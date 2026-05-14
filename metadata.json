@@ -1,0 +1,6 @@
+{
+  "name": "那我走 - 城市探索者",
+  "description": "一款基于地理位置的暗黑霓虹风格城市探索游戏。通过步行任务解锁城市故事，赢取商家优惠和成就奖励。",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["geolocation"]
+}
