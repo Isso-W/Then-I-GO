@@ -3,16 +3,22 @@ import { Sparkles, Zap, BookOpen, Compass, Gift, Navigation, HelpCircle, Clock, 
 import { motion, AnimatePresence } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
 import { BottomNav } from "../components/CommonUI";
-import { ScreenType, ExploreStep } from "../types";
+import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute } from "../types";
 
-export function ExploreScreen({ 
-  onNavigate, 
-  step, 
-  setStep 
-}: { 
+export function ExploreScreen({
+  onNavigate,
+  step,
+  setStep,
+  onPreferenceConfirm,
+  onGearConfirm,
+  generatedRoute,
+}: {
   onNavigate: (s: ScreenType) => void;
   step: ExploreStep;
   setStep: (s: ExploreStep) => void;
+  onPreferenceConfirm: (prefs: UserPreferences) => void;
+  onGearConfirm: () => void;
+  generatedRoute: GeneratedRoute | null;
 }) {
 
   const handleInitialComplete = () => {
@@ -41,7 +47,7 @@ export function ExploreScreen({
       {(step === "intro" || (isGameStarted && !isCapturing)) && <ExploreHeader />}
       {isGameStarted && !isCapturing && <ProgressPanel step={step} />}
       {isGameStarted && !isCapturing && <DottedPath step={step} />}
-      {isGameStarted && !isCapturing && <NextTarget step={step} />}
+      {isGameStarted && !isCapturing && <NextTarget step={step} generatedRoute={generatedRoute} />}
       {isGameStarted && !isCapturing && <UnknownMarkers step={step} />}
       {!isCapturing && <UserAvatar step={step} />}
       {isGameStarted && !isCapturing && <FloatingActions onAction={(a) => a === 'event' && onNavigate('event')} />}
@@ -56,10 +62,10 @@ export function ExploreScreen({
           />
         )}
         {step === "preference_selection" && (
-          <PreferenceOverlay key="preference" onConfirm={() => setStep("gear_confirmation")} onBack={() => setStep("intro")} />
+          <PreferenceOverlay key="preference" onConfirm={onPreferenceConfirm} onBack={() => setStep("intro")} />
         )}
         {step === "gear_confirmation" && (
-          <GearConfirmationOverlay key="gear" onConfirm={() => setStep("initial")} onBack={() => setStep("preference_selection")} />
+          <GearConfirmationOverlay key="gear" onConfirm={onGearConfirm} onBack={() => setStep("preference_selection")} />
         )}
       </AnimatePresence>
 
@@ -77,14 +83,15 @@ export function ExploreScreen({
             exit={{ y: 100, opacity: 0 }}
             className="absolute left-5 right-5 z-40 bottom-[90px]"
           >
-            <TaskCard 
-              step={step} 
-              onComplete={handleInitialComplete} 
+            <TaskCard
+              step={step}
+              onComplete={handleInitialComplete}
               onCheckIn={() => {
                 if (step === "initial") setStep("checkin_initial");
                 if (step === "hidden_active") setStep("checkin_hidden");
                 if (step === "next_objective") setStep("checkin_next");
-              }} 
+              }}
+              generatedRoute={generatedRoute}
             />
           </motion.div>
         )}
@@ -258,21 +265,24 @@ function UserAvatar({ step }: { step?: ExploreStep }) {
   );
 }
 
-function NextTarget({ step }: { step: ExploreStep }) {
+function NextTarget({ step, generatedRoute }: { step: ExploreStep; generatedRoute: GeneratedRoute | null }) {
   const isHiddenActive = step === "hidden_active" || step === "checkin_hidden" || step === "reward_hidden";
   const isNextObjective = step === "next_objective" || step === "checkin_next";
-  
+
+  const wp0 = generatedRoute?.waypoints[0];
+  const wp1 = generatedRoute?.waypoints[1];
+
   return (
     <AnimatePresence mode="wait">
       {isHiddenActive ? (
-        <motion.div 
+        <motion.div
           key="hidden-target"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           className="absolute right-[18%] top-[33%] z-30"
         >
           <div className="relative">
-            <motion.div 
+            <motion.div
               animate={{ y: [0, -4, 0] }}
               transition={{ duration: 2, repeat: Infinity }}
               className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-amber-400 bg-amber-600 shadow-[0_0_15px_rgba(251,191,36,0.6)]"
@@ -288,30 +298,30 @@ function NextTarget({ step }: { step: ExploreStep }) {
           </div>
         </motion.div>
       ) : isNextObjective ? (
-        <motion.div 
+        <motion.div
           key="next-target"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           className="absolute left-[18%] top-[15%] z-30"
         >
           <div className="relative">
-            <motion.div 
+            <motion.div
               animate={{ y: [0, -4, 0] }}
               transition={{ duration: 2, repeat: Infinity }}
               className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#00E5FF] bg-[#0066FF] shadow-[0_0_15px_rgba(0,229,255,0.6)]"
             >
               <div className="absolute -bottom-2.5 h-5 w-5 rotate-45 rounded-br-md bg-[#0066FF]" />
-              <span className="relative text-xl">📚</span>
+              <span className="relative text-xl">{wp1?.emoji ?? "📚"}</span>
             </motion.div>
             <Glass className="absolute left-[120%] top-0 w-[110px] rounded-lg p-2 text-white">
               <div className="text-[10px] text-[#00E5FF]">下一站</div>
-              <div className="text-[12px] font-bold">下一目标</div>
-              <div className="text-[10px] text-white/40">210 米</div>
+              <div className="text-[12px] font-bold">{wp1?.name ?? "下一目标"}</div>
+              <div className="text-[10px] text-white/40">{wp1?.distanceText ?? "210 米"}</div>
             </Glass>
           </div>
         </motion.div>
       ) : (
-        <motion.div 
+        <motion.div
           key="initial-target"
           className="absolute"
           initial={{ opacity: 0 }}
@@ -319,14 +329,21 @@ function NextTarget({ step }: { step: ExploreStep }) {
           exit={{ opacity: 0 }}
         >
           <div className="absolute left-[48%] top-[25%] z-30 -translate-x-1/2">
-            <motion.div 
+            <motion.div
               animate={{ y: [0, -4, 0] }}
               transition={{ duration: 2, repeat: Infinity }}
               className="relative flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#8F5CFF] bg-[#5B3BFF] shadow-[0_0_15px_rgba(108,92,255,0.6)]"
             >
               <div className="absolute -bottom-2.5 h-5 w-5 rotate-45 rounded-br-md bg-[#5B3BFF]" />
-              <span className="relative text-xl text-white">🚇</span>
+              <span className="relative text-xl">{wp0?.emoji ?? "🚇"}</span>
             </motion.div>
+            {wp0 && (
+              <Glass className="absolute left-[120%] top-0 w-[110px] rounded-lg p-2 text-white" style={{ top: "-8px" }}>
+                <div className="text-[10px] text-[#A98BFF]">第一站</div>
+                <div className="text-[12px] font-bold">{wp0.name}</div>
+                <div className="text-[10px] text-white/40">{wp0.distanceText}</div>
+              </Glass>
+            )}
           </div>
         </motion.div>
       )}
@@ -393,18 +410,44 @@ function Legend({ step }: { step?: ExploreStep }) {
   );
 }
 
-function TaskCard({ step, onComplete, onCheckIn }: { step: ExploreStep, onComplete: () => void, onCheckIn: () => void }) {
+function TaskCard({ step, onComplete, onCheckIn, generatedRoute }: {
+  step: ExploreStep;
+  onComplete: () => void;
+  onCheckIn: () => void;
+  generatedRoute: GeneratedRoute | null;
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const isHiddenActive = step === "hidden_active" || step === "checkin_hidden";
   const isInitial = step === "initial" || step === "checkin_initial";
   const isNext = step === "next_objective" || step === "checkin_next";
 
+  const wp0 = generatedRoute?.waypoints[0];
+  const wp1 = generatedRoute?.waypoints[1];
+
   const getTaskContent = () => {
-    if (isInitial) return { title: "前往下一目标", desc: "前方直走100m|预计6min到达", reward: "+10", color: "#6C5CFF" };
-    if (isHiddenActive) return { title: "秘密：转角咖啡店", desc: "开启特殊的视频打卡", reward: "+50", color: "#F59E0B" };
-    if (isNext) return { title: "前往下一目标", desc: "左转直走1km|预计12min到达", reward: "+20", color: "#0066FF" };
-    return { title: "任务完成", desc: "点击查看后续", reward: "+0", color: "#10B981" };
+    if (isInitial) return {
+      title: wp0?.name ?? "前往第一站",
+      desc: wp0?.task ?? "前方直走100m|预计6min到达",
+      detail: wp0?.description ?? "目的地在地下，那里夏凉冬不凉",
+      reward: wp0?.reward ?? "+10 XP",
+      color: "#6C5CFF",
+    };
+    if (isHiddenActive) return {
+      title: "秘密：转角咖啡店",
+      desc: "开启特殊的视频打卡",
+      detail: "通过泰康路的老木门，走进那家复古咖啡店。在那里的某个靠窗位置，藏着一段旧时光。",
+      reward: "+50 XP",
+      color: "#F59E0B",
+    };
+    if (isNext) return {
+      title: wp1?.name ?? "前往下一站",
+      desc: wp1?.task ?? "左转直走1km|预计12min到达",
+      detail: wp1?.description ?? "那里是个即便你发呆四个小时，也会被认为'思考人生'的合法场所",
+      reward: wp1?.reward ?? "+20 XP",
+      color: "#0066FF",
+    };
+    return { title: "任务完成", desc: "点击查看后续", detail: "", reward: "+0", color: "#10B981" };
   };
 
   const content = getTaskContent();
@@ -464,11 +507,7 @@ function TaskCard({ step, onComplete, onCheckIn }: { step: ExploreStep, onComple
           >
             <div className="mt-4 space-y-3 pt-1">
               <p className="text-[12px] leading-relaxed text-white/50">
-                {isInitial 
-                  ? "目的地在地下，那里夏凉冬不凉"
-                  : isHiddenActive 
-                  ? "通过泰康路的老木门，走进那家复古咖啡店。在那里的某个靠窗位置，藏着一段旧时光。" 
-                  : "那里是个即便你发呆四个小时，也会是被认为‘思考人生’的合法场所"}
+                {content.detail}
               </p>
               
               <button 
@@ -837,7 +876,7 @@ function AchievementOverlay({ onContinue }: { onContinue: () => void }) {
   );
 }
 
-function PreferenceOverlay({ onConfirm, onBack }: { onConfirm: () => void; onBack: () => void }) {
+function PreferenceOverlay({ onConfirm, onBack }: { onConfirm: (prefs: import("../types").UserPreferences) => void; onBack: () => void }) {
   const [mood, setMood] = useState("happy");
   const [duration, setDuration] = useState("1h");
   const [transport, setTransport] = useState("walk");
@@ -1061,7 +1100,7 @@ function PreferenceOverlay({ onConfirm, onBack }: { onConfirm: () => void; onBac
 
       <div className="fixed bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-[#05070A] via-[#05070A] to-transparent">
         <button 
-          onClick={onConfirm}
+          onClick={() => onConfirm({ mood, duration, transport, special, foodPreference, intensity })}
           className="group relative flex w-full items-center justify-center gap-3 rounded-full bg-[#6C5CFF] py-3.5 text-[16px] font-black text-white shadow-[0_15px_40px_rgba(108,92,255,0.4)] active:scale-[0.98] transition-all overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
