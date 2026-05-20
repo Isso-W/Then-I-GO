@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git mv *)",
+      "Bash(git push *)",
+      "Bash(mv .claude/settings.local.json .claude/settings.json)"
+    ]
+  }
+}
