@@ -1,0 +1,703 @@
+{
+  "area": "北京五道口",
+  "bbox": {
+    "south": 39.98,
+    "west": 116.32,
+    "north": 40.005,
+    "east": 116.358
+  },
+  "fetchedAt": "2026-05-24T00:41:24.386Z",
+  "totalStreets": 35,
+  "namedStreets": 35,
+  "streets": [
+    {
+      "name": "成府路",
+      "nameEn": "Chengfu Road",
+      "highway": "secondary",
+      "points": [
+        {
+          "lat": 39.9923,
+          "lng": 116.3201
+        },
+        {
+          "lat": 39.9923,
+          "lng": 116.328
+        },
+        {
+          "lat": 39.9921,
+          "lng": 116.335
+        },
+        {
+          "lat": 39.992,
+          "lng": 116.345
+        },
+        {
+          "lat": 39.9919,
+          "lng": 116.3579
+        }
+      ]
+    },
+    {
+      "name": "中关村北大街",
+      "nameEn": "Zhongguancun North Street",
+      "highway": "primary",
+      "points": [
+        {
+          "lat": 39.98,
+          "lng": 116.323
+        },
+        {
+          "lat": 39.985,
+          "lng": 116.3235
+        },
+        {
+          "lat": 39.99,
+          "lng": 116.324
+        },
+        {
+          "lat": 39.995,
+          "lng": 116.3245
+        },
+        {
+          "lat": 40,
+          "lng": 116.325
+        },
+        {
+          "lat": 40.005,
+          "lng": 116.3255
+        }
+      ]
+    },
+    {
+      "name": "学院路",
+      "nameEn": "Xueyuan Road",
+      "highway": "primary",
+      "points": [
+        {
+          "lat": 39.98,
+          "lng": 116.355
+        },
+        {
+          "lat": 39.985,
+          "lng": 116.3552
+        },
+        {
+          "lat": 39.99,
+          "lng": 116.3555
+        },
+        {
+          "lat": 39.995,
+          "lng": 116.3558
+        },
+        {
+          "lat": 40,
+          "lng": 116.356
+        },
+        {
+          "lat": 40.005,
+          "lng": 116.3562
+        }
+      ]
+    },
+    {
+      "name": "清华东路",
+      "nameEn": "Qinghua East Road",
+      "highway": "secondary",
+      "points": [
+        {
+          "lat": 40.0025,
+          "lng": 116.3255
+        },
+        {
+          "lat": 40.0028,
+          "lng": 116.335
+        },
+        {
+          "lat": 40.003,
+          "lng": 116.345
+        },
+        {
+          "lat": 40.0032,
+          "lng": 116.356
+        }
+      ]
+    },
+    {
+      "name": "双清路",
+      "nameEn": "Shuangqing Road",
+      "highway": "tertiary",
+      "points": [
+        {
+          "lat": 39.9985,
+          "lng": 116.328
+        },
+        {
+          "lat": 39.9987,
+          "lng": 116.338
+        },
+        {
+          "lat": 39.999,
+          "lng": 116.35
+        }
+      ]
+    },
+    {
+      "name": "王庄路",
+      "nameEn": "Wangzhuang Road",
+      "highway": "tertiary",
+      "points": [
+        {
+          "lat": 39.99,
+          "lng": 116.338
+        },
+        {
+          "lat": 39.995,
+          "lng": 116.3382
+        },
+        {
+          "lat": 39.999,
+          "lng": 116.3385
+        }
+      ]
+    },
+    {
+      "name": "荷清路",
+      "nameEn": "Heqing Road",
+      "highway": "tertiary",
+      "points": [
+        {
+          "lat": 39.992,
+          "lng": 116.345
+        },
+        {
+          "lat": 39.997,
+          "lng": 116.3453
+        },
+        {
+          "lat": 40.003,
+          "lng": 116.3455
+        }
+      ]
+    },
+    {
+      "name": "五道口地铁站南侧路",
+      "nameEn": "Road South of Wudaokou Station",
+      "highway": "tertiary",
+      "points": [
+        {
+          "lat": 39.9921,
+          "lng": 116.3355
+        },
+        {
+          "lat": 39.989,
+          "lng": 116.3357
+        },
+        {
+          "lat": 39.985,
+          "lng": 116.336
+        }
+      ]
+    },
+    {
+      "name": "东升园路",
+      "nameEn": "Dongshengyuan Road",
+      "highway": "tertiary",
+      "points": [
+        {
+          "lat": 39.9922,
+          "lng": 116.3315
+        },
+        {
+          "lat": 39.995,
+          "lng": 116.3318
+        },
+        {
+          "lat": 39.998,
+          "lng": 116.332
+        }
+      ]
+    },
+    {
+      "name": "清华园路",
+      "nameEn": "Qinghuayuan Road",
+      "highway": "tertiary",
+      "points": [
+        {
+          "lat": 39.9922,
+          "lng": 116.328
+        },
+        {
+          "lat": 39.995,
+          "lng": 116.3282
+        },
+        {
+          "lat": 39.998,
+          "lng": 116.3285
+        }
+      ]
+    },
+    {
+      "name": "华清嘉园北路",
+      "nameEn": "Huaqing Jiayuan North Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.9895,
+          "lng": 116.333
+        },
+        {
+          "lat": 39.9893,
+          "lng": 116.336
+        },
+        {
+          "lat": 39.9892,
+          "lng": 116.339
+        }
+      ]
+    },
+    {
+      "name": "华清嘉园东路",
+      "nameEn": "Huaqing Jiayuan East Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.985,
+          "lng": 116.339
+        },
+        {
+          "lat": 39.989,
+          "lng": 116.3392
+        }
+      ]
+    },
+    {
+      "name": "华清嘉园西路",
+      "nameEn": "Huaqing Jiayuan West Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.985,
+          "lng": 116.333
+        },
+        {
+          "lat": 39.989,
+          "lng": 116.3332
+        }
+      ]
+    },
+    {
+      "name": "华清嘉园南路",
+      "nameEn": "Huaqing Jiayuan South Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.985,
+          "lng": 116.333
+        },
+        {
+          "lat": 39.985,
+          "lng": 116.336
+        },
+        {
+          "lat": 39.985,
+          "lng": 116.339
+        }
+      ]
+    },
+    {
+      "name": "五道口购物中心内部小径",
+      "nameEn": "Wudaokou Shopping Center Path",
+      "highway": "pedestrian",
+      "points": [
+        {
+          "lat": 39.991,
+          "lng": 116.3365
+        },
+        {
+          "lat": 39.9915,
+          "lng": 116.337
+        },
+        {
+          "lat": 39.992,
+          "lng": 116.3375
+        }
+      ]
+    },
+    {
+      "name": "东王庄路",
+      "nameEn": "East Wangzhuang Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.99,
+          "lng": 116.342
+        },
+        {
+          "lat": 39.994,
+          "lng": 116.3422
+        },
+        {
+          "lat": 39.998,
+          "lng": 116.3425
+        }
+      ]
+    },
+    {
+      "name": "清华大学主干道",
+      "nameEn": "Tsinghua University Main Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.992,
+          "lng": 116.33
+        },
+        {
+          "lat": 39.995,
+          "lng": 116.3305
+        },
+        {
+          "lat": 40,
+          "lng": 116.331
+        },
+        {
+          "lat": 40.002,
+          "lng": 116.3315
+        }
+      ]
+    },
+    {
+      "name": "清华西门路",
+      "nameEn": "Tsinghua West Gate Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.995,
+          "lng": 116.3245
+        },
+        {
+          "lat": 39.9955,
+          "lng": 116.326
+        },
+        {
+          "lat": 39.996,
+          "lng": 116.328
+        }
+      ]
+    },
+    {
+      "name": "清华南门路",
+      "nameEn": "Tsinghua South Gate Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.9922,
+          "lng": 116.3325
+        },
+        {
+          "lat": 39.993,
+          "lng": 116.3327
+        }
+      ]
+    },
+    {
+      "name": "清华科技园内部路",
+      "nameEn": "Tsinghua Science Park Internal Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.99,
+          "lng": 116.322
+        },
+        {
+          "lat": 39.9905,
+          "lng": 116.321
+        },
+        {
+          "lat": 39.991,
+          "lng": 116.3205
+        }
+      ]
+    },
+    {
+      "name": "荷清园路",
+      "nameEn": "Heqingyuan Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.992,
+          "lng": 116.347
+        },
+        {
+          "lat": 39.997,
+          "lng": 116.3473
+        },
+        {
+          "lat": 40.002,
+          "lng": 116.3475
+        }
+      ]
+    },
+    {
+      "name": "清华北门内路",
+      "nameEn": "Tsinghua North Gate Internal Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 40.0028,
+          "lng": 116.335
+        },
+        {
+          "lat": 40,
+          "lng": 116.3352
+        }
+      ]
+    },
+    {
+      "name": "林业大学西门路",
+      "nameEn": "Beijing Forestry University West Gate Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 40.003,
+          "lng": 116.354
+        },
+        {
+          "lat": 40,
+          "lng": 116.3535
+        }
+      ]
+    },
+    {
+      "name": "地质大学南门路",
+      "nameEn": "China University of Geosciences South Gate Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.985,
+          "lng": 116.3556
+        },
+        {
+          "lat": 39.987,
+          "lng": 116.353
+        },
+        {
+          "lat": 39.989,
+          "lng": 116.3525
+        }
+      ]
+    },
+    {
+      "name": "荷清路东侧小路",
+      "nameEn": "Small Road East of Heqing Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.9918,
+          "lng": 116.3465
+        },
+        {
+          "lat": 39.993,
+          "lng": 116.3467
+        }
+      ]
+    },
+    {
+      "name": "成府路北侧支路",
+      "nameEn": "Branch Road North of Chengfu Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.993,
+          "lng": 116.333
+        },
+        {
+          "lat": 39.9932,
+          "lng": 116.336
+        },
+        {
+          "lat": 39.9935,
+          "lng": 116.338
+        }
+      ]
+    },
+    {
+      "name": "清华大学校园内小路1",
+      "nameEn": "Tsinghua Campus Path 1",
+      "highway": "pedestrian",
+      "points": [
+        {
+          "lat": 39.996,
+          "lng": 116.33
+        },
+        {
+          "lat": 39.997,
+          "lng": 116.332
+        },
+        {
+          "lat": 39.998,
+          "lng": 116.334
+        }
+      ]
+    },
+    {
+      "name": "清华大学校园内小路2",
+      "nameEn": "Tsinghua Campus Path 2",
+      "highway": "pedestrian",
+      "points": [
+        {
+          "lat": 39.998,
+          "lng": 116.33
+        },
+        {
+          "lat": 39.999,
+          "lng": 116.3315
+        },
+        {
+          "lat": 40,
+          "lng": 116.333
+        }
+      ]
+    },
+    {
+      "name": "清华园路支路1",
+      "nameEn": "Qinghuayuan Road Branch 1",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.995,
+          "lng": 116.3282
+        },
+        {
+          "lat": 39.9955,
+          "lng": 116.327
+        },
+        {
+          "lat": 39.996,
+          "lng": 116.326
+        }
+      ]
+    },
+    {
+      "name": "清华西路",
+      "nameEn": "Qinghua West Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.994,
+          "lng": 116.326
+        },
+        {
+          "lat": 39.9942,
+          "lng": 116.328
+        },
+        {
+          "lat": 39.9945,
+          "lng": 116.33
+        }
+      ]
+    },
+    {
+      "name": "逸夫科技楼路",
+      "nameEn": "Yifu Science Building Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.997,
+          "lng": 116.3308
+        },
+        {
+          "lat": 39.9965,
+          "lng": 116.332
+        },
+        {
+          "lat": 39.996,
+          "lng": 116.333
+        }
+      ]
+    },
+    {
+      "name": "华清嘉园内部环路",
+      "nameEn": "Huaqing Jiayuan Internal Loop",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.987,
+          "lng": 116.334
+        },
+        {
+          "lat": 39.986,
+          "lng": 116.335
+        },
+        {
+          "lat": 39.987,
+          "lng": 116.337
+        },
+        {
+          "lat": 39.988,
+          "lng": 116.336
+        },
+        {
+          "lat": 39.987,
+          "lng": 116.334
+        }
+      ]
+    },
+    {
+      "name": "文津国际酒店周边路",
+      "nameEn": "Wenjin Hotel Surrounding Road",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.99,
+          "lng": 116.324
+        },
+        {
+          "lat": 39.991,
+          "lng": 116.325
+        },
+        {
+          "lat": 39.9915,
+          "lng": 116.326
+        }
+      ]
+    },
+    {
+      "name": "五道口地铁站东侧小路",
+      "nameEn": "Small Road East of Wudaokou Subway Station",
+      "highway": "pedestrian",
+      "points": [
+        {
+          "lat": 39.9921,
+          "lng": 116.3365
+        },
+        {
+          "lat": 39.993,
+          "lng": 116.3367
+        },
+        {
+          "lat": 39.9938,
+          "lng": 116.337
+        }
+      ]
+    },
+    {
+      "name": "清华园路西侧支路",
+      "nameEn": "Qinghuayuan Road West Branch",
+      "highway": "residential",
+      "points": [
+        {
+          "lat": 39.994,
+          "lng": 116.328
+        },
+        {
+          "lat": 39.9935,
+          "lng": 116.327
+        },
+        {
+          "lat": 39.993,
+          "lng": 116.326
+        }
+      ]
+    }
+  ]
+}

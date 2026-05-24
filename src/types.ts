@@ -68,8 +68,10 @@ export interface POI {
   name: string;
   category: string;                   // 咖啡厅 / 书店 / 公园 / 美术馆 …
   tags: string[];                     // 对应 UserPreferences 里的 special 标签
-  area: string;                       // 所在商圈，如"静安寺"
+  area: string;                       // 所在商圈，如"五道口"
   address: string;
+  lat: number;                        // 纬度
+  lng: number;                        // 经度
   open_hours: string;                 // "09:00-22:00"
   avg_stay_minutes: number;           // 平均停留时长
   avg_wait_minutes: number;           // 平均排队时长

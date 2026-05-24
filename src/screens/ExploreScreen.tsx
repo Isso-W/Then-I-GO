@@ -1098,7 +1098,7 @@ function PreferenceOverlay({ onConfirm, onBack }: { onConfirm: (prefs: import(".
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-[#05070A] via-[#05070A] to-transparent">
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] p-5 bg-gradient-to-t from-[#05070A] via-[#05070A] to-transparent">
         <button 
           onClick={() => onConfirm({ mood, duration, transport, special, foodPreference, intensity })}
           className="group relative flex w-full items-center justify-center gap-3 rounded-full bg-[#6C5CFF] py-3.5 text-[16px] font-black text-white shadow-[0_15px_40px_rgba(108,92,255,0.4)] active:scale-[0.98] transition-all overflow-hidden"

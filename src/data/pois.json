@@ -1,0 +1,3700 @@
+[
+  {
+    "name": "未名咖啡",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "niche",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "清华大学内",
+    "lat": 40.00301797507781,
+    "lng": 116.34598862927946,
+    "open_hours": "08:00-20:00",
+    "avg_stay_minutes": 70,
+    "avg_wait_minutes": 5,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.7,
+    "review_summary": "在校园深处，静谧之选，适合学习和发呆。",
+    "reviews": [
+      "能在清华园里找到这样一家环境超棒的咖啡馆太惊喜了！适合一个人静静地看书。",
+      "咖啡味道不错，店里有很多绿植，拍照也很好看。",
+      "周末人不算多，感觉很适合放空自己，远离城市的喧嚣。"
+    ],
+    "mood_match": [
+      "relax",
+      "explore"
+    ],
+    "mbti_tags": [
+      "内向",
+      "文艺"
+    ],
+    "best_time": "工作日上午",
+    "id": "poi_001"
+  },
+  {
+    "name": "学府书吧",
+    "category": "书店",
+    "tags": [
+      "art",
+      "niche",
+      "budget"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 39.98718987362678,
+    "lng": 116.35533139241761,
+    "open_hours": "10:00-21:00",
+    "avg_stay_minutes": 90,
+    "avg_wait_minutes": 0,
+    "crowd_level": "medium",
+    "price_level": 1,
+    "rating": 4.5,
+    "review_summary": "藏书丰富，价格亲民，是学生党的心头好。",
+    "reviews": [
+      "第一次来，感觉就像个小宝藏，书很多，而且价格比其他书店实惠。",
+      "喜欢这里的氛围，可以悠闲地看一下午的书，店员也很热情。",
+      "经常在这里淘到绝版书，虽然环境不豪华，但内容才是最重要的。"
+    ],
+    "mood_match": [
+      "explore",
+      "relax"
+    ],
+    "mbti_tags": [
+      "文艺",
+      "求知"
+    ],
+    "best_time": "工作日下午",
+    "id": "poi_002"
+  },
+  {
+    "name": "时光雕刻",
+    "category": "文创小店",
+    "tags": [
+      "art",
+      "niche",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "清华园路XX号",
+    "lat": 39.992190807189964,
+    "lng": 116.33182174835139,
+    "open_hours": "11:00-20:00",
+    "avg_stay_minutes": 45,
+    "avg_wait_minutes": 5,
+    "crowd_level": "low",
+    "price_level": 2,
+    "rating": 4.6,
+    "review_summary": "充满设计感的小店，文创产品独特，适合送礼或自用。",
+    "reviews": [
+      "店里的东西都很有创意，尤其是那些结合了中国风的设计，爱了爱了！",
+      "买了几个小摆件，质量很好，店主也很懂产品，会介绍背后的故事。",
+      "小小的店面，却藏着大大的惊喜，每次来都能发现新玩意儿。"
+    ],
+    "mood_match": [
+      "explore",
+      "happy"
+    ],
+    "mbti_tags": [
+      "创意",
+      "感性"
+    ],
+    "best_time": "周末上午",
+    "id": "poi_003"
+  },
+  {
+    "name": "五道营小酒馆",
+    "category": "酒吧",
+    "tags": [
+      "food",
+      "busy",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 39.99342170842076,
+    "lng": 116.34708530250525,
+    "open_hours": "18:00-02:00",
+    "avg_stay_minutes": 90,
+    "avg_wait_minutes": 15,
+    "crowd_level": "high",
+    "price_level": 3,
+    "rating": 4.3,
+    "review_summary": "热闹的夜生活去处，小吃和酒都很有特色。",
+    "reviews": [
+      "周末晚上人很多，氛围很棒，适合朋友小聚。",
+      "推荐他们家的炸鸡和精酿啤酒，味道都挺不错的。",
+      "晚上来这里放松一下，听着音乐，感觉很舒服。"
+    ],
+    "mood_match": [
+      "happy",
+      "tired"
+    ],
+    "mbti_tags": [
+      "外向",
+      "社交"
+    ],
+    "best_time": "周末晚上",
+    "id": "poi_004"
+  },
+  {
+    "name": "清华美院画廊",
+    "category": "美术馆",
+    "tags": [
+      "art",
+      "photo",
+      "explore"
+    ],
+    "area": "五道口",
+    "address": "清华大学内",
+    "lat": 39.999034084490475,
+    "lng": 116.33155112673572,
+    "open_hours": "09:00-17:00",
+    "avg_stay_minutes": 60,
+    "avg_wait_minutes": 0,
+    "crowd_level": "low",
+    "price_level": 1,
+    "rating": 4.8,
+    "review_summary": "艺术爱好者的天堂，常有学生优秀作品展出。",
+    "reviews": [
+      "免费参观，而且展出的作品都很有想法，能感受到年轻艺术家的活力。",
+      "每次来都有新惊喜，光线很好，适合拍照。",
+      "能在这里感受到浓厚的艺术氛围，对理解当代艺术很有帮助。"
+    ],
+    "mood_match": [
+      "explore",
+      "relax"
+    ],
+    "mbti_tags": [
+      "艺术",
+      "思考"
+    ],
+    "best_time": "工作日上午",
+    "id": "poi_005"
+  },
+  {
+    "name": "7-Eleven",
+    "category": "便利店",
+    "tags": [
+      "budget",
+      "busy",
+      "food"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 39.99850291354289,
+    "lng": 116.32814567714476,
+    "open_hours": "24小时",
+    "avg_stay_minutes": 10,
+    "avg_wait_minutes": 5,
+    "crowd_level": "high",
+    "price_level": 1,
+    "rating": 4.2,
+    "review_summary": "24小时便利，满足各种即时需求。",
+    "reviews": [
+      "五道口必备，半夜饿了或者需要买点什么，这里永远有。",
+      "学生党最爱，零食饮料种类多，价格也还行。",
+      "经常看到骑着自行车的学生进进出出，很接地气。"
+    ],
+    "mood_match": [
+      "hungry",
+      "tired"
+    ],
+    "mbti_tags": [
+      "实用",
+      "快速"
+    ],
+    "best_time": "深夜",
+    "id": "poi_006"
+  },
+  {
+    "name": "小确幸咖啡",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "relax",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "双清路西段XX号",
+    "lat": 39.98427907797299,
+    "lng": 116.3234279077973,
+    "open_hours": "09:30-19:00",
+    "avg_stay_minutes": 60,
+    "avg_wait_minutes": 8,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.5,
+    "review_summary": "藏在小巷里的咖啡馆，安静舒适，是偷得浮生半日闲的好去处。",
+    "reviews": [
+      "这家店真的太适合一个人来发呆了，音乐很轻柔，咖啡也香。",
+      "店里有很多绿植，感觉很治愈，周末下午来这里充电。",
+      "第一次来，发现这家店的甜点也很好吃，搭配咖啡绝了。"
+    ],
+    "mood_match": [
+      "relax",
+      "bored"
+    ],
+    "mbti_tags": [
+      "内向",
+      "宁静"
+    ],
+    "best_time": "工作日下午",
+    "id": "poi_007"
+  },
+  {
+    "name": "知乎书店",
+    "category": "书店",
+    "tags": [
+      "art",
+      "niche",
+      "explore"
+    ],
+    "area": "五道口",
+    "address": "清华园路XX号",
+    "lat": 39.99689150790057,
+    "lng": 116.33106038103863,
+    "open_hours": "10:00-20:00",
+    "avg_stay_minutes": 75,
+    "avg_wait_minutes": 0,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.6,
+    "review_summary": "以知识和思考为主题的书店，氛围感十足。",
+    "reviews": [
+      "这里的书都很有深度，很多是独立出版物，值得慢慢淘。",
+      "店里经常有读书分享会，氛围很好，能认识很多有趣的人。",
+      "虽然名字叫知乎，但书的内容比想象中更丰富，很多哲学和人文类书籍。"
+    ],
+    "mood_match": [
+      "explore",
+      "relax"
+    ],
+    "mbti_tags": [
+      "求知",
+      "思考"
+    ],
+    "best_time": "周末下午",
+    "id": "poi_008"
+  },
+  {
+    "name": "灵感制造所",
+    "category": "文创小店",
+    "tags": [
+      "art",
+      "niche",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 39.99700425997634,
+    "lng": 116.33200851995268,
+    "open_hours": "10:30-19:30",
+    "avg_stay_minutes": 40,
+    "avg_wait_minutes": 3,
+    "crowd_level": "low",
+    "price_level": 2,
+    "rating": 4.4,
+    "review_summary": "充满创意的手工制品和设计周边，适合寻找独特礼物。",
+    "reviews": [
+      "有很多独立设计师的作品，风格很独特，包装也很精美。",
+      "买了一个定制的小摆件，非常有纪念意义。",
+      "店主是个很有才华的年轻人，店里的东西都充满生活气息。"
+    ],
+    "mood_match": [
+      "happy",
+      "explore"
+    ],
+    "mbti_tags": [
+      "创意",
+      "个性"
+    ],
+    "best_time": "工作日午后",
+    "id": "poi_009"
+  },
+  {
+    "name": "深夜食堂",
+    "category": "餐厅",
+    "tags": [
+      "food",
+      "hungry",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 39.99851755923273,
+    "lng": 116.32887796163658,
+    "open_hours": "17:00-03:00",
+    "avg_stay_minutes": 60,
+    "avg_wait_minutes": 20,
+    "crowd_level": "high",
+    "price_level": 2,
+    "rating": 4.3,
+    "review_summary": "日式小馆，氛围温馨，深夜里的人气聚集地。",
+    "reviews": [
+      "晚上来吃串烧和拉面，味道很正宗，价格也合理。",
+      "店里总是人声鼎沸，特别是周末，年轻人都喜欢来这里。",
+      "感觉就像动漫里的场景，虽然有点挤，但味道真的不错。"
+    ],
+    "mood_match": [
+      "hungry",
+      "happy"
+    ],
+    "mbti_tags": [
+      "外向",
+      "热闹"
+    ],
+    "best_time": "深夜",
+    "id": "poi_010"
+  },
+  {
+    "name": "绿野仙踪咖啡",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "relax",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "清华园路XX号",
+    "lat": 39.985,
+    "lng": 116.33690809831803,
+    "open_hours": "09:00-21:00",
+    "avg_stay_minutes": 75,
+    "avg_wait_minutes": 10,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.7,
+    "review_summary": "以植物为主题的咖啡馆，仿佛置身丛林，拍照绝佳。",
+    "reviews": [
+      "咖啡的味道很惊艳，店里的绿植真的太治愈了！",
+      "光线很好，每个角落都适合拍照，感觉来这里就能拍一组文艺大片。",
+      "周末人有点多，但等待是值得的，安静地喝一杯咖啡，感觉很放松。"
+    ],
+    "mood_match": [
+      "relax",
+      "explore"
+    ],
+    "mbti_tags": [
+      "文艺",
+      "自然"
+    ],
+    "best_time": "工作日上午",
+    "id": "poi_011"
+  },
+  {
+    "name": "思想的角落",
+    "category": "书店",
+    "tags": [
+      "niche",
+      "art",
+      "explore"
+    ],
+    "area": "五道口",
+    "address": "双清路西段XX号",
+    "lat": 40.00307919165228,
+    "lng": 116.34935554087542,
+    "open_hours": "10:30-19:30",
+    "avg_stay_minutes": 80,
+    "avg_wait_minutes": 0,
+    "crowd_level": "low",
+    "price_level": 2,
+    "rating": 4.5,
+    "review_summary": "小众独立书店，专注于社科和人文类书籍。",
+    "reviews": [
+      "这里总能找到一些冷门但非常有价值的书籍，是知识爱好者的宝藏。",
+      "店主对书的品味很高，每次来都能发现新大陆。",
+      "环境很安静，适合一个人静静地翻阅，远离喧嚣。"
+    ],
+    "mood_match": [
+      "explore",
+      "relax"
+    ],
+    "mbti_tags": [
+      "求知",
+      "深度"
+    ],
+    "best_time": "工作日午后",
+    "id": "poi_012"
+  },
+  {
+    "name": "青年集市",
+    "category": "文创小店",
+    "tags": [
+      "art",
+      "niche",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 40.00215970499907,
+    "lng": 116.32521597049991,
+    "open_hours": "11:00-20:00",
+    "avg_stay_minutes": 40,
+    "avg_wait_minutes": 5,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.4,
+    "review_summary": "汇集了许多年轻设计师的原创品牌，充满活力。",
+    "reviews": [
+      "这里的衣服和饰品都很有设计感，价格也比较合理。",
+      "能淘到很多独一无二的单品，感觉和外面卖的东西很不一样。",
+      "周末人比较多，但逛起来很有意思，能感受到年轻人的创意。"
+    ],
+    "mood_match": [
+      "explore",
+      "happy"
+    ],
+    "mbti_tags": [
+      "时尚",
+      "个性"
+    ],
+    "best_time": "周末下午",
+    "id": "poi_013"
+  },
+  {
+    "name": "街角餐吧",
+    "category": "餐厅",
+    "tags": [
+      "food",
+      "happy",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 40.003119576600746,
+    "lng": 116.35157671304106,
+    "open_hours": "11:30-22:00",
+    "avg_stay_minutes": 70,
+    "avg_wait_minutes": 10,
+    "crowd_level": "high",
+    "price_level": 2,
+    "rating": 4.2,
+    "review_summary": "提供简餐和酒水，是朋友聚会的好地方。",
+    "reviews": [
+      "披萨和意面都做得不错，适合和朋友一起分享。",
+      "晚上气氛很好，音乐也不吵，很适合聊天。",
+      "性价比挺高的，在五道口这个地段算很不错了。"
+    ],
+    "mood_match": [
+      "happy",
+      "hungry"
+    ],
+    "mbti_tags": [
+      "社交",
+      "休闲"
+    ],
+    "best_time": "工作日晚上",
+    "id": "poi_014"
+  },
+  {
+    "name": "清华园咖啡",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "relax",
+      "budget"
+    ],
+    "area": "五道口",
+    "address": "清华大学内",
+    "lat": 39.99207360686006,
+    "lng": 116.33763931399398,
+    "open_hours": "08:00-19:00",
+    "avg_stay_minutes": 50,
+    "avg_wait_minutes": 5,
+    "crowd_level": "medium",
+    "price_level": 1,
+    "rating": 4.4,
+    "review_summary": "校园内的咖啡，价格实惠，是学生党常去的。",
+    "reviews": [
+      "学校里的咖啡馆，价格很亲民，咖啡味道也还可以。",
+      "适合上完课来这里坐坐，或者和同学讨论事情。",
+      "虽然不是什么网红店，但胜在方便和实惠。"
+    ],
+    "mood_match": [
+      "relax",
+      "tired"
+    ],
+    "mbti_tags": [
+      "实用",
+      "便捷"
+    ],
+    "best_time": "工作日午后",
+    "id": "poi_015"
+  },
+  {
+    "name": "文心书社",
+    "category": "书店",
+    "tags": [
+      "art",
+      "niche",
+      "budget"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 39.99877363253269,
+    "lng": 116.3559509453013,
+    "open_hours": "09:30-20:30",
+    "avg_stay_minutes": 70,
+    "avg_wait_minutes": 0,
+    "crowd_level": "medium",
+    "price_level": 1,
+    "rating": 4.4,
+    "review_summary": "新华书店的延伸，涵盖各类图书，是学生学习的好去处。",
+    "reviews": [
+      "书的种类很全，考试教材、专业书籍都有，价格也比较稳定。",
+      "虽然是连锁店，但这里的氛围还不错，很多人在这里看书。",
+      "经常买一些课外读物，很方便。"
+    ],
+    "mood_match": [
+      "explore",
+      "budget"
+    ],
+    "mbti_tags": [
+      "求知",
+      "学习"
+    ],
+    "best_time": "工作日傍晚",
+    "id": "poi_016"
+  },
+  {
+    "name": "设计盒子",
+    "category": "文创小店",
+    "tags": [
+      "art",
+      "niche",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "清华园路XX号",
+    "lat": 40.00046728002018,
+    "lng": 116.32504672800202,
+    "open_hours": "11:00-20:00",
+    "avg_stay_minutes": 45,
+    "avg_wait_minutes": 5,
+    "crowd_level": "low",
+    "price_level": 2,
+    "rating": 4.5,
+    "review_summary": "小巧精致的文创店，有很多有趣的独立设计师品牌。",
+    "reviews": [
+      "这里的笔记本和明信片设计感十足，送给朋友很合适。",
+      "淘到了很多特别的小物件，比如复古风的钥匙扣，很喜欢。",
+      "店主是个很懂生活的人，店里的陈设也很讲究。"
+    ],
+    "mood_match": [
+      "explore",
+      "happy"
+    ],
+    "mbti_tags": [
+      "创意",
+      "品味"
+    ],
+    "best_time": "周末上午",
+    "id": "poi_017"
+  },
+  {
+    "name": "老北京炸酱面",
+    "category": "餐厅",
+    "tags": [
+      "food",
+      "budget",
+      "hungry"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 39.99125189356435,
+    "lng": 116.33805007574257,
+    "open_hours": "11:00-21:00",
+    "avg_stay_minutes": 40,
+    "avg_wait_minutes": 10,
+    "crowd_level": "medium",
+    "price_level": 1,
+    "rating": 4.3,
+    "review_summary": "地道的北京炸酱面，价格实惠，是快速解决午餐的好选择。",
+    "reviews": [
+      "味道很正宗，面条劲道，配菜丰富，吃得很满足。",
+      "学生党的最爱，价格便宜量又足，经常看到排队。",
+      "在五道口能吃到这么地道的炸酱面，感觉很亲切。"
+    ],
+    "mood_match": [
+      "hungry",
+      "budget"
+    ],
+    "mbti_tags": [
+      "实惠",
+      "家常"
+    ],
+    "best_time": "午餐时间",
+    "id": "poi_018"
+  },
+  {
+    "name": "清风徐来咖啡",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "relax",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "双清路西段XX号",
+    "lat": 39.999813999541296,
+    "lng": 116.35599255998164,
+    "open_hours": "10:00-20:00",
+    "avg_stay_minutes": 65,
+    "avg_wait_minutes": 8,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.6,
+    "review_summary": "环境清幽，适合安静地享受一杯咖啡和阅读。",
+    "reviews": [
+      "喜欢这里的音乐和灯光，让人感觉很放松，适合一个人待着。",
+      "咖啡师很专业，拉花很漂亮，味道也很香醇。",
+      "店里有很多小细节做得很好，比如精致的杯子和餐具。"
+    ],
+    "mood_match": [
+      "relax",
+      "bored"
+    ],
+    "mbti_tags": [
+      "宁静",
+      "思考"
+    ],
+    "best_time": "工作日下午",
+    "id": "poi_019"
+  },
+  {
+    "name": "艺文空间",
+    "category": "美术馆",
+    "tags": [
+      "art",
+      "explore",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 39.995133993405,
+    "lng": 116.33180893289367,
+    "open_hours": "10:00-18:00",
+    "avg_stay_minutes": 50,
+    "avg_wait_minutes": 0,
+    "crowd_level": "low",
+    "price_level": 1,
+    "rating": 4.5,
+    "review_summary": "小型艺术展览空间，经常有独立艺术家的作品展出。",
+    "reviews": [
+      "免费参观，展出的作品很有意思，能看到很多年轻艺术家的想法。",
+      "空间不大，但布置得很用心，光线也很好，很适合拍照。",
+      "每次来都能发现一些惊喜，对了解当代艺术很有帮助。"
+    ],
+    "mood_match": [
+      "explore",
+      "relax"
+    ],
+    "mbti_tags": [
+      "艺术",
+      "好奇"
+    ],
+    "best_time": "工作日午前",
+    "id": "poi_020"
+  },
+  {
+    "name": "便利蜂",
+    "category": "便利店",
+    "tags": [
+      "budget",
+      "busy",
+      "food"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 39.98503931728291,
+    "lng": 116.33300196586414,
+    "open_hours": "24小时",
+    "avg_stay_minutes": 10,
+    "avg_wait_minutes": 5,
+    "crowd_level": "high",
+    "price_level": 1,
+    "rating": 4.1,
+    "review_summary": "24小时便利，提供多种零食和简餐。",
+    "reviews": [
+      "和7-11差不多，也是学生党经常光顾的地方。",
+      "半夜饿了或者需要买生活用品，这里都满足。",
+      "有时候会有一些打折活动，价格更实惠。"
+    ],
+    "mood_match": [
+      "hungry",
+      "tired"
+    ],
+    "mbti_tags": [
+      "实用",
+      "便捷"
+    ],
+    "best_time": "深夜",
+    "id": "poi_021"
+  },
+  {
+    "name": "午后时光咖啡",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "relax",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "清华园路XX号",
+    "lat": 39.991901984142984,
+    "lng": 116.35764404555556,
+    "open_hours": "09:00-20:00",
+    "avg_stay_minutes": 60,
+    "avg_wait_minutes": 10,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.7,
+    "review_summary": "环境舒适，咖啡香浓，适合一个人或三两好友小聚。",
+    "reviews": [
+      "第一次来，被这里的环境吸引了，很适合拍照。",
+      "咖啡味道很棒，店员也很热情，感觉很舒服。",
+      "周末人会比较多，但还是值得来的。"
+    ],
+    "mood_match": [
+      "relax",
+      "explore"
+    ],
+    "mbti_tags": [
+      "文艺",
+      "舒适"
+    ],
+    "best_time": "工作日下午",
+    "id": "poi_022"
+  },
+  {
+    "name": "时光书屋",
+    "category": "书店",
+    "tags": [
+      "niche",
+      "art",
+      "explore"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 39.98644244496497,
+    "lng": 116.33455755503503,
+    "open_hours": "10:00-21:00",
+    "avg_stay_minutes": 85,
+    "avg_wait_minutes": 0,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.6,
+    "review_summary": "一家充满怀旧气息的书店，有很多经典老书。",
+    "reviews": [
+      "在这里找到了很多小时候看过的书，感觉很惊喜。",
+      "店主很懂书，每次来都能和他聊得很开心。",
+      "虽然不是新书，但这些书承载着很多回忆，很值得来逛逛。"
+    ],
+    "mood_match": [
+      "explore",
+      "relax"
+    ],
+    "mbti_tags": [
+      "怀旧",
+      "文艺"
+    ],
+    "best_time": "周末傍晚",
+    "id": "poi_023"
+  },
+  {
+    "name": "创意工坊",
+    "category": "文创小店",
+    "tags": [
+      "art",
+      "niche",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "清华园路XX号",
+    "lat": 39.99213703735917,
+    "lng": 116.33370369242897,
+    "open_hours": "11:00-19:00",
+    "avg_stay_minutes": 40,
+    "avg_wait_minutes": 3,
+    "crowd_level": "low",
+    "price_level": 2,
+    "rating": 4.4,
+    "review_summary": "手工艺品和DIY材料的集合店，可以自己动手制作。",
+    "reviews": [
+      "买了一些DIY材料，周末在家做了个小礼物，很有意思。",
+      "店里的手工制品都很精致，看得出来花了很多心思。",
+      "店主很有耐心，会教你如何制作，适合亲子活动。"
+    ],
+    "mood_match": [
+      "happy",
+      "explore"
+    ],
+    "mbti_tags": [
+      "手工",
+      "创意"
+    ],
+    "best_time": "周末下午",
+    "id": "poi_024"
+  },
+  {
+    "name": "韩式烤肉",
+    "category": "餐厅",
+    "tags": [
+      "food",
+      "hungry",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 39.99693842140664,
+    "lng": 116.33192922809377,
+    "open_hours": "11:00-22:00",
+    "avg_stay_minutes": 70,
+    "avg_wait_minutes": 15,
+    "crowd_level": "high",
+    "price_level": 2,
+    "rating": 4.3,
+    "review_summary": "正宗韩式烤肉，性价比高，是年轻人聚餐的首选。",
+    "reviews": [
+      "肉质新鲜，调味也很好，一大桌子菜吃下来很满足。",
+      "周末晚上人很多，建议提前预定。",
+      "和朋友一起烤肉聊天，感觉很开心。"
+    ],
+    "mood_match": [
+      "hungry",
+      "happy"
+    ],
+    "mbti_tags": [
+      "聚餐",
+      "热闹"
+    ],
+    "best_time": "周末晚餐",
+    "id": "poi_025"
+  },
+  {
+    "name": "书香阁",
+    "category": "书店",
+    "tags": [
+      "art",
+      "niche",
+      "explore"
+    ],
+    "area": "五道口",
+    "address": "清华园路XX号",
+    "lat": 39.99879947554612,
+    "lng": 116.34197902184476,
+    "open_hours": "10:00-20:00",
+    "avg_stay_minutes": 75,
+    "avg_wait_minutes": 0,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.5,
+    "review_summary": "小而美的书店，专注于文学和艺术类书籍。",
+    "reviews": [
+      "这里的书都很有品味，是文艺青年的聚集地。",
+      "店主对书的理解很深刻，每次来都能得到一些推荐。",
+      "环境很安静，适合在这里度过一个下午。"
+    ],
+    "mood_match": [
+      "explore",
+      "relax"
+    ],
+    "mbti_tags": [
+      "文学",
+      "艺术"
+    ],
+    "best_time": "工作日午后",
+    "id": "poi_026"
+  },
+  {
+    "name": "文具杂货铺",
+    "category": "文创小店",
+    "tags": [
+      "niche",
+      "art",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 39.985,
+    "lng": 116.33640293026068,
+    "open_hours": "10:00-20:00",
+    "avg_stay_minutes": 35,
+    "avg_wait_minutes": 3,
+    "crowd_level": "low",
+    "price_level": 2,
+    "rating": 4.3,
+    "review_summary": "各种可爱的文具和生活小物，让人爱不释手。",
+    "reviews": [
+      "这里的本子和笔都很有设计感，每次来都会买一些。",
+      "有很多小挂件和贴纸，让你的生活充满小确幸。",
+      "店主是个很细心的人，店里的陈设也很温馨。"
+    ],
+    "mood_match": [
+      "happy",
+      "explore"
+    ],
+    "mbti_tags": [
+      "可爱",
+      "实用"
+    ],
+    "best_time": "工作日傍晚",
+    "id": "poi_027"
+  },
+  {
+    "name": "意式餐厅",
+    "category": "餐厅",
+    "tags": [
+      "food",
+      "hungry",
+      "relax"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 39.99879500176884,
+    "lng": 116.34180007075364,
+    "open_hours": "11:30-21:30",
+    "avg_stay_minutes": 75,
+    "avg_wait_minutes": 10,
+    "crowd_level": "medium",
+    "price_level": 3,
+    "rating": 4.4,
+    "review_summary": "精致的意式料理，适合约会或商务午餐。",
+    "reviews": [
+      "披萨和意面都做得非常地道，食材也很新鲜。",
+      "服务很好，环境优雅，是享受美食的好地方。",
+      "价格稍高，但味道和体验都值。"
+    ],
+    "mood_match": [
+      "hungry",
+      "relax"
+    ],
+    "mbti_tags": [
+      "浪漫",
+      "品味"
+    ],
+    "best_time": "晚餐时间",
+    "id": "poi_028"
+  },
+  {
+    "name": "独立书吧",
+    "category": "书店",
+    "tags": [
+      "niche",
+      "art",
+      "explore"
+    ],
+    "area": "五道口",
+    "address": "双清路西段XX号",
+    "lat": 39.997730523873265,
+    "lng": 116.32847305238734,
+    "open_hours": "11:00-20:00",
+    "avg_stay_minutes": 90,
+    "avg_wait_minutes": 0,
+    "crowd_level": "low",
+    "price_level": 2,
+    "rating": 4.6,
+    "review_summary": "小众独立书店，藏书特色鲜明，是深度阅读的好去处。",
+    "reviews": [
+      "在这里能找到很多平时看不到的书，特别是关于艺术和哲学。",
+      "店主很懂书，每次来都能和他交流，学到很多。",
+      "环境非常安静，适合沉浸在书的世界里。"
+    ],
+    "mood_match": [
+      "explore",
+      "relax"
+    ],
+    "mbti_tags": [
+      "深度",
+      "思考"
+    ],
+    "best_time": "工作日午后",
+    "id": "poi_029"
+  },
+  {
+    "name": "复古风",
+    "category": "文创小店",
+    "tags": [
+      "art",
+      "niche",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "清华园路XX号",
+    "lat": 40.002952600010104,
+    "lng": 116.34263000050512,
+    "open_hours": "12:00-21:00",
+    "avg_stay_minutes": 45,
+    "avg_wait_minutes": 5,
+    "crowd_level": "low",
+    "price_level": 2,
+    "rating": 4.5,
+    "review_summary": "主打复古风的文创小店，有很多独特的饰品和摆件。",
+    "reviews": [
+      "这里的衣服和饰品都很有年代感，很适合喜欢复古风格的人。",
+      "淘到了很多绝版的CD和杂志，感觉回到了过去。",
+      "店主对复古文化很有研究，店里的东西都很有故事。"
+    ],
+    "mood_match": [
+      "explore",
+      "happy"
+    ],
+    "mbti_tags": [
+      "复古",
+      "个性"
+    ],
+    "best_time": "周末下午",
+    "id": "poi_030"
+  },
+  {
+    "name": "日式居酒屋",
+    "category": "餐厅",
+    "tags": [
+      "food",
+      "hungry",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 40.00279859635158,
+    "lng": 116.3349555511335,
+    "open_hours": "17:00-01:00",
+    "avg_stay_minutes": 60,
+    "avg_wait_minutes": 15,
+    "crowd_level": "high",
+    "price_level": 2,
+    "rating": 4.3,
+    "review_summary": "小巧精致的日式居酒屋，提供各种烤串和日式小食。",
+    "reviews": [
+      "下班后和同事来这里小酌一杯，感觉很放松。",
+      "烤串味道很棒，尤其是烤鸡翅，外酥里嫩。",
+      "店里人很多，气氛很热闹，适合朋友聚会。"
+    ],
+    "mood_match": [
+      "hungry",
+      "happy"
+    ],
+    "mbti_tags": [
+      "社交",
+      "小酌"
+    ],
+    "best_time": "工作日晚上",
+    "id": "poi_031"
+  },
+  {
+    "name": "咖啡时光",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "relax",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "清华园路XX号",
+    "lat": 39.99865876279352,
+    "lng": 116.33593813967599,
+    "open_hours": "09:00-19:00",
+    "avg_stay_minutes": 55,
+    "avg_wait_minutes": 7,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.5,
+    "review_summary": "安静舒适的咖啡馆，适合一个人静静地看书或工作。",
+    "reviews": [
+      "这里的咖啡豆很新鲜，每次来都能喝到不错的咖啡。",
+      "店里环境很舒服，适合久坐，是学习的好地方。",
+      "店员很友好，会根据你的喜好推荐咖啡。"
+    ],
+    "mood_match": [
+      "relax",
+      "bored"
+    ],
+    "mbti_tags": [
+      "宁静",
+      "专注"
+    ],
+    "best_time": "工作日午后",
+    "id": "poi_032"
+  },
+  {
+    "name": "艺廊",
+    "category": "美术馆",
+    "tags": [
+      "art",
+      "photo",
+      "explore"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 39.99194943118721,
+    "lng": 116.35561696587123,
+    "open_hours": "10:00-17:00",
+    "avg_stay_minutes": 50,
+    "avg_wait_minutes": 0,
+    "crowd_level": "low",
+    "price_level": 1,
+    "rating": 4.5,
+    "review_summary": "小众艺术展览空间，常有惊喜的当代艺术作品。",
+    "reviews": [
+      "免费参观，每次来的展品都很有意思，能看到很多年轻艺术家的作品。",
+      "空间不大，但布置得很用心，光线好，适合拍照。",
+      "这里总能带来一些不一样的艺术体验。"
+    ],
+    "mood_match": [
+      "explore",
+      "relax"
+    ],
+    "mbti_tags": [
+      "艺术",
+      "好奇"
+    ],
+    "best_time": "工作日午前",
+    "id": "poi_033"
+  },
+  {
+    "name": "便利店A",
+    "category": "便利店",
+    "tags": [
+      "budget",
+      "busy",
+      "food"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 39.99391767165133,
+    "lng": 116.33031961194189,
+    "open_hours": "24小时",
+    "avg_stay_minutes": 10,
+    "avg_wait_minutes": 5,
+    "crowd_level": "high",
+    "price_level": 1,
+    "rating": 4.2,
+    "review_summary": "24小时便利，满足生活所需。",
+    "reviews": [
+      "五道口必备，半夜饿了或者需要买点什么，这里永远有。",
+      "学生党最爱，零食饮料种类多，价格也还行。",
+      "经常看到骑着自行车的学生进进出出，很接地气。"
+    ],
+    "mood_match": [
+      "hungry",
+      "tired"
+    ],
+    "mbti_tags": [
+      "实用",
+      "快速"
+    ],
+    "best_time": "深夜",
+    "id": "poi_034"
+  },
+  {
+    "name": "小酒馆",
+    "category": "酒吧",
+    "tags": [
+      "food",
+      "busy",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "成府路XX号",
+    "lat": 39.99282535171385,
+    "lng": 116.34504952110282,
+    "open_hours": "18:00-02:00",
+    "avg_stay_minutes": 90,
+    "avg_wait_minutes": 15,
+    "crowd_level": "high",
+    "price_level": 3,
+    "rating": 4.3,
+    "review_summary": "热闹的夜生活去处，小吃和酒都很有特色。",
+    "reviews": [
+      "周末晚上人很多，氛围很棒，适合朋友小聚。",
+      "推荐他们家的炸鸡和精酿啤酒，味道都挺不错的。",
+      "晚上来这里放松一下，听着音乐，感觉很舒服。"
+    ],
+    "mood_match": [
+      "happy",
+      "tired"
+    ],
+    "mbti_tags": [
+      "外向",
+      "社交"
+    ],
+    "best_time": "周末晚上",
+    "id": "poi_035"
+  },
+  {
+    "name": "韩时烤肉",
+    "category": "餐厅-日韩料理",
+    "tags": [
+      "food",
+      "busy",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "海淀区五道口购物中心1层",
+    "lat": 39.99644247030457,
+    "lng": 116.33211505939084,
+    "open_hours": "11:00-22:00",
+    "avg_stay_minutes": 90,
+    "avg_wait_minutes": 20,
+    "crowd_level": "high",
+    "price_level": 3,
+    "rating": 4.5,
+    "review_summary": "年轻人聚餐热门选择，烤肉很香！",
+    "reviews": [
+      "味道不错，环境也适合拍照，和朋友们一起来吃得很开心。",
+      "周末排队太长了，但烤肉的味道和五道口的年轻氛围很搭。",
+      "价格适中，人均消费不算太高，适合学生党。"
+    ],
+    "mood_match": [
+      "hungry",
+      "happy"
+    ],
+    "mbti_tags": [
+      "外向",
+      "社交"
+    ],
+    "best_time": "晚餐和周末",
+    "id": "poi_036"
+  },
+  {
+    "name": "味千拉面",
+    "category": "餐厅-日韩料理",
+    "tags": [
+      "food",
+      "budget",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区五道口购物中心2层",
+    "lat": 39.98819728449034,
+    "lng": 116.33576020366323,
+    "open_hours": "10:00-21:30",
+    "avg_stay_minutes": 45,
+    "avg_wait_minutes": 10,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.2,
+    "review_summary": "快捷方便的日式拉面，满足味蕾。",
+    "reviews": [
+      "上菜很快，味道稳定，是忙碌一天后快速解决午餐的好地方。",
+      "拉面汤底浓郁，配料也挺丰富的，适合一个人来吃。",
+      "五道口这边的店，学生比较多，经常能看到骑着自行车的年轻人。"
+    ],
+    "mood_match": [
+      "hungry",
+      "tired"
+    ],
+    "mbti_tags": [
+      "实用",
+      "效率"
+    ],
+    "best_time": "午餐和晚餐高峰期",
+    "id": "poi_037"
+  },
+  {
+    "name": "石二锅",
+    "category": "餐厅-日韩料理",
+    "tags": [
+      "food",
+      "budget",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区五道口购物中心B1层",
+    "lat": 40.00122965781428,
+    "lng": 116.35370494296905,
+    "open_hours": "11:00-21:00",
+    "avg_stay_minutes": 60,
+    "avg_wait_minutes": 15,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.3,
+    "review_summary": "一人一锅，卫生又实惠。",
+    "reviews": [
+      "很喜欢这种一人一锅的形式，食材新鲜，服务也周到。",
+      "价格挺亲民的，性价比很高，是五道口学生常光顾的店。",
+      "用餐环境舒适，即使人多也不会显得拥挤，适合快速用餐。"
+    ],
+    "mood_match": [
+      "hungry",
+      "relax"
+    ],
+    "mbti_tags": [
+      "独立",
+      "舒适"
+    ],
+    "best_time": "午餐和晚餐",
+    "id": "poi_038"
+  },
+  {
+    "name": "大户屋",
+    "category": "餐厅-日韩料理",
+    "tags": [
+      "food",
+      "relax",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路29号五道口购物中心3层",
+    "lat": 39.99338607304024,
+    "lng": 116.33724048693496,
+    "open_hours": "11:00-22:00",
+    "avg_stay_minutes": 70,
+    "avg_wait_minutes": 5,
+    "crowd_level": "medium",
+    "price_level": 3,
+    "rating": 4.4,
+    "review_summary": "日式定食的温馨选择。",
+    "reviews": [
+      "环境很舒服，适合朋友小聚，定食种类很多，摆盘也很好看。",
+      "味道比较日式，很喜欢他们的照烧鸡排饭，是工作日午餐的不错选择。",
+      "五道口的学生和白领都喜欢来，有时候能看到背着书包的学生在用餐。"
+    ],
+    "mood_match": [
+      "relax",
+      "explore"
+    ],
+    "mbti_tags": [
+      "文艺",
+      "沉静"
+    ],
+    "best_time": "午餐和晚餐",
+    "id": "poi_039"
+  },
+  {
+    "name": "摩打食堂",
+    "category": "餐厅-日韩料理",
+    "tags": [
+      "food",
+      "busy",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路29号五道口购物中心3层",
+    "lat": 39.99384829004409,
+    "lng": 116.33030804834068,
+    "open_hours": "11:00-22:00",
+    "avg_stay_minutes": 75,
+    "avg_wait_minutes": 25,
+    "crowd_level": "high",
+    "price_level": 3,
+    "rating": 4.7,
+    "review_summary": "人气日料，招牌菜值得尝试。",
+    "reviews": [
+      "每次来五道口都要排队，但他们的招牌菜确实好吃，颜值也很高。",
+      "适合拍照打卡，食物精致，口味也很地道，是年轻人喜欢的日料店。",
+      "能感受到五道口浓厚的年轻活力，这家店更是热门中的热门。"
+    ],
+    "mood_match": [
+      "hungry",
+      "happy",
+      "explore"
+    ],
+    "mbti_tags": [
+      "外向",
+      "潮流"
+    ],
+    "best_time": "晚餐和周末",
+    "id": "poi_040"
+  },
+  {
+    "name": "吉野家",
+    "category": "餐厅-日韩料理",
+    "tags": [
+      "food",
+      "budget",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区五道口购物中心B1层",
+    "lat": 39.98591222729737,
+    "lng": 116.33304561136487,
+    "open_hours": "09:00-21:00",
+    "avg_stay_minutes": 30,
+    "avg_wait_minutes": 5,
+    "crowd_level": "medium",
+    "price_level": 1,
+    "rating": 4,
+    "review_summary": "平价快速的日式简餐。",
+    "reviews": [
+      "非常方便快捷，价格实惠，是学生党和上班族的首选。",
+      "牛肉饭味道不错，分量也足，适合赶时间的时候吃。",
+      "虽然是快餐，但在五道口这样的区域，能提供这样的品质已经很不错了。"
+    ],
+    "mood_match": [
+      "hungry",
+      "tired"
+    ],
+    "mbti_tags": [
+      "实用",
+      "便捷"
+    ],
+    "best_time": "午餐和晚餐",
+    "id": "poi_041"
+  },
+  {
+    "name": "味蕾日料",
+    "category": "餐厅-日韩料理",
+    "tags": [
+      "food",
+      "niche",
+      "relax"
+    ],
+    "area": "五道口",
+    "address": "海淀区王庄路XX号",
+    "lat": 40.002531071441915,
+    "lng": 116.32648392899411,
+    "open_hours": "11:30-22:00",
+    "avg_stay_minutes": 70,
+    "avg_wait_minutes": 10,
+    "crowd_level": "low",
+    "price_level": 3,
+    "rating": 4.5,
+    "review_summary": "小众精致日料，适合安静品尝。",
+    "reviews": [
+      "藏在小街巷里，环境很安静，寿司很新鲜，服务也很细致。",
+      "虽然不如大店出名，但味道和氛围都很赞，是探索五道口隐藏美食的好去处。",
+      "适合和另一半来，享受安静的用餐时光。"
+    ],
+    "mood_match": [
+      "relax",
+      "explore"
+    ],
+    "mbti_tags": [
+      "内向",
+      "精致"
+    ],
+    "best_time": "工作日午餐或晚餐",
+    "id": "poi_042"
+  },
+  {
+    "name": "鳗鳗的爱",
+    "category": "餐厅-日韩料理",
+    "tags": [
+      "food",
+      "photo",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路XX号",
+    "lat": 39.991714655144946,
+    "lng": 116.3241714655145,
+    "open_hours": "11:00-21:00",
+    "avg_stay_minutes": 60,
+    "avg_wait_minutes": 15,
+    "crowd_level": "medium",
+    "price_level": 3,
+    "rating": 4.6,
+    "review_summary": "招牌鳗鱼饭，不容错过。",
+    "reviews": [
+      "鳗鱼饭真的太好吃了，入口即化，酱汁也很棒。",
+      "店里装修很有风格，适合拍照，年轻人很喜欢来。",
+      "五道口这边有很多高校，这家店是学生们聚餐的热门选择之一。"
+    ],
+    "mood_match": [
+      "hungry",
+      "happy",
+      "photo"
+    ],
+    "mbti_tags": [
+      "外向",
+      "享受"
+    ],
+    "best_time": "午餐和晚餐",
+    "id": "poi_043"
+  },
+  {
+    "name": "星巴克（五道口店）",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "busy",
+      "relax"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路29号五道口购物中心1层",
+    "lat": 39.9920647325478,
+    "lng": 116.3380825893019,
+    "open_hours": "07:00-22:00",
+    "avg_stay_minutes": 60,
+    "avg_wait_minutes": 5,
+    "crowd_level": "high",
+    "price_level": 2,
+    "rating": 4.3,
+    "review_summary": "熟悉的味道，五道口的活力聚集地。",
+    "reviews": [
+      "在五道口购物中心里，非常方便，经常看到学生在这里学习或聚会。",
+      "咖啡味道稳定，适合工作日下午过来放松一下。",
+      "人流量很大，能感受到五道口年轻人的聚集效应。"
+    ],
+    "mood_match": [
+      "relax",
+      "explore",
+      "tired"
+    ],
+    "mbti_tags": [
+      "通用",
+      "社交"
+    ],
+    "best_time": "全天，尤其是下午",
+    "id": "poi_044"
+  },
+  {
+    "name": "瑞幸咖啡（清华东路店）",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "budget",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区清华东路XX号",
+    "lat": 40.00276309952295,
+    "lng": 116.33500263574835,
+    "open_hours": "08:00-20:00",
+    "avg_stay_minutes": 45,
+    "avg_wait_minutes": 3,
+    "crowd_level": "medium",
+    "price_level": 1,
+    "rating": 4.2,
+    "review_summary": "性价比之王，快速补充能量。",
+    "reviews": [
+      "价格实惠，活动多，是学生党常光顾的咖啡店。",
+      "点单取餐速度快，适合赶时间的年轻人。",
+      "五道口区域的学生用瑞幸的特别多，常常能看到大家拿着手机点单。"
+    ],
+    "mood_match": [
+      "tired",
+      "hungry",
+      "budget"
+    ],
+    "mbti_tags": [
+      "效率",
+      "便捷"
+    ],
+    "best_time": "工作日早晨和下午",
+    "id": "poi_045"
+  },
+  {
+    "name": "Seesaw Coffee",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "art",
+      "relax"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路XX号",
+    "lat": 39.99509322727594,
+    "lng": 116.32477968182782,
+    "open_hours": "09:00-21:00",
+    "avg_stay_minutes": 75,
+    "avg_wait_minutes": 5,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.5,
+    "review_summary": "有设计感的空间，品味一杯好咖啡。",
+    "reviews": [
+      "店面设计很有艺术感，适合喜欢拍照和安静环境的朋友。",
+      "咖啡豆的选择很多，手冲咖啡很棒，是追求品质的咖啡爱好者的好去处。",
+      "五道口周边艺术气息浓厚，这家店很符合这种调调。"
+    ],
+    "mood_match": [
+      "relax",
+      "explore",
+      "art"
+    ],
+    "mbti_tags": [
+      "文艺",
+      "沉静"
+    ],
+    "best_time": "下午",
+    "id": "poi_046"
+  },
+  {
+    "name": "Tims咖啡",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "busy",
+      "budget"
+    ],
+    "area": "五道口",
+    "address": "海淀区五道口购物中心1层",
+    "lat": 39.991854796815275,
+    "lng": 116.34650913280255,
+    "open_hours": "07:00-22:00",
+    "avg_stay_minutes": 45,
+    "avg_wait_minutes": 5,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.1,
+    "review_summary": "加拿大风味，快速提神。",
+    "reviews": [
+      "咖啡和甜甜圈都很不错，价格适中，是工作日早晨的好选择。",
+      "在五道口购物中心里，人流量大，能感受到这里的活力。",
+      "适合忙碌的年轻人，快速来一杯咖啡，开始新的一天。"
+    ],
+    "mood_match": [
+      "tired",
+      "hungry",
+      "busy"
+    ],
+    "mbti_tags": [
+      "效率",
+      "活力"
+    ],
+    "best_time": "早晨和下午",
+    "id": "poi_047"
+  },
+  {
+    "name": "M Stand",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "photo",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路XX号",
+    "lat": 39.988226020148595,
+    "lng": 116.33316130100744,
+    "open_hours": "10:00-22:00",
+    "avg_stay_minutes": 60,
+    "avg_wait_minutes": 10,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.4,
+    "review_summary": "工业风设计，出片率高。",
+    "reviews": [
+      "店面设计非常有特色，工业风十足，非常适合拍照打卡。",
+      "咖啡口味也很不错，有一些创意特调，是年轻人聚集的地方。",
+      "在五道口区域，这样的风格很受欢迎，尤其受大学生喜爱。"
+    ],
+    "mood_match": [
+      "photo",
+      "explore",
+      "relax"
+    ],
+    "mbti_tags": [
+      "潮流",
+      "个性"
+    ],
+    "best_time": "下午",
+    "id": "poi_048"
+  },
+  {
+    "name": "Peet's Coffee",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "relax",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "海淀区五道口购物中心XX号",
+    "lat": 39.980216766702405,
+    "lng": 116.32302167667024,
+    "open_hours": "08:00-21:00",
+    "avg_stay_minutes": 70,
+    "avg_wait_minutes": 5,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.3,
+    "review_summary": "美式咖啡的醇厚选择。",
+    "reviews": [
+      "美式咖啡口味很正宗，环境比较舒适，适合和朋友聊天。",
+      "在购物中心里，方便逛街休息，是午后小憩的好地方。",
+      "五道口年轻人多，这家店也吸引了不少学生和年轻白领。"
+    ],
+    "mood_match": [
+      "relax",
+      "explore",
+      "tired"
+    ],
+    "mbti_tags": [
+      "品味",
+      "舒适"
+    ],
+    "best_time": "下午",
+    "id": "poi_049"
+  },
+  {
+    "name": "满记甜品",
+    "category": "奶茶甜品",
+    "tags": [
+      "food",
+      "budget",
+      "relax"
+    ],
+    "area": "五道口",
+    "address": "海淀区五道口购物中心B1层",
+    "lat": 39.997837990886595,
+    "lng": 116.3424878493165,
+    "open_hours": "10:00-22:00",
+    "avg_stay_minutes": 45,
+    "avg_wait_minutes": 10,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.3,
+    "review_summary": "经典的港式甜品。",
+    "reviews": [
+      "杨枝甘露很好喝，芒果新鲜，甜度适中，是下午茶的好选择。",
+      "店里环境比较温馨，适合和朋友一起分享甜品。",
+      "五道口的学生党很喜欢来，价格也比较合理。"
+    ],
+    "mood_match": [
+      "happy",
+      "relax",
+      "hungry"
+    ],
+    "mbti_tags": [
+      "甜蜜",
+      "分享"
+    ],
+    "best_time": "下午茶和晚餐后",
+    "id": "poi_050"
+  },
+  {
+    "name": "CoCo都可",
+    "category": "奶茶甜品",
+    "tags": [
+      "food",
+      "budget",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路XX号",
+    "lat": 39.985,
+    "lng": 116.33349963872486,
+    "open_hours": "10:00-22:00",
+    "avg_stay_minutes": 20,
+    "avg_wait_minutes": 5,
+    "crowd_level": "high",
+    "price_level": 1,
+    "rating": 4.1,
+    "review_summary": "随处可见的平价奶茶。",
+    "reviews": [
+      "性价比很高，口味选择多，是学生党日常必备。",
+      "在五道口这种地方，来一杯CoCo是常态，可以看到很多骑车路过的学生。",
+      "点单很快，适合忙碌的生活节奏。"
+    ],
+    "mood_match": [
+      "hungry",
+      "happy",
+      "busy"
+    ],
+    "mbti_tags": [
+      "便捷",
+      "日常"
+    ],
+    "best_time": "全天",
+    "id": "poi_051"
+  },
+  {
+    "name": "一点点",
+    "category": "奶茶甜品",
+    "tags": [
+      "food",
+      "budget",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路XX号",
+    "lat": 39.9986131138327,
+    "lng": 116.34736452455331,
+    "open_hours": "10:00-22:00",
+    "avg_stay_minutes": 20,
+    "avg_wait_minutes": 8,
+    "crowd_level": "high",
+    "price_level": 1,
+    "rating": 4.2,
+    "review_summary": "经典奶茶，总有你的爱。",
+    "reviews": [
+      "经典的口味，鲜奶茶和波霸是必点，价格实惠。",
+      "五道口的学生和年轻人非常喜欢，经常看到排队。",
+      "可以根据自己的喜好调整甜度和冰块，很人性化。"
+    ],
+    "mood_match": [
+      "hungry",
+      "happy",
+      "budget"
+    ],
+    "mbti_tags": [
+      "个性化",
+      "选择"
+    ],
+    "best_time": "下午和晚上",
+    "id": "poi_052"
+  },
+  {
+    "name": "喜茶",
+    "category": "奶茶甜品",
+    "tags": [
+      "food",
+      "photo",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区五道口购物中心1层",
+    "lat": 39.989495151005634,
+    "lng": 116.33307273491543,
+    "open_hours": "10:00-22:00",
+    "avg_stay_minutes": 30,
+    "avg_wait_minutes": 15,
+    "crowd_level": "high",
+    "price_level": 2,
+    "rating": 4.5,
+    "review_summary": "网红奶茶，颜值与口味并存。",
+    "reviews": [
+      "芝芝莓莓和多肉葡萄是招牌，颜值很高，适合拍照。",
+      "价格比普通奶茶高一些，但品质不错，是年轻人喜欢的品牌。",
+      "五道口人流量大，喜茶总是排队，能体现年轻人的消费趋势。"
+    ],
+    "mood_match": [
+      "happy",
+      "photo",
+      "hungry"
+    ],
+    "mbti_tags": [
+      "潮流",
+      "分享"
+    ],
+    "best_time": "下午和晚上",
+    "id": "poi_053"
+  },
+  {
+    "name": "Lady M",
+    "category": "奶茶甜品",
+    "tags": [
+      "food",
+      "niche",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "海淀区五道口购物中心XX号",
+    "lat": 39.995616360701234,
+    "lng": 116.35582465442805,
+    "open_hours": "10:00-21:00",
+    "avg_stay_minutes": 45,
+    "avg_wait_minutes": 10,
+    "crowd_level": "medium",
+    "price_level": 3,
+    "rating": 4.6,
+    "review_summary": "精致蛋糕，下午茶的仪式感。",
+    "reviews": [
+      "千层蛋糕口味非常细腻，是下午茶的首选。",
+      "店面不大，但很有格调，适合拍照，价格稍高但值得。",
+      "五道口的学生和白领偶尔会来犒劳自己，享受这份精致。"
+    ],
+    "mood_match": [
+      "relax",
+      "happy",
+      "photo"
+    ],
+    "mbti_tags": [
+      "精致",
+      "仪式感"
+    ],
+    "best_time": "下午",
+    "id": "poi_054"
+  },
+  {
+    "name": "Keep健身房",
+    "category": "健身/瑜伽",
+    "tags": [
+      "outdoor",
+      "busy",
+      "explore"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路XX号",
+    "lat": 39.99025628172884,
+    "lng": 116.33561894956588,
+    "open_hours": "06:00-23:00",
+    "avg_stay_minutes": 90,
+    "avg_wait_minutes": 0,
+    "crowd_level": "medium",
+    "price_level": 3,
+    "rating": 4.5,
+    "review_summary": "科技感健身，为年轻身体充电。",
+    "reviews": [
+      "器械很新，环境好，适合在高校林立的五道口保持健康。",
+      "很多大学生在这里锻炼，能感受到年轻人的活力。",
+      "课程安排丰富，适合不同需求的人群。"
+    ],
+    "mood_match": [
+      "explore",
+      "busy",
+      "tired"
+    ],
+    "mbti_tags": [
+      "活力",
+      "健康"
+    ],
+    "best_time": "工作日傍晚和周末",
+    "id": "poi_055"
+  },
+  {
+    "name": "Space瑜伽",
+    "category": "健身/瑜伽",
+    "tags": [
+      "art",
+      "relax",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "海淀区荷清路XX号",
+    "lat": 39.995580287414036,
+    "lng": 116.32683942517193,
+    "open_hours": "09:00-21:00",
+    "avg_stay_minutes": 75,
+    "avg_wait_minutes": 0,
+    "crowd_level": "low",
+    "price_level": 3,
+    "rating": 4.7,
+    "review_summary": "静谧空间，找回内心的平静。",
+    "reviews": [
+      "环境非常安静舒适，老师专业，是放松身心的好去处。",
+      "适合想要慢下来、感受身体变化的人，五道口这样的快节奏地方需要这样的空间。",
+      "课程种类多，从初学者到进阶都有。"
+    ],
+    "mood_match": [
+      "relax",
+      "art",
+      "explore"
+    ],
+    "mbti_tags": [
+      "沉静",
+      "内在"
+    ],
+    "best_time": "工作日白天",
+    "id": "poi_056"
+  },
+  {
+    "name": "热练营",
+    "category": "健身/瑜伽",
+    "tags": [
+      "busy",
+      "outdoor",
+      "explore"
+    ],
+    "area": "五道口",
+    "address": "海淀区王庄路XX号",
+    "lat": 39.985143664985436,
+    "lng": 116.33598922512608,
+    "open_hours": "08:00-22:00",
+    "avg_stay_minutes": 60,
+    "avg_wait_minutes": 0,
+    "crowd_level": "medium",
+    "price_level": 3,
+    "rating": 4.4,
+    "review_summary": "活力四射的团课体验。",
+    "reviews": [
+      "团课氛围很好，教练有激情，能带动大家一起运动。",
+      "适合喜欢热闹、有挑战性的健身爱好者。",
+      "五道口的学生们热衷于各种运动，这里是很受欢迎的选择。"
+    ],
+    "mood_match": [
+      "happy",
+      "explore",
+      "busy"
+    ],
+    "mbti_tags": [
+      "外向",
+      "能量"
+    ],
+    "best_time": "傍晚和周末",
+    "id": "poi_057"
+  },
+  {
+    "name": "CrossFit XYZ",
+    "category": "健身/瑜伽",
+    "tags": [
+      "outdoor",
+      "busy",
+      "explore"
+    ],
+    "area": "五道口",
+    "address": "海淀区学院路XX号",
+    "lat": 39.998735485319024,
+    "lng": 116.33110322797853,
+    "open_hours": "07:00-21:00",
+    "avg_stay_minutes": 75,
+    "avg_wait_minutes": 0,
+    "crowd_level": "medium",
+    "price_level": 4,
+    "rating": 4.6,
+    "review_summary": "挑战极限，释放激情。",
+    "reviews": [
+      "高强度训练，非常锻炼身体，教练专业且有耐心。",
+      "适合追求极致健身效果的人，在这里能感受到身体的突破。",
+      "五道口附近的年轻白领和高年级学生会来这里挑战自我。"
+    ],
+    "mood_match": [
+      "explore",
+      "busy",
+      "tired"
+    ],
+    "mbti_tags": [
+      "挑战",
+      "坚韧"
+    ],
+    "best_time": "工作日傍晚",
+    "id": "poi_058"
+  },
+  {
+    "name": "7-Eleven（五道口店）",
+    "category": "便利店",
+    "tags": [
+      "food",
+      "budget",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路XX号",
+    "lat": 40.00097080414594,
+    "lng": 116.35603883216584,
+    "open_hours": "24小时",
+    "avg_stay_minutes": 10,
+    "avg_wait_minutes": 2,
+    "crowd_level": "medium",
+    "price_level": 1,
+    "rating": 4,
+    "review_summary": "24小时的便利之选。",
+    "reviews": [
+      "晚上肚子饿了或者买点零食的好去处，品类齐全。",
+      "在五道口这种繁忙区域，24小时营业非常方便。",
+      "经常看到学生深夜在这里买东西，很有生活气息。"
+    ],
+    "mood_match": [
+      "hungry",
+      "tired",
+      "budget"
+    ],
+    "mbti_tags": [
+      "便捷",
+      "随心"
+    ],
+    "best_time": "全天，尤其夜间",
+    "id": "poi_059"
+  },
+  {
+    "name": "罗森（清华东路店）",
+    "category": "便利店",
+    "tags": [
+      "food",
+      "budget",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区清华东路XX号",
+    "lat": 40.00452511142176,
+    "lng": 116.35618100445687,
+    "open_hours": "24小时",
+    "avg_stay_minutes": 10,
+    "avg_wait_minutes": 2,
+    "crowd_level": "medium",
+    "price_level": 1,
+    "rating": 4.1,
+    "review_summary": "温暖的小确幸，日系便利。",
+    "reviews": [
+      "日式便当和零食很受欢迎，品质不错。",
+      "在学校附近，为学生提供了很多便利。",
+      "深夜时分，这里也是一些学生学习到很晚的补给站。"
+    ],
+    "mood_match": [
+      "hungry",
+      "tired",
+      "budget"
+    ],
+    "mbti_tags": [
+      "便捷",
+      "日常"
+    ],
+    "best_time": "全天，尤其夜间",
+    "id": "poi_060"
+  },
+  {
+    "name": "全家FamilyMart",
+    "category": "便利店",
+    "tags": [
+      "food",
+      "budget",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区王庄路XX号",
+    "lat": 40.002994470772244,
+    "lng": 116.34472353861219,
+    "open_hours": "24小时",
+    "avg_stay_minutes": 10,
+    "avg_wait_minutes": 2,
+    "crowd_level": "medium",
+    "price_level": 1,
+    "rating": 4.1,
+    "review_summary": "满足日常所需，方便快捷。",
+    "reviews": [
+      "关东煮和各种零食都很受欢迎，价格适中。",
+      "在五道口区域，是学生和上班族常去的便利店。",
+      "24小时营业，随时都能买到想要的东西。"
+    ],
+    "mood_match": [
+      "hungry",
+      "tired",
+      "budget"
+    ],
+    "mbti_tags": [
+      "便捷",
+      "实用"
+    ],
+    "best_time": "全天",
+    "id": "poi_061"
+  },
+  {
+    "name": "五道口公园",
+    "category": "公园绿地",
+    "tags": [
+      "outdoor",
+      "relax",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路XX号",
+    "lat": 39.99924691654052,
+    "lng": 116.33187037481079,
+    "open_hours": "06:00-22:00",
+    "avg_stay_minutes": 60,
+    "avg_wait_minutes": 0,
+    "crowd_level": "medium",
+    "price_level": 0,
+    "rating": 4.2,
+    "review_summary": "城市绿洲，放松身心。",
+    "reviews": [
+      "在五道口这个繁忙区域，有一片绿地可以散步很舒服。",
+      "周末会有很多人来这里休闲，是年轻人拍照的好地方。",
+      "能看到很多骑车路过的学生，在这里短暂休憩。"
+    ],
+    "mood_match": [
+      "relax",
+      "explore",
+      "photo"
+    ],
+    "mbti_tags": [
+      "自然",
+      "宁静"
+    ],
+    "best_time": "春季和秋季的下午",
+    "id": "poi_062"
+  },
+  {
+    "name": "清华大学校园绿化带",
+    "category": "公园绿地",
+    "tags": [
+      "outdoor",
+      "relax",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "清华大学内",
+    "lat": 39.985,
+    "lng": 116.33353598178039,
+    "open_hours": "全天",
+    "avg_stay_minutes": 90,
+    "avg_wait_minutes": 0,
+    "crowd_level": "medium",
+    "price_level": 0,
+    "rating": 4.5,
+    "review_summary": "校园内的宁静角落。",
+    "reviews": [
+      "紧邻清华大学，环境优美，适合散步和拍照。",
+      "能感受到浓厚的学术氛围和青春气息。",
+      "很多学生在这里学习、聊天，享受校园时光。"
+    ],
+    "mood_match": [
+      "relax",
+      "explore",
+      "art"
+    ],
+    "mbti_tags": [
+      "自然",
+      "学习"
+    ],
+    "best_time": "春季和秋季",
+    "id": "poi_063"
+  },
+  {
+    "name": "北京林业大学校园绿化",
+    "category": "公园绿地",
+    "tags": [
+      "outdoor",
+      "relax",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "北京林业大学内",
+    "lat": 39.991974246523434,
+    "lng": 116.34832219847677,
+    "open_hours": "全天",
+    "avg_stay_minutes": 90,
+    "avg_wait_minutes": 0,
+    "crowd_level": "low",
+    "price_level": 0,
+    "rating": 4.4,
+    "review_summary": "绿意盎然，生态优美。",
+    "reviews": [
+      "学校内绿化非常好，有树有花，空气清新。",
+      "适合散步、放松，感受自然的美好。",
+      "能看到很多学生在这里学习或休息，远离城市的喧嚣。"
+    ],
+    "mood_match": [
+      "relax",
+      "explore",
+      "art"
+    ],
+    "mbti_tags": [
+      "自然",
+      "宁静"
+    ],
+    "best_time": "春季和夏季",
+    "id": "poi_064"
+  },
+  {
+    "name": "小公园",
+    "category": "公园绿地",
+    "tags": [
+      "outdoor",
+      "relax",
+      "budget"
+    ],
+    "area": "五道口",
+    "address": "海淀区荷清路XX号",
+    "lat": 39.98824011640942,
+    "lng": 116.33316200582047,
+    "open_hours": "06:00-22:00",
+    "avg_stay_minutes": 45,
+    "avg_wait_minutes": 0,
+    "crowd_level": "low",
+    "price_level": 0,
+    "rating": 4.1,
+    "review_summary": "闹市中的一片宁静。",
+    "reviews": [
+      "虽然不大，但绿化很好，适合短暂休息。",
+      "能看到一些附近居民在这里散步，感受生活气息。",
+      "价格为零，是性价比最高的休闲场所。"
+    ],
+    "mood_match": [
+      "relax",
+      "budget",
+      "explore"
+    ],
+    "mbti_tags": [
+      "宁静",
+      "日常"
+    ],
+    "best_time": "下午",
+    "id": "poi_065"
+  },
+  {
+    "name": "串串香",
+    "category": "夜宵烧烤",
+    "tags": [
+      "food",
+      "busy",
+      "budget"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路XX号",
+    "lat": 39.99863219713875,
+    "lng": 116.3346098569374,
+    "open_hours": "17:00-03:00",
+    "avg_stay_minutes": 70,
+    "avg_wait_minutes": 15,
+    "crowd_level": "high",
+    "price_level": 2,
+    "rating": 4.3,
+    "review_summary": "夜晚的烟火气，学生最爱。",
+    "reviews": [
+      "晚上吃串串是五道口学生的标配，价格实惠，味道好。",
+      "很热闹，充满了年轻人的活力。",
+      "在夜晚的街道上，这里是最有烟火气的地方之一。"
+    ],
+    "mood_match": [
+      "hungry",
+      "happy",
+      "busy"
+    ],
+    "mbti_tags": [
+      "热闹",
+      "分享"
+    ],
+    "best_time": "晚上和深夜",
+    "id": "poi_066"
+  },
+  {
+    "name": "新疆羊肉串",
+    "category": "夜宵烧烤",
+    "tags": [
+      "food",
+      "busy",
+      "budget"
+    ],
+    "area": "五道口",
+    "address": "海淀区王庄路XX号",
+    "lat": 39.98650950798773,
+    "lng": 116.33307547539938,
+    "open_hours": "18:00-02:00",
+    "avg_stay_minutes": 60,
+    "avg_wait_minutes": 10,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.4,
+    "review_summary": "深夜的诱惑，烤串的香气。",
+    "reviews": [
+      "羊肉串烤得外焦里嫩，孜然味十足，是深夜的绝佳选择。",
+      "很多人慕名而来，能感受到五道口夜晚的活力。",
+      "适合和朋友小酌一杯，畅聊人生。"
+    ],
+    "mood_match": [
+      "hungry",
+      "happy",
+      "relax"
+    ],
+    "mbti_tags": [
+      "畅快",
+      "满足"
+    ],
+    "best_time": "深夜",
+    "id": "poi_067"
+  },
+  {
+    "name": "烧烤排档",
+    "category": "夜宵烧烤",
+    "tags": [
+      "food",
+      "busy",
+      "budget"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路XX号",
+    "lat": 39.98711098903969,
+    "lng": 116.33584167582202,
+    "open_hours": "17:00-03:00",
+    "avg_stay_minutes": 75,
+    "avg_wait_minutes": 20,
+    "crowd_level": "high",
+    "price_level": 2,
+    "rating": 4.2,
+    "review_summary": "热闹的夜市，满足各种口味。",
+    "reviews": [
+      "各种烤串、海鲜、小吃应有尽有，是深夜食堂。",
+      "在这里能感受到五道口年轻人的夜生活。",
+      "价格实惠，氛围热闹，是朋友聚会的绝佳场所。"
+    ],
+    "mood_match": [
+      "hungry",
+      "happy",
+      "busy"
+    ],
+    "mbti_tags": [
+      "热闹",
+      "社交"
+    ],
+    "best_time": "夜晚和深夜",
+    "id": "poi_068"
+  },
+  {
+    "name": "鲜花小铺",
+    "category": "花店",
+    "tags": [
+      "art",
+      "photo",
+      "relax"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路XX号",
+    "lat": 39.99896906969709,
+    "lng": 116.34876278788337,
+    "open_hours": "09:00-20:00",
+    "avg_stay_minutes": 20,
+    "avg_wait_minutes": 0,
+    "crowd_level": "low",
+    "price_level": 2,
+    "rating": 4.5,
+    "review_summary": "生活中的小确幸，装点你的心情。",
+    "reviews": [
+      "鲜花很新鲜，老板人很好，可以根据需求搭配。",
+      "在五道口这样的地方，一束鲜花能带来好心情。",
+      "适合买来送人或者装点自己的生活。"
+    ],
+    "mood_match": [
+      "relax",
+      "art",
+      "happy"
+    ],
+    "mbti_tags": [
+      "美好",
+      "治愈"
+    ],
+    "best_time": "早晨和下午",
+    "id": "poi_069"
+  },
+  {
+    "name": "花漾年华",
+    "category": "花店",
+    "tags": [
+      "art",
+      "photo",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "海淀区王庄路XX号",
+    "lat": 39.995911381364685,
+    "lng": 116.33826835360234,
+    "open_hours": "09:30-19:30",
+    "avg_stay_minutes": 25,
+    "avg_wait_minutes": 0,
+    "crowd_level": "low",
+    "price_level": 2,
+    "rating": 4.6,
+    "review_summary": "精致的花艺，点亮生活。",
+    "reviews": [
+      "花艺设计很有创意，适合送给特别的人。",
+      "店面不大，但充满艺术感，是拍照的好地方。",
+      "五道口周边的学生和年轻白领会来这里挑选花束。"
+    ],
+    "mood_match": [
+      "art",
+      "relax",
+      "photo"
+    ],
+    "mbti_tags": [
+      "精致",
+      "创意"
+    ],
+    "best_time": "工作日白天",
+    "id": "poi_070"
+  },
+  {
+    "name": "芬芳花坊",
+    "category": "花店",
+    "tags": [
+      "art",
+      "relax",
+      "budget"
+    ],
+    "area": "五道口",
+    "address": "海淀区荷清路XX号",
+    "lat": 39.99117630642252,
+    "lng": 116.34205881532112,
+    "open_hours": "09:00-19:00",
+    "avg_stay_minutes": 15,
+    "avg_wait_minutes": 0,
+    "crowd_level": "low",
+    "price_level": 1,
+    "rating": 4.3,
+    "review_summary": "平价鲜花，温暖的角落。",
+    "reviews": [
+      "价格很实惠，能买到新鲜的鲜花，适合日常点缀。",
+      "店主很热情，会帮忙搭配，是五道口附近性价比很高的花店。",
+      "偶尔路过，买上一束，就能让心情变好。"
+    ],
+    "mood_match": [
+      "relax",
+      "budget",
+      "art"
+    ],
+    "mbti_tags": [
+      "日常",
+      "温暖"
+    ],
+    "best_time": "上午",
+    "id": "poi_071"
+  },
+  {
+    "name": "京味儿炸酱面",
+    "category": "餐厅-北京风味",
+    "tags": [
+      "food",
+      "budget",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路35号",
+    "lat": 39.99648534613551,
+    "lng": 116.32834853461355,
+    "open_hours": "10:00-21:00",
+    "avg_stay_minutes": 45,
+    "avg_wait_minutes": 15,
+    "crowd_level": "high",
+    "price_level": 1,
+    "rating": 4.3,
+    "review_summary": "地道的北京炸酱面，量大实惠，是学生党和附近居民的心头好。",
+    "reviews": [
+      "来五道口必吃的一家炸酱面，价格亲民，味道正宗，每次来人都不少，得赶早。",
+      "面条劲道，酱料香浓，配菜也给得足，性价比超高，尤其适合饥肠轆辘的学生。",
+      "虽然环境一般，但味道完全弥补了，体验了一把老北京的味道，很满意。"
+    ],
+    "mood_match": [
+      "hungry",
+      "explore"
+    ],
+    "mbti_tags": [
+      "外向",
+      "务实"
+    ],
+    "best_time": "午餐高峰",
+    "id": "poi_072"
+  },
+  {
+    "name": "老诚一锅(五道口店)",
+    "category": "餐厅-北京风味",
+    "tags": [
+      "food",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区清华科技园D座一层",
+    "lat": 40.00039622316653,
+    "lng": 116.35601584892666,
+    "open_hours": "11:00-22:00",
+    "avg_stay_minutes": 60,
+    "avg_wait_minutes": 20,
+    "crowd_level": "high",
+    "price_level": 2,
+    "rating": 4.5,
+    "review_summary": "麻辣鲜香的羊蝎子火锅，是冬天聚餐的好去处。",
+    "reviews": [
+      "冬天来一锅热气腾腾的羊蝎子，太爽了！肉炖得软烂入味，汤底也很棒。",
+      "和朋友一起吃的，大家都很喜欢，服务员也很热情，会及时添汤加菜。",
+      "虽然价格不算便宜，但味道和分量都值了，是五道口附近吃火锅不错的选择。"
+    ],
+    "mood_match": [
+      "hungry",
+      "happy"
+    ],
+    "mbti_tags": [
+      "外向",
+      "享乐"
+    ],
+    "best_time": "晚餐时间",
+    "id": "poi_073"
+  },
+  {
+    "name": "爆肚冯(五道口店)",
+    "category": "餐厅-北京风味",
+    "tags": [
+      "food",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路24号",
+    "lat": 39.99141404617751,
+    "lng": 116.32582809235501,
+    "open_hours": "11:00-14:00, 17:00-21:00",
+    "avg_stay_minutes": 40,
+    "avg_wait_minutes": 10,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.4,
+    "review_summary": "传统的北京爆肚，口感脆嫩，搭配麻酱小料，风味独特。",
+    "reviews": [
+      "第一次尝试爆肚，口感很特别，脆脆的，蘸上麻酱，味道出乎意料的好。",
+      "是老北京的味道，虽然年轻人可能不太习惯，但喜欢传统小吃的绝对不能错过。",
+      "这家店开了很多年了，味道一直很稳定，价格也还可以，适合尝鲜。"
+    ],
+    "mood_match": [
+      "explore",
+      "hungry"
+    ],
+    "mbti_tags": [
+      "内向",
+      "好奇"
+    ],
+    "best_time": "晚餐时间",
+    "id": "poi_074"
+  },
+  {
+    "name": "宫门口马记",
+    "category": "餐厅-北京风味",
+    "tags": [
+      "food",
+      "budget"
+    ],
+    "area": "五道口",
+    "address": "海淀区知春路106号",
+    "lat": 39.990263829233946,
+    "lng": 116.32402638292339,
+    "open_hours": "09:00-20:00",
+    "avg_stay_minutes": 30,
+    "avg_wait_minutes": 5,
+    "crowd_level": "medium",
+    "price_level": 1,
+    "rating": 4.2,
+    "review_summary": "经典的北京小吃，如卤煮、炒肝等，价格实惠，味道地道。",
+    "reviews": [
+      "卤煮味道很正宗，够火候，料也足，是街头小吃的代表。",
+      "来这里主要是为了吃炒肝，味道很浓郁，配上炸馒头片，绝了！",
+      "学生党福音，价格便宜，味道好，有时候排队也挺快的。"
+    ],
+    "mood_match": [
+      "hungry",
+      "budget"
+    ],
+    "mbti_tags": [
+      "外向",
+      "实在"
+    ],
+    "best_time": "早餐和午餐",
+    "id": "poi_075"
+  },
+  {
+    "name": "京酱肉丝家常菜",
+    "category": "餐厅-北京风味",
+    "tags": [
+      "food",
+      "family"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路18号",
+    "lat": 39.98604342471522,
+    "lng": 116.3552626054829,
+    "open_hours": "11:00-22:00",
+    "avg_stay_minutes": 75,
+    "avg_wait_minutes": 15,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.3,
+    "review_summary": "提供多种家常菜，口味偏北京风味，适合家庭朋友聚餐。",
+    "reviews": [
+      "点的宫保鸡丁和鱼香肉丝都很好吃，口味偏甜，很下饭。",
+      "带家人来吃的，老人家觉得口味比较习惯，菜品种类也多，服务周到。",
+      "价格适中，份量也还可以，是附近比较稳定的家常菜馆。"
+    ],
+    "mood_match": [
+      "happy",
+      "hungry"
+    ],
+    "mbti_tags": [
+      "外向",
+      "温和"
+    ],
+    "best_time": "晚餐时间",
+    "id": "poi_076"
+  },
+  {
+    "name": "卤煮小肠",
+    "category": "餐厅-北京风味",
+    "tags": [
+      "food",
+      "budget"
+    ],
+    "area": "五道口",
+    "address": "海淀区学院路30号",
+    "lat": 39.990491469023716,
+    "lng": 116.32404914690237,
+    "open_hours": "11:00-21:00",
+    "avg_stay_minutes": 40,
+    "avg_wait_minutes": 10,
+    "crowd_level": "medium",
+    "price_level": 1,
+    "rating": 4.1,
+    "review_summary": "专注卤煮，口味浓郁，是体验地道北京风味的好地方。",
+    "reviews": [
+      "这家的卤煮是真材实料，味道香浓，吃完一身汗，特别过瘾。",
+      "性价比很高，味道也棒，虽然店面不大，但生意一直很好，很多回头客。",
+      "适合喜欢重口味和地道北京小吃的朋友，来五道口可以试试。"
+    ],
+    "mood_match": [
+      "hungry",
+      "explore"
+    ],
+    "mbti_tags": [
+      "外向",
+      "实在"
+    ],
+    "best_time": "午餐时间",
+    "id": "poi_077"
+  },
+  {
+    "name": "豆汁焦圈",
+    "category": "餐厅-北京风味",
+    "tags": [
+      "food",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "海淀区知春里小区1号",
+    "lat": 39.988574414116904,
+    "lng": 116.33917872070585,
+    "open_hours": "07:00-19:00",
+    "avg_stay_minutes": 30,
+    "avg_wait_minutes": 5,
+    "crowd_level": "low",
+    "price_level": 1,
+    "rating": 3.9,
+    "review_summary": "提供传统的豆汁和焦圈，是体验北京特色早餐的选择。",
+    "reviews": [
+      "第一次喝豆汁，味道确实有点特别，但搭配焦圈还不错。",
+      "本地人比较喜欢，游客可以来尝试一下，感受北京的早餐文化。",
+      "价格很便宜，是体验当地生活的好去处。"
+    ],
+    "mood_match": [
+      "explore",
+      "budget"
+    ],
+    "mbti_tags": [
+      "内向",
+      "好奇"
+    ],
+    "best_time": "早餐时间",
+    "id": "poi_078"
+  },
+  {
+    "name": "Green Leaf Kitchen",
+    "category": "餐厅-素食轻食",
+    "tags": [
+      "food",
+      "healthy",
+      "budget"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路33号",
+    "lat": 39.98790386237534,
+    "lng": 116.33578221032185,
+    "open_hours": "10:00-21:00",
+    "avg_stay_minutes": 50,
+    "avg_wait_minutes": 10,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.5,
+    "review_summary": "提供多种健康美味的素食和轻食选择，适合追求健康饮食的年轻人。",
+    "reviews": [
+      "沙拉很新鲜，选择很多，搭配的酱汁也很不错，是健康午餐的好选择。",
+      "素食汉堡味道惊喜，完全不输肉汉堡，环境也很小清新。",
+      "价格合理，分量也足，有很多学生来这里吃，感觉很受年轻人欢迎。"
+    ],
+    "mood_match": [
+      "relax",
+      "explore"
+    ],
+    "mbti_tags": [
+      "内向",
+      "健康"
+    ],
+    "best_time": "午餐时间",
+    "id": "poi_079"
+  },
+  {
+    "name": "Vegan Garden",
+    "category": "餐厅-素食轻食",
+    "tags": [
+      "food",
+      "healthy",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "海淀区华清嘉园东门",
+    "lat": 40.004675658369564,
+    "lng": 116.35618702633478,
+    "open_hours": "09:30-20:30",
+    "avg_stay_minutes": 50,
+    "avg_wait_minutes": 10,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.4,
+    "review_summary": "提供创意素食料理，摆盘精致，味道也不错。",
+    "reviews": [
+      "素食意面味道很棒，酱汁浓郁，食材新鲜。",
+      "环境很安静，适合一个人来吃午餐，或者和朋友小声聊天。",
+      "发现了很多意想不到的美味素食，是素食爱好者的天堂。"
+    ],
+    "mood_match": [
+      "relax",
+      "explore"
+    ],
+    "mbti_tags": [
+      "内向",
+      "文艺"
+    ],
+    "best_time": "下午茶或午餐",
+    "id": "poi_080"
+  },
+  {
+    "name": "轻食主义",
+    "category": "餐厅-素食轻食",
+    "tags": [
+      "food",
+      "healthy",
+      "budget"
+    ],
+    "area": "五道口",
+    "address": "海淀区知春路108号",
+    "lat": 39.99234363444777,
+    "lng": 116.34211718172239,
+    "open_hours": "10:00-21:00",
+    "avg_stay_minutes": 45,
+    "avg_wait_minutes": 15,
+    "crowd_level": "high",
+    "price_level": 1,
+    "rating": 4.3,
+    "review_summary": "主打健康轻食，价格亲民，是学生党常去的午餐地点。",
+    "reviews": [
+      "鸡胸肉沙拉份量很足，酱汁选择多，味道不错。",
+      "饭团和卷饼也很受欢迎，方便快捷，是赶时间的理想选择。",
+      "五道口性价比最高的轻食之一，经常排队，但速度挺快的。"
+    ],
+    "mood_match": [
+      "hungry",
+      "budget"
+    ],
+    "mbti_tags": [
+      "外向",
+      "健康"
+    ],
+    "best_time": "午餐高峰",
+    "id": "poi_081"
+  },
+  {
+    "name": "蔬食生活",
+    "category": "餐厅-素食轻食",
+    "tags": [
+      "food",
+      "healthy",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路20号",
+    "lat": 39.994238170137876,
+    "lng": 116.32825446758585,
+    "open_hours": "11:00-21:00",
+    "avg_stay_minutes": 50,
+    "avg_wait_minutes": 10,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.6,
+    "review_summary": "环境优美，菜品颜值高，适合拍照打卡，味道也健康。",
+    "reviews": [
+      "意面和披萨做得很好，味道出乎意料，而且摆盘很艺术。",
+      "小姐妹约会的好地方，店里很多绿植，拍照超出片。",
+      "第一次尝试素食披萨，口感很棒，完全不油腻，健康又美味。"
+    ],
+    "mood_match": [
+      "relax",
+      "photo"
+    ],
+    "mbti_tags": [
+      "内向",
+      "文艺"
+    ],
+    "best_time": "下午茶或晚餐",
+    "id": "poi_082"
+  },
+  {
+    "name": "谷物天堂",
+    "category": "餐厅-素食轻食",
+    "tags": [
+      "food",
+      "healthy",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "海淀区中关村北大街42号",
+    "lat": 39.99434697482109,
+    "lng": 116.34514081848926,
+    "open_hours": "10:00-20:00",
+    "avg_stay_minutes": 45,
+    "avg_wait_minutes": 5,
+    "crowd_level": "low",
+    "price_level": 2,
+    "rating": 4.2,
+    "review_summary": "提供各种谷物碗和健康饮品，注重食材的天然与营养。",
+    "reviews": [
+      "这里的燕麦碗很受欢迎，搭配水果坚果，营养又美味。",
+      "喜欢他们家的鲜榨果汁，种类很多，都很新鲜。",
+      "适合喜欢简单健康饮食的人，价格也比较合理。"
+    ],
+    "mood_match": [
+      "relax",
+      "explore"
+    ],
+    "mbti_tags": [
+      "内向",
+      "健康"
+    ],
+    "best_time": "午餐或下午茶",
+    "id": "poi_083"
+  },
+  {
+    "name": "角落里的咖啡馆",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "relax",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路15号",
+    "lat": 39.99204309113769,
+    "lng": 116.34654051518962,
+    "open_hours": "08:30-21:00",
+    "avg_stay_minutes": 90,
+    "avg_wait_minutes": 5,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.7,
+    "review_summary": "隐藏在小巷里的独立咖啡馆，环境安静舒适，适合阅读和发呆。",
+    "reviews": [
+      "手冲咖啡味道很棒，豆子选择多，咖啡师很专业，会耐心介绍。",
+      "店里有很多书，可以静静地坐一下午，享受属于自己的时光。",
+      "周末常来，氛围感十足，是逃离喧嚣的好去处。"
+    ],
+    "mood_match": [
+      "relax",
+      "explore"
+    ],
+    "mbti_tags": [
+      "内向",
+      "文艺"
+    ],
+    "best_time": "工作日下午",
+    "id": "poi_084"
+  },
+  {
+    "name": "星辰咖啡",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "photo",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区五道口购物中心一层",
+    "lat": 39.99192622621834,
+    "lng": 116.35451681783445,
+    "open_hours": "09:00-22:00",
+    "avg_stay_minutes": 60,
+    "avg_wait_minutes": 10,
+    "crowd_level": "high",
+    "price_level": 2,
+    "rating": 4.4,
+    "review_summary": "位于购物中心，交通便利，是逛街休息的好选择。",
+    "reviews": [
+      "咖啡味道稳定，服务也很好，是逛街时补充能量的好地方。",
+      "店面很大，经常人满为患，尤其是在周末，但整体氛围不错。",
+      "在这里可以边喝咖啡边看人来人往，感受五道口的活力。"
+    ],
+    "mood_match": [
+      "happy",
+      "explore"
+    ],
+    "mbti_tags": [
+      "外向",
+      "时尚"
+    ],
+    "best_time": "周末下午",
+    "id": "poi_085"
+  },
+  {
+    "name": "青年空间咖啡",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "budget",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路28号",
+    "lat": 39.99859812499816,
+    "lng": 116.33290624990796,
+    "open_hours": "08:00-20:00",
+    "avg_stay_minutes": 70,
+    "avg_wait_minutes": 10,
+    "crowd_level": "high",
+    "price_level": 1,
+    "rating": 4.3,
+    "review_summary": "价格实惠，提供免费Wi-Fi，是学生党常去的学习和社交场所。",
+    "reviews": [
+      "咖啡价格很亲民，而且味道还不错，适合学生党长时间待。",
+      "经常看到很多学生在这里学习，氛围比较活跃，但也能找到安静的角落。",
+      "有各种套餐，点一杯咖啡可以坐很久，性价比很高。"
+    ],
+    "mood_match": [
+      "explore",
+      "study"
+    ],
+    "mbti_tags": [
+      "外向",
+      "务实"
+    ],
+    "best_time": "工作日下午",
+    "id": "poi_086"
+  },
+  {
+    "name": "文艺复兴咖啡",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "art",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "海淀区中关村北大街38号",
+    "lat": 39.99219728231083,
+    "lng": 116.33159511912075,
+    "open_hours": "09:00-20:00",
+    "avg_stay_minutes": 80,
+    "avg_wait_minutes": 5,
+    "crowd_level": "low",
+    "price_level": 3,
+    "rating": 4.8,
+    "review_summary": "主打精品咖啡，店内艺术氛围浓厚，经常举办小型艺术展览。",
+    "reviews": [
+      "咖啡豆选择非常多，可以品尝到不同产地的风味，咖啡师技艺精湛。",
+      "店里装饰很有特色，墙上挂着艺术家的画作，适合喜欢艺术的人。",
+      "价格偏高，但作为一家精品咖啡馆，体验感很值。"
+    ],
+    "mood_match": [
+      "relax",
+      "explore"
+    ],
+    "mbti_tags": [
+      "内向",
+      "文艺"
+    ],
+    "best_time": "工作日上午",
+    "id": "poi_087"
+  },
+  {
+    "name": "深夜咖啡馆",
+    "category": "咖啡厅",
+    "tags": [
+      "coffee",
+      "relax",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路37号",
+    "lat": 39.985775855504535,
+    "lng": 116.32357758555045,
+    "open_hours": "11:00-02:00",
+    "avg_stay_minutes": 120,
+    "avg_wait_minutes": 5,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.5,
+    "review_summary": "营业至凌晨的咖啡馆，环境舒适，适合夜猫子和需要深夜学习的人。",
+    "reviews": [
+      "晚上来这里很安静，适合写东西或者一个人发呆，咖啡也很香。",
+      "很少有这么晚还营业的咖啡馆，味道好，价格也合适，是深夜福利。",
+      "店里灯光柔和，氛围很放松，即使深夜也不觉得孤单。"
+    ],
+    "mood_match": [
+      "relax",
+      "study"
+    ],
+    "mbti_tags": [
+      "内向",
+      "沉思"
+    ],
+    "best_time": "夜晚",
+    "id": "poi_088"
+  },
+  {
+    "name": "静思空间",
+    "category": "共享空间/自习室",
+    "tags": [
+      "study",
+      "relax",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路31号",
+    "lat": 39.98567860004911,
+    "lng": 116.33903393000246,
+    "open_hours": "09:00-22:00",
+    "avg_stay_minutes": 180,
+    "avg_wait_minutes": 0,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.6,
+    "review_summary": "安静舒适的自习空间，提供独立座位和小组讨论区，是备考学生的理想场所。",
+    "reviews": [
+      "环境非常棒，隔音效果好，座椅也很舒服，适合长时间学习。",
+      "管理规范，大家都很自觉地保持安静，是效率提升的好地方。",
+      "有免费的饮用水和小零食，细节做得很好，性价比很高。"
+    ],
+    "mood_match": [
+      "study",
+      "relax"
+    ],
+    "mbti_tags": [
+      "内向",
+      "专注"
+    ],
+    "best_time": "备考季",
+    "id": "poi_089"
+  },
+  {
+    "name": "灵感工坊",
+    "category": "共享空间/自习室",
+    "tags": [
+      "study",
+      "creative",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "海淀区中关村北大街40号",
+    "lat": 39.985,
+    "lng": 116.3360070005375,
+    "open_hours": "09:00-21:00",
+    "avg_stay_minutes": 150,
+    "avg_wait_minutes": 0,
+    "crowd_level": "low",
+    "price_level": 2,
+    "rating": 4.4,
+    "review_summary": "提供创意工作空间，有独立工位和会议室，适合自由职业者和创业团队。",
+    "reviews": [
+      "空间设计很现代，采光好，有很多植物，工作氛围很轻松。",
+      "提供打印复印等服务，很方便，适合需要临时办公的人。",
+      "价格不算贵，适合需要一个安静独立空间进行创作或工作的人。"
+    ],
+    "mood_match": [
+      "study",
+      "explore"
+    ],
+    "mbti_tags": [
+      "内向",
+      "创新"
+    ],
+    "best_time": "工作日",
+    "id": "poi_090"
+  },
+  {
+    "name": "书香角落",
+    "category": "共享空间/自习室",
+    "tags": [
+      "study",
+      "relax",
+      "art"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路19号",
+    "lat": 40.0029072399133,
+    "lng": 116.34036199566481,
+    "open_hours": "09:00-22:00",
+    "avg_stay_minutes": 120,
+    "avg_wait_minutes": 0,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.5,
+    "review_summary": "结合了书店和自习室的功能，环境安静，藏书丰富。",
+    "reviews": [
+      "可以在书店里看书，也可以在自习区学习，非常方便。",
+      "书的种类很多，尤其是人文社科类的，适合喜欢阅读的人。",
+      "工作日人不多，周末会比较热闹，整体氛围很棒。"
+    ],
+    "mood_match": [
+      "study",
+      "relax"
+    ],
+    "mbti_tags": [
+      "内向",
+      "文艺"
+    ],
+    "best_time": "工作日下午",
+    "id": "poi_091"
+  },
+  {
+    "name": "青春驿站",
+    "category": "共享空间/自习室",
+    "tags": [
+      "study",
+      "budget",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区学院路28号",
+    "lat": 39.98738167449872,
+    "lng": 116.35290458137531,
+    "open_hours": "08:00-23:00",
+    "avg_stay_minutes": 180,
+    "avg_wait_minutes": 0,
+    "crowd_level": "high",
+    "price_level": 1,
+    "rating": 4.2,
+    "review_summary": "价格低廉，24小时开放，是学生党考前冲刺的首选。",
+    "reviews": [
+      "24小时开放太棒了，有时候学到很晚也不用担心没地方去。",
+      "虽然环境不算是最顶级的，但是性价比真的无敌，适合预算有限的学生。",
+      "人多的时候会有点吵，但整体还是能保持学习氛围的。"
+    ],
+    "mood_match": [
+      "study",
+      "tired"
+    ],
+    "mbti_tags": [
+      "外向",
+      "拼搏"
+    ],
+    "best_time": "考试季",
+    "id": "poi_092"
+  },
+  {
+    "name": "时光酒吧",
+    "category": "酒吧清吧",
+    "tags": [
+      "bar",
+      "relax",
+      "music"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路22号",
+    "lat": 40.002627608058454,
+    "lng": 116.32954092185115,
+    "open_hours": "18:00-02:00",
+    "avg_stay_minutes": 90,
+    "avg_wait_minutes": 10,
+    "crowd_level": "medium",
+    "price_level": 3,
+    "rating": 4.5,
+    "review_summary": "氛围轻松，音乐好听，是下班后小酌一杯的好地方。",
+    "reviews": [
+      "鸡尾酒种类很多，调酒师很专业，还会根据口味推荐。",
+      "周末晚上有驻唱，气氛很嗨，适合和朋友一起来放松。",
+      "环境比较有情调，适合情侣约会或者和朋友小聚。"
+    ],
+    "mood_match": [
+      "relax",
+      "happy"
+    ],
+    "mbti_tags": [
+      "外向",
+      "享乐"
+    ],
+    "best_time": "晚上",
+    "id": "poi_094"
+  },
+  {
+    "name": "学生时代",
+    "category": "酒吧清吧",
+    "tags": [
+      "bar",
+      "budget",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路39号",
+    "lat": 39.99280923871798,
+    "lng": 116.34704855432308,
+    "open_hours": "18:00-03:00",
+    "avg_stay_minutes": 80,
+    "avg_wait_minutes": 15,
+    "crowd_level": "high",
+    "price_level": 2,
+    "rating": 4.3,
+    "review_summary": "以青春怀旧为主题，价格实惠，是学生党聚会的热门选择。",
+    "reviews": [
+      "这里的气氛很像大学时代的宿舍聚会，很有怀旧感。",
+      "酒水价格很便宜，而且有很多小吃，适合学生们放飞自我。",
+      "周末晚上人非常多，需要提前预定或者做好排队的准备。"
+    ],
+    "mood_match": [
+      "happy",
+      "explore"
+    ],
+    "mbti_tags": [
+      "外向",
+      "青春"
+    ],
+    "best_time": "周末晚上",
+    "id": "poi_096"
+  },
+  {
+    "name": "猫咪的秘密花园",
+    "category": "宠物友好咖啡",
+    "tags": [
+      "coffee",
+      "pet",
+      "relax"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路21号",
+    "lat": 40.003177959939634,
+    "lng": 116.35478779667999,
+    "open_hours": "10:00-21:00",
+    "avg_stay_minutes": 75,
+    "avg_wait_minutes": 10,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.7,
+    "review_summary": "有可爱的猫咪陪伴，环境舒适，是爱猫人士的聚集地。",
+    "reviews": [
+      "店里的猫咪都很亲人，可以和它们玩耍，非常治愈。",
+      "咖啡味道不错，甜点也很好吃，是和猫咪一起享受下午茶的好地方。",
+      "周末人比较多，想和猫咪独处的话，工作日去会更好。"
+    ],
+    "mood_match": [
+      "relax",
+      "happy"
+    ],
+    "mbti_tags": [
+      "内向",
+      "爱宠"
+    ],
+    "best_time": "下午茶时间",
+    "id": "poi_097"
+  },
+  {
+    "name": "汪星人的乐园",
+    "category": "宠物友好咖啡",
+    "tags": [
+      "coffee",
+      "pet",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "海淀区学院路29号",
+    "lat": 39.99563670238188,
+    "lng": 116.32672659523624,
+    "open_hours": "09:00-20:00",
+    "avg_stay_minutes": 70,
+    "avg_wait_minutes": 5,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.5,
+    "review_summary": "有狗狗活动区，主人可以带着狗狗一起玩耍，咖啡和零食也很棒。",
+    "reviews": [
+      "带我家狗狗来这里玩，有专门的狗狗活动区，它玩得很开心。",
+      "店里也有一些寄养的狗狗，很可爱，工作人员也很专业。",
+      "咖啡味道不错，而且有狗狗专用的零食，很贴心。"
+    ],
+    "mood_match": [
+      "happy",
+      "explore"
+    ],
+    "mbti_tags": [
+      "外向",
+      "爱宠"
+    ],
+    "best_time": "周末下午",
+    "id": "poi_098"
+  },
+  {
+    "name": "萌宠下午茶",
+    "category": "宠物友好咖啡",
+    "tags": [
+      "coffee",
+      "pet",
+      "budget"
+    ],
+    "area": "五道口",
+    "address": "海淀区知春路109号",
+    "lat": 40.00289731524662,
+    "lng": 116.35611589260986,
+    "open_hours": "10:00-21:00",
+    "avg_stay_minutes": 60,
+    "avg_wait_minutes": 10,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.3,
+    "review_summary": "提供宠物友好的环境和餐饮，价格适中，是带宠物出门的好去处。",
+    "reviews": [
+      "带猫咪来这里，店里有猫抓板和玩具，猫咪很喜欢。",
+      "咖啡和简餐味道还可以，最重要的是能带宠物一起来，很方便。",
+      "价格不算贵，很多学生带着宠物来，氛围很融洽。"
+    ],
+    "mood_match": [
+      "relax",
+      "happy"
+    ],
+    "mbti_tags": [
+      "内向",
+      "爱宠"
+    ],
+    "best_time": "下午茶时间",
+    "id": "poi_099"
+  },
+  {
+    "name": "爱宠之家",
+    "category": "宠物友好咖啡",
+    "tags": [
+      "coffee",
+      "pet",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "海淀区中关村北大街41号",
+    "lat": 39.99206430142853,
+    "lng": 116.33856985714687,
+    "open_hours": "11:00-22:00",
+    "avg_stay_minutes": 80,
+    "avg_wait_minutes": 5,
+    "crowd_level": "low",
+    "price_level": 2,
+    "rating": 4.6,
+    "review_summary": "环境干净整洁，有专门的宠物区域，咖啡和甜点也很精致。",
+    "reviews": [
+      "店主很喜欢宠物，对宠物很友好，而且很懂宠物习性。",
+      "这里的咖啡拉花很漂亮，而且味道也很醇厚。",
+      "是附近为数不多的宠物友好咖啡馆，适合带猫狗一起放松。"
+    ],
+    "mood_match": [
+      "relax",
+      "explore"
+    ],
+    "mbti_tags": [
+      "内向",
+      "爱宠"
+    ],
+    "best_time": "工作日下午",
+    "id": "poi_100"
+  },
+  {
+    "name": "快洗生活",
+    "category": "洗衣生活服务",
+    "tags": [
+      "service",
+      "budget",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路36号",
+    "lat": 39.99497304388334,
+    "lng": 116.34227297829125,
+    "open_hours": "08:00-22:00",
+    "avg_stay_minutes": 20,
+    "avg_wait_minutes": 5,
+    "crowd_level": "high",
+    "price_level": 1,
+    "rating": 4.2,
+    "review_summary": "提供快速洗衣和干洗服务，价格实惠，是学生和上班族的首选。",
+    "reviews": [
+      "洗衣服速度很快，而且价格很便宜，是学生党经常来的地方。",
+      "有自助洗衣机，也有干洗服务，满足不同需求。",
+      "每次来都很多人，但排队也不会等很久。"
+    ],
+    "mood_match": [
+      "busy",
+      "budget"
+    ],
+    "mbti_tags": [
+      "外向",
+      "效率"
+    ],
+    "best_time": "周末下午",
+    "id": "poi_101"
+  },
+  {
+    "name": "便捷洗衣",
+    "category": "洗衣生活服务",
+    "tags": [
+      "service",
+      "budget"
+    ],
+    "area": "五道口",
+    "address": "海淀区学院路27号",
+    "lat": 39.985,
+    "lng": 116.33327600498019,
+    "open_hours": "09:00-21:00",
+    "avg_stay_minutes": 25,
+    "avg_wait_minutes": 5,
+    "crowd_level": "medium",
+    "price_level": 1,
+    "rating": 4.1,
+    "review_summary": "提供自助洗衣和烘干服务，方便快捷。",
+    "reviews": [
+      "洗烘一体的机器很方便，价格也公道，是附近居民常来的。",
+      "环境比较整洁，机器运行也很稳定，值得推荐。",
+      "适合自己动手洗衣服，价格比送去干洗店便宜不少。"
+    ],
+    "mood_match": [
+      "busy",
+      "budget"
+    ],
+    "mbti_tags": [
+      "外向",
+      "务实"
+    ],
+    "best_time": "工作日晚上",
+    "id": "poi_102"
+  },
+  {
+    "name": "时光洗衣",
+    "category": "洗衣生活服务",
+    "tags": [
+      "service",
+      "budget",
+      "family"
+    ],
+    "area": "五道口",
+    "address": "海淀区中关村北大街39号",
+    "lat": 39.985,
+    "lng": 116.33336821452642,
+    "open_hours": "08:30-21:30",
+    "avg_stay_minutes": 30,
+    "avg_wait_minutes": 10,
+    "crowd_level": "low",
+    "price_level": 1,
+    "rating": 4.3,
+    "review_summary": "提供洗衣、烘干、熨烫等全方位服务，价格透明。",
+    "reviews": [
+      "服务很周到，不仅洗衣服，还能帮忙熨烫，非常方便。",
+      "价格很实在，是附近性价比不错的洗衣店。",
+      "带孩子来，这里也有一些简单的玩乐设施，小朋友不闹。"
+    ],
+    "mood_match": [
+      "busy",
+      "family"
+    ],
+    "mbti_tags": [
+      "外向",
+      "便捷"
+    ],
+    "best_time": "工作日白天",
+    "id": "poi_103"
+  },
+  {
+    "name": "高效洗衣",
+    "category": "洗衣生活服务",
+    "tags": [
+      "service",
+      "busy",
+      "budget"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路18号",
+    "lat": 39.99858536597795,
+    "lng": 116.33226829889769,
+    "open_hours": "07:00-23:00",
+    "avg_stay_minutes": 20,
+    "avg_wait_minutes": 5,
+    "crowd_level": "high",
+    "price_level": 1,
+    "rating": 4,
+    "review_summary": "营业时间长，适合各种时间段的需求。",
+    "reviews": [
+      "23点才关门，对于晚睡的学生来说太友好了。",
+      "洗衣服很快，烘干效果也好，价格也很便宜。",
+      "虽然人多，但是机器数量也多，基本不用怎么排队。"
+    ],
+    "mood_match": [
+      "busy",
+      "budget"
+    ],
+    "mbti_tags": [
+      "外向",
+      "效率"
+    ],
+    "best_time": "深夜",
+    "id": "poi_104"
+  },
+  {
+    "name": "五道口 Livehouse",
+    "category": "livehouse",
+    "tags": [
+      "music",
+      "art",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路23号",
+    "lat": 39.9903666555664,
+    "lng": 116.34201833277832,
+    "open_hours": "19:00-23:00 (演出时间)",
+    "avg_stay_minutes": 120,
+    "avg_wait_minutes": 30,
+    "crowd_level": "high",
+    "price_level": 2,
+    "rating": 4.6,
+    "review_summary": "经常有乐队演出，氛围热烈，是年轻人感受音乐的好地方。",
+    "reviews": [
+      "晚上来看演出，气氛超燃！乐队很棒，观众也很投入。",
+      "是五道口非常有名的livehouse，经常能看到各种风格的演出。",
+      "虽然场地不大，但音响效果很棒，离舞台很近，能感受到现场的魅力。"
+    ],
+    "mood_match": [
+      "happy",
+      "explore"
+    ],
+    "mbti_tags": [
+      "外向",
+      "热情"
+    ],
+    "best_time": "周末晚上",
+    "id": "poi_105"
+  },
+  {
+    "name": "青年节拍",
+    "category": "livehouse",
+    "tags": [
+      "music",
+      "art",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "海淀区学院路26号",
+    "lat": 39.99644555327499,
+    "lng": 116.3306445553275,
+    "open_hours": "19:00-23:00 (演出时间)",
+    "avg_stay_minutes": 100,
+    "avg_wait_minutes": 20,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.4,
+    "review_summary": "主打独立音乐和实验性演出，吸引了不少喜欢小众音乐的年轻人。",
+    "reviews": [
+      "第一次来，发现了很多有才华的独立乐队，音乐很有味道。",
+      "氛围比较小众，但很适合喜欢安静听音乐的人。",
+      "店家对音乐很有追求，选的乐队都很棒。"
+    ],
+    "mood_match": [
+      "explore",
+      "relax"
+    ],
+    "mbti_tags": [
+      "内向",
+      "品味"
+    ],
+    "best_time": "工作日晚上",
+    "id": "poi_106"
+  },
+  {
+    "name": "青春回响",
+    "category": "livehouse",
+    "tags": [
+      "music",
+      "art",
+      "busy"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路20号",
+    "lat": 39.99193430278578,
+    "lng": 116.35347494063424,
+    "open_hours": "19:00-23:00 (演出时间)",
+    "avg_stay_minutes": 130,
+    "avg_wait_minutes": 30,
+    "crowd_level": "high",
+    "price_level": 2,
+    "rating": 4.7,
+    "review_summary": "是五道口最早的livehouse之一，承载了很多年轻人的音乐梦想。",
+    "reviews": [
+      "从小听到大的livehouse，见证了很多乐队的成长，很有情怀。",
+      "经常有各种主题的演出，每次来都能发现惊喜。",
+      "虽然场地不大，但舞台效果和音响都很棒，性价比很高。"
+    ],
+    "mood_match": [
+      "happy",
+      "explore"
+    ],
+    "mbti_tags": [
+      "外向",
+      "怀旧"
+    ],
+    "best_time": "周末晚上",
+    "id": "poi_108"
+  }
+]
