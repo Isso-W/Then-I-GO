@@ -45,23 +45,41 @@ Features specified but not present in the current frontend prototype:
 - **Social sharing reward** — sharing a generated Vlog to an external platform grants in-app titles or bonus items.
 - ~~Multi-player collaborative routing~~ — scoped out for the hackathon.
 
-## POI 数据层 — Implemented
+## 地理数据层 — Implemented
 
-### 设计决策
+### 区域定位
 
-不接入实时第三方 API（高德需付费，大众点评/美团不对外开放，Google Maps 国内受限）。改用**一次性 AI 生成的模拟数据**，存为静态 JSON 文件提交进仓库。
+项目地点已从上海静安区改为**北京五道口**（海淀区高校聚集区，清华/北林/北语周边）。
+BBOX：lat 39.980~40.005，lng 116.320~116.358，以五道口地铁站为中心。
 
-这个方案完整满足黑客松评审要求：
-- POI 数据与服务 → `src/data/pois.json`
-- 用户评价语料 → 每条 POI 含 `reviews[]` 和 `review_summary`
-- 时空约束 → `avg_stay_minutes + avg_wait_minutes` 计算总时长，`open_hours` 过滤营业状态
-- 路线可行、排队适中 → `avg_wait_minutes < 20` 过滤，`crowd_level` 作为舒适度约束
+### 路网数据（`scripts/data/street-network.json`）
 
-### POI 数据结构（`src/types.ts` → `POI` 接口）
+因国内访问 OpenStreetMap Overpass API 不稳定，改用 Gemini 生成模拟路网。
+
+```bash
+npx tsx scripts/fetchStreetNetwork.ts   # 生成 scripts/data/street-network.json
+```
+
+输出 35 条路段（主路/次路/支路/步行街）、76 条子线段，总长约 28km。
+覆盖成府路、中关村北大街、学院路、清华东路、双清路、王庄路等主要街道。
+
+### POI 数据（`src/data/pois.json`）
+
+不接入实时第三方 API（高德需付费，大众点评/美团不对外开放，Google Maps 国内受限）。改用 Gemini 分批生成，结果 commit 进仓库，demo 完全离线。
+
+```bash
+# 完整生成流程（三步）：
+npx tsx scripts/generatePOIs.ts      # 1. 生成 POI 内容（分3批，每批~38个，共~105个）
+npx tsx scripts/snapPOIsToRoads.ts   # 2. 将 POI 坐标吸附到路网（按路段长度加权均匀分布）
+npx tsx scripts/visualizeStreetNetwork.ts  # 3. 可选：生成可视化地图 → scripts/data/street-network.html
+```
+
+**POI 数据结构（`src/types.ts` → `POI` 接口）**
 
 ```
 id, name, category, tags[]          基础信息
-area, address, open_hours           地理与时间
+area, address, lat, lng             地理位置（坐标经 snapPOIsToRoads 吸附到路网）
+open_hours                          营业时间
 avg_stay_minutes, avg_wait_minutes  路线时长计算依据
 crowd_level                         low / medium / high，影响舒适度评分
 price_level                         1-4档，配合 budget 偏好过滤
@@ -70,15 +88,9 @@ mood_match[], mbti_tags[]           偏好匹配维度
 best_time                           推荐游玩时段文案
 ```
 
-### 数据生成
+**生成策略**：分 3 批（西北区/东北区/南部区）各生成约 38 个，限定每批坐标范围，避免扎堆。生成后 `snapPOIsToRoads.ts` 按路段长度加权随机采样，将所有 POI 均匀分布到路网上。
 
-**只需跑一次，结果 commit 进仓库，之后 demo 完全离线。**
-
-```bash
-npx tsx scripts/generatePOIs.ts   # 生成 src/data/pois.json
-```
-
-脚本位置：`scripts/generatePOIs.ts`。调用 Gemini 生成 30 个上海静安区风格的 POI，覆盖咖啡厅、书店、公园、美术馆、餐厅等多种类型，以及 low/medium/high 三种客流等级。
+**POI 类型覆盖**（20 种）：咖啡厅、餐厅系列（日韩/北京风味/素食）、奶茶甜品、书店、文创小店、美术馆、livehouse、公园绿地、酒吧系列、夜宵烧烤、便利店、花店、健身瑜伽、共享自习室、洗衣生活服务、宠物友好咖啡。
 
 ### 路由逻辑（待实现）
 
@@ -141,9 +153,10 @@ ExploreScreen（地图界面）
 
 ### Gemini 调用规范
 
-- 模型：`gemini-2.5-flash`
-- 要求 Gemini **只返回 JSON**，用正则 `/\{[\s\S]*\}/` 从响应文本中提取，防止 Gemini 在 JSON 前后多说话导致解析失败。
+- 模型：`gemini-2.5-flash-lite`（`gemini-2.5-flash` 在国内高峰期频繁 503，lite 版稳定性更好）
+- 要求 Gemini **只返回 JSON**，用正则 `/\{[\s\S]*\}/` 或 `/\[[\s\S]*\]/` 从响应文本中提取，防止 Gemini 在 JSON 前后多说话导致解析失败。
 - API Key 通过 `process.env.GEMINI_API_KEY` 注入（由 `vite.config.ts` 的 `define` 字段在构建时替换）。
+- 脚本层通过 `$env:GEMINI_API_KEY="..."; npx tsx scripts/xxx.ts` 传入，或读取 `.env.local`。
 
 ## Commands
 
@@ -154,6 +167,12 @@ npm run lint           # TypeScript type-check (tsc --noEmit) — the only linte
 npm run preview        # Preview the production build
 npm run clean          # Remove dist/
 npm run generate:pois  # 一次性生成 POI 模拟数据 → src/data/pois.json（需要 GEMINI_API_KEY）
+
+# 地理数据生成（一次性，结果 commit 进仓库）
+npx tsx scripts/fetchStreetNetwork.ts      # 生成路网 → scripts/data/street-network.json
+npx tsx scripts/generatePOIs.ts           # 生成 POI → src/data/pois.json
+npx tsx scripts/snapPOIsToRoads.ts        # POI 吸附到路网（覆盖 pois.json）
+npx tsx scripts/visualizeStreetNetwork.ts # 可视化地图 → scripts/data/street-network.html
 ```
 
 There is no test suite.

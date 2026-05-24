@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>五道口路网 + POI</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: sans-serif; }
+  #map { width:100vw; height:100vh; }
+  #info {
+    position:absolute; top:12px; right:12px; z-index:1000;
+    background:rgba(255,255,255,0.93); padding:12px 16px;
+    border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2);
+    font-size:12px; min-width:155px; max-height:90vh; overflow-y:auto;
+  }
+  #info h4 { font-size:13px; margin:8px 0 4px; color:#333; }
+  #info .stat { color:#666; margin-bottom:6px; font-size:11px; }
+  .note { font-size:10px; color:#999; margin-top:4px; }
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="info">
+  <b style="font-size:13px">五道口路网 + POI</b>
+  <div class="stat" style="margin-top:4px">
+    路段 35 条 · POI 105 个<br>
+    圆圈大小 = 客流量
+  </div>
+  <h4>道路类型</h4>
+  <div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:24px;height:4px;background:#FF4444;border-radius:2px"></div>
+       <span>primary</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:24px;height:4px;background:#FF8800;border-radius:2px"></div>
+       <span>secondary</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:24px;height:4px;background:#FFCC00;border-radius:2px"></div>
+       <span>tertiary</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:24px;height:4px;background:#44BB88;border-radius:2px"></div>
+       <span>residential</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:24px;height:4px;background:#4488FF;border-radius:2px"></div>
+       <span>pedestrian</span></div>
+  <h4>POI 类型</h4>
+  <div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#A87CFF"></div>
+       <span>咖啡厅</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#C9A0FF"></div>
+       <span>宠物友好咖啡</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#FF88CC"></div>
+       <span>奶茶甜品</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#4488FF"></div>
+       <span>书店</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#00CCEE"></div>
+       <span>文创小店</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#FF6699"></div>
+       <span>美术馆</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#FF3366"></div>
+       <span>livehouse</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#33CC77"></div>
+       <span>公园绿地</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#FF8833"></div>
+       <span>餐厅</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#FFB347"></div>
+       <span>餐厅-日韩料理</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#FF6633"></div>
+       <span>餐厅-北京风味</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#99DD44"></div>
+       <span>餐厅-素食轻食</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#EE44AA"></div>
+       <span>酒吧</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#CC3388"></div>
+       <span>酒吧清吧</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#FF4444"></div>
+       <span>夜宵烧烤</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#FFDD22"></div>
+       <span>便利店</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#FF99BB"></div>
+       <span>花店</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#44DDBB"></div>
+       <span>健身/瑜伽</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#88AAFF"></div>
+       <span>共享空间/自习室</span></div><div style="display:flex;align-items:center;gap:6px;margin:2px 0">
+       <div style="width:10px;height:10px;border-radius:50%;background:#AAAAAA"></div>
+       <span>洗衣生活服务</span></div>
+  <div class="note">点击 POI 查看详情</div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map = L.map('map');
+map.fitBounds([[39.98,116.32],[40.005,116.358]]);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors', maxZoom: 19,
+}).addTo(map);
+
+L.rectangle(
+  [[39.98,116.32],[40.005,116.358]],
+  {color:'#6C5CFF',weight:1.5,fill:false,dashArray:'6,4',opacity:0.4}
+).addTo(map);
+
+// 路网（先画，POI 在上层）
+L.polyline([[39.9923,116.3201],[39.9923,116.328],[39.9921,116.335],[39.992,116.345],[39.9919,116.3579]],{color:'#FF8800',weight:4,opacity:0.7}).bindTooltip("成府路",{sticky:true}).addTo(map);
+L.polyline([[39.98,116.323],[39.985,116.3235],[39.99,116.324],[39.995,116.3245],[40,116.325],[40.005,116.3255]],{color:'#FF4444',weight:5,opacity:0.7}).bindTooltip("中关村北大街",{sticky:true}).addTo(map);
+L.polyline([[39.98,116.355],[39.985,116.3552],[39.99,116.3555],[39.995,116.3558],[40,116.356],[40.005,116.3562]],{color:'#FF4444',weight:5,opacity:0.7}).bindTooltip("学院路",{sticky:true}).addTo(map);
+L.polyline([[40.0025,116.3255],[40.0028,116.335],[40.003,116.345],[40.0032,116.356]],{color:'#FF8800',weight:4,opacity:0.7}).bindTooltip("清华东路",{sticky:true}).addTo(map);
+L.polyline([[39.9985,116.328],[39.9987,116.338],[39.999,116.35]],{color:'#FFCC00',weight:3,opacity:0.7}).bindTooltip("双清路",{sticky:true}).addTo(map);
+L.polyline([[39.99,116.338],[39.995,116.3382],[39.999,116.3385]],{color:'#FFCC00',weight:3,opacity:0.7}).bindTooltip("王庄路",{sticky:true}).addTo(map);
+L.polyline([[39.992,116.345],[39.997,116.3453],[40.003,116.3455]],{color:'#FFCC00',weight:3,opacity:0.7}).bindTooltip("荷清路",{sticky:true}).addTo(map);
+L.polyline([[39.9921,116.3355],[39.989,116.3357],[39.985,116.336]],{color:'#FFCC00',weight:3,opacity:0.7}).bindTooltip("五道口地铁站南侧路",{sticky:true}).addTo(map);
+L.polyline([[39.9922,116.3315],[39.995,116.3318],[39.998,116.332]],{color:'#FFCC00',weight:3,opacity:0.7}).bindTooltip("东升园路",{sticky:true}).addTo(map);
+L.polyline([[39.9922,116.328],[39.995,116.3282],[39.998,116.3285]],{color:'#FFCC00',weight:3,opacity:0.7}).bindTooltip("清华园路",{sticky:true}).addTo(map);
+L.polyline([[39.9895,116.333],[39.9893,116.336],[39.9892,116.339]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("华清嘉园北路",{sticky:true}).addTo(map);
+L.polyline([[39.985,116.339],[39.989,116.3392]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("华清嘉园东路",{sticky:true}).addTo(map);
+L.polyline([[39.985,116.333],[39.989,116.3332]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("华清嘉园西路",{sticky:true}).addTo(map);
+L.polyline([[39.985,116.333],[39.985,116.336],[39.985,116.339]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("华清嘉园南路",{sticky:true}).addTo(map);
+L.polyline([[39.991,116.3365],[39.9915,116.337],[39.992,116.3375]],{color:'#4488FF',weight:2,opacity:0.7}).bindTooltip("五道口购物中心内部小径",{sticky:true}).addTo(map);
+L.polyline([[39.99,116.342],[39.994,116.3422],[39.998,116.3425]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("东王庄路",{sticky:true}).addTo(map);
+L.polyline([[39.992,116.33],[39.995,116.3305],[40,116.331],[40.002,116.3315]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("清华大学主干道",{sticky:true}).addTo(map);
+L.polyline([[39.995,116.3245],[39.9955,116.326],[39.996,116.328]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("清华西门路",{sticky:true}).addTo(map);
+L.polyline([[39.9922,116.3325],[39.993,116.3327]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("清华南门路",{sticky:true}).addTo(map);
+L.polyline([[39.99,116.322],[39.9905,116.321],[39.991,116.3205]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("清华科技园内部路",{sticky:true}).addTo(map);
+L.polyline([[39.992,116.347],[39.997,116.3473],[40.002,116.3475]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("荷清园路",{sticky:true}).addTo(map);
+L.polyline([[40.0028,116.335],[40,116.3352]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("清华北门内路",{sticky:true}).addTo(map);
+L.polyline([[40.003,116.354],[40,116.3535]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("林业大学西门路",{sticky:true}).addTo(map);
+L.polyline([[39.985,116.3556],[39.987,116.353],[39.989,116.3525]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("地质大学南门路",{sticky:true}).addTo(map);
+L.polyline([[39.9918,116.3465],[39.993,116.3467]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("荷清路东侧小路",{sticky:true}).addTo(map);
+L.polyline([[39.993,116.333],[39.9932,116.336],[39.9935,116.338]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("成府路北侧支路",{sticky:true}).addTo(map);
+L.polyline([[39.996,116.33],[39.997,116.332],[39.998,116.334]],{color:'#4488FF',weight:2,opacity:0.7}).bindTooltip("清华大学校园内小路1",{sticky:true}).addTo(map);
+L.polyline([[39.998,116.33],[39.999,116.3315],[40,116.333]],{color:'#4488FF',weight:2,opacity:0.7}).bindTooltip("清华大学校园内小路2",{sticky:true}).addTo(map);
+L.polyline([[39.995,116.3282],[39.9955,116.327],[39.996,116.326]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("清华园路支路1",{sticky:true}).addTo(map);
+L.polyline([[39.994,116.326],[39.9942,116.328],[39.9945,116.33]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("清华西路",{sticky:true}).addTo(map);
+L.polyline([[39.997,116.3308],[39.9965,116.332],[39.996,116.333]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("逸夫科技楼路",{sticky:true}).addTo(map);
+L.polyline([[39.987,116.334],[39.986,116.335],[39.987,116.337],[39.988,116.336],[39.987,116.334]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("华清嘉园内部环路",{sticky:true}).addTo(map);
+L.polyline([[39.99,116.324],[39.991,116.325],[39.9915,116.326]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("文津国际酒店周边路",{sticky:true}).addTo(map);
+L.polyline([[39.9921,116.3365],[39.993,116.3367],[39.9938,116.337]],{color:'#4488FF',weight:2,opacity:0.7}).bindTooltip("五道口地铁站东侧小路",{sticky:true}).addTo(map);
+L.polyline([[39.994,116.328],[39.9935,116.327],[39.993,116.326]],{color:'#44BB88',weight:2,opacity:0.7}).bindTooltip("清华园路西侧支路",{sticky:true}).addTo(map);
+
+// POI
+L.circleMarker([40.00301797507781,116.34598862927946],{radius:11,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>未名咖啡</b><br>咖啡厅 · ⭐4.7 · ¥¥<br>客流：medium | 停留约 70min<br><i>在校园深处，静谧之选，适合学习和发呆。</i>").addTo(map);
+L.circleMarker([39.98718987362678,116.35533139241761],{radius:11,color:'#4488FF',fillColor:'#4488FF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>学府书吧</b><br>书店 · ⭐4.5 · ¥<br>客流：medium | 停留约 90min<br><i>藏书丰富，价格亲民，是学生党的心头好。</i>").addTo(map);
+L.circleMarker([39.992190807189964,116.33182174835139],{radius:8,color:'#00CCEE',fillColor:'#00CCEE',fillOpacity:0.85,weight:1.5}).bindPopup("<b>时光雕刻</b><br>文创小店 · ⭐4.6 · ¥¥<br>客流：low | 停留约 45min<br><i>充满设计感的小店，文创产品独特，适合送礼或自用。</i>").addTo(map);
+L.circleMarker([39.99342170842076,116.34708530250525],{radius:15,color:'#EE44AA',fillColor:'#EE44AA',fillOpacity:0.85,weight:1.5}).bindPopup("<b>五道营小酒馆</b><br>酒吧 · ⭐4.3 · ¥¥¥<br>客流：high | 停留约 90min<br><i>热闹的夜生活去处，小吃和酒都很有特色。</i>").addTo(map);
+L.circleMarker([39.999034084490475,116.33155112673572],{radius:8,color:'#FF6699',fillColor:'#FF6699',fillOpacity:0.85,weight:1.5}).bindPopup("<b>清华美院画廊</b><br>美术馆 · ⭐4.8 · ¥<br>客流：low | 停留约 60min<br><i>艺术爱好者的天堂，常有学生优秀作品展出。</i>").addTo(map);
+L.circleMarker([39.99850291354289,116.32814567714476],{radius:15,color:'#FFDD22',fillColor:'#FFDD22',fillOpacity:0.85,weight:1.5}).bindPopup("<b>7-Eleven</b><br>便利店 · ⭐4.2 · ¥<br>客流：high | 停留约 10min<br><i>24小时便利，满足各种即时需求。</i>").addTo(map);
+L.circleMarker([39.98427907797299,116.3234279077973],{radius:11,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>小确幸咖啡</b><br>咖啡厅 · ⭐4.5 · ¥¥<br>客流：medium | 停留约 60min<br><i>藏在小巷里的咖啡馆，安静舒适，是偷得浮生半日闲的好去处。</i>").addTo(map);
+L.circleMarker([39.99689150790057,116.33106038103863],{radius:11,color:'#4488FF',fillColor:'#4488FF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>知乎书店</b><br>书店 · ⭐4.6 · ¥¥<br>客流：medium | 停留约 75min<br><i>以知识和思考为主题的书店，氛围感十足。</i>").addTo(map);
+L.circleMarker([39.99700425997634,116.33200851995268],{radius:8,color:'#00CCEE',fillColor:'#00CCEE',fillOpacity:0.85,weight:1.5}).bindPopup("<b>灵感制造所</b><br>文创小店 · ⭐4.4 · ¥¥<br>客流：low | 停留约 40min<br><i>充满创意的手工制品和设计周边，适合寻找独特礼物。</i>").addTo(map);
+L.circleMarker([39.99851755923273,116.32887796163658],{radius:15,color:'#FF8833',fillColor:'#FF8833',fillOpacity:0.85,weight:1.5}).bindPopup("<b>深夜食堂</b><br>餐厅 · ⭐4.3 · ¥¥<br>客流：high | 停留约 60min<br><i>日式小馆，氛围温馨，深夜里的人气聚集地。</i>").addTo(map);
+L.circleMarker([39.985,116.33690809831803],{radius:11,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>绿野仙踪咖啡</b><br>咖啡厅 · ⭐4.7 · ¥¥<br>客流：medium | 停留约 75min<br><i>以植物为主题的咖啡馆，仿佛置身丛林，拍照绝佳。</i>").addTo(map);
+L.circleMarker([40.00307919165228,116.34935554087542],{radius:8,color:'#4488FF',fillColor:'#4488FF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>思想的角落</b><br>书店 · ⭐4.5 · ¥¥<br>客流：low | 停留约 80min<br><i>小众独立书店，专注于社科和人文类书籍。</i>").addTo(map);
+L.circleMarker([40.00215970499907,116.32521597049991],{radius:11,color:'#00CCEE',fillColor:'#00CCEE',fillOpacity:0.85,weight:1.5}).bindPopup("<b>青年集市</b><br>文创小店 · ⭐4.4 · ¥¥<br>客流：medium | 停留约 40min<br><i>汇集了许多年轻设计师的原创品牌，充满活力。</i>").addTo(map);
+L.circleMarker([40.003119576600746,116.35157671304106],{radius:15,color:'#FF8833',fillColor:'#FF8833',fillOpacity:0.85,weight:1.5}).bindPopup("<b>街角餐吧</b><br>餐厅 · ⭐4.2 · ¥¥<br>客流：high | 停留约 70min<br><i>提供简餐和酒水，是朋友聚会的好地方。</i>").addTo(map);
+L.circleMarker([39.99207360686006,116.33763931399398],{radius:11,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>清华园咖啡</b><br>咖啡厅 · ⭐4.4 · ¥<br>客流：medium | 停留约 50min<br><i>校园内的咖啡，价格实惠，是学生党常去的。</i>").addTo(map);
+L.circleMarker([39.99877363253269,116.3559509453013],{radius:11,color:'#4488FF',fillColor:'#4488FF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>文心书社</b><br>书店 · ⭐4.4 · ¥<br>客流：medium | 停留约 70min<br><i>新华书店的延伸，涵盖各类图书，是学生学习的好去处。</i>").addTo(map);
+L.circleMarker([40.00046728002018,116.32504672800202],{radius:8,color:'#00CCEE',fillColor:'#00CCEE',fillOpacity:0.85,weight:1.5}).bindPopup("<b>设计盒子</b><br>文创小店 · ⭐4.5 · ¥¥<br>客流：low | 停留约 45min<br><i>小巧精致的文创店，有很多有趣的独立设计师品牌。</i>").addTo(map);
+L.circleMarker([39.99125189356435,116.33805007574257],{radius:11,color:'#FF8833',fillColor:'#FF8833',fillOpacity:0.85,weight:1.5}).bindPopup("<b>老北京炸酱面</b><br>餐厅 · ⭐4.3 · ¥<br>客流：medium | 停留约 40min<br><i>地道的北京炸酱面，价格实惠，是快速解决午餐的好选择。</i>").addTo(map);
+L.circleMarker([39.999813999541296,116.35599255998164],{radius:11,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>清风徐来咖啡</b><br>咖啡厅 · ⭐4.6 · ¥¥<br>客流：medium | 停留约 65min<br><i>环境清幽，适合安静地享受一杯咖啡和阅读。</i>").addTo(map);
+L.circleMarker([39.995133993405,116.33180893289367],{radius:8,color:'#FF6699',fillColor:'#FF6699',fillOpacity:0.85,weight:1.5}).bindPopup("<b>艺文空间</b><br>美术馆 · ⭐4.5 · ¥<br>客流：low | 停留约 50min<br><i>小型艺术展览空间，经常有独立艺术家的作品展出。</i>").addTo(map);
+L.circleMarker([39.98503931728291,116.33300196586414],{radius:15,color:'#FFDD22',fillColor:'#FFDD22',fillOpacity:0.85,weight:1.5}).bindPopup("<b>便利蜂</b><br>便利店 · ⭐4.1 · ¥<br>客流：high | 停留约 10min<br><i>24小时便利，提供多种零食和简餐。</i>").addTo(map);
+L.circleMarker([39.991901984142984,116.35764404555556],{radius:11,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>午后时光咖啡</b><br>咖啡厅 · ⭐4.7 · ¥¥<br>客流：medium | 停留约 60min<br><i>环境舒适，咖啡香浓，适合一个人或三两好友小聚。</i>").addTo(map);
+L.circleMarker([39.98644244496497,116.33455755503503],{radius:11,color:'#4488FF',fillColor:'#4488FF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>时光书屋</b><br>书店 · ⭐4.6 · ¥¥<br>客流：medium | 停留约 85min<br><i>一家充满怀旧气息的书店，有很多经典老书。</i>").addTo(map);
+L.circleMarker([39.99213703735917,116.33370369242897],{radius:8,color:'#00CCEE',fillColor:'#00CCEE',fillOpacity:0.85,weight:1.5}).bindPopup("<b>创意工坊</b><br>文创小店 · ⭐4.4 · ¥¥<br>客流：low | 停留约 40min<br><i>手工艺品和DIY材料的集合店，可以自己动手制作。</i>").addTo(map);
+L.circleMarker([39.99693842140664,116.33192922809377],{radius:15,color:'#FF8833',fillColor:'#FF8833',fillOpacity:0.85,weight:1.5}).bindPopup("<b>韩式烤肉</b><br>餐厅 · ⭐4.3 · ¥¥<br>客流：high | 停留约 70min<br><i>正宗韩式烤肉，性价比高，是年轻人聚餐的首选。</i>").addTo(map);
+L.circleMarker([39.99879947554612,116.34197902184476],{radius:11,color:'#4488FF',fillColor:'#4488FF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>书香阁</b><br>书店 · ⭐4.5 · ¥¥<br>客流：medium | 停留约 75min<br><i>小而美的书店，专注于文学和艺术类书籍。</i>").addTo(map);
+L.circleMarker([39.985,116.33640293026068],{radius:8,color:'#00CCEE',fillColor:'#00CCEE',fillOpacity:0.85,weight:1.5}).bindPopup("<b>文具杂货铺</b><br>文创小店 · ⭐4.3 · ¥¥<br>客流：low | 停留约 35min<br><i>各种可爱的文具和生活小物，让人爱不释手。</i>").addTo(map);
+L.circleMarker([39.99879500176884,116.34180007075364],{radius:11,color:'#FF8833',fillColor:'#FF8833',fillOpacity:0.85,weight:1.5}).bindPopup("<b>意式餐厅</b><br>餐厅 · ⭐4.4 · ¥¥¥<br>客流：medium | 停留约 75min<br><i>精致的意式料理，适合约会或商务午餐。</i>").addTo(map);
+L.circleMarker([39.997730523873265,116.32847305238734],{radius:8,color:'#4488FF',fillColor:'#4488FF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>独立书吧</b><br>书店 · ⭐4.6 · ¥¥<br>客流：low | 停留约 90min<br><i>小众独立书店，藏书特色鲜明，是深度阅读的好去处。</i>").addTo(map);
+L.circleMarker([40.002952600010104,116.34263000050512],{radius:8,color:'#00CCEE',fillColor:'#00CCEE',fillOpacity:0.85,weight:1.5}).bindPopup("<b>复古风</b><br>文创小店 · ⭐4.5 · ¥¥<br>客流：low | 停留约 45min<br><i>主打复古风的文创小店，有很多独特的饰品和摆件。</i>").addTo(map);
+L.circleMarker([40.00279859635158,116.3349555511335],{radius:15,color:'#FF8833',fillColor:'#FF8833',fillOpacity:0.85,weight:1.5}).bindPopup("<b>日式居酒屋</b><br>餐厅 · ⭐4.3 · ¥¥<br>客流：high | 停留约 60min<br><i>小巧精致的日式居酒屋，提供各种烤串和日式小食。</i>").addTo(map);
+L.circleMarker([39.99865876279352,116.33593813967599],{radius:11,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>咖啡时光</b><br>咖啡厅 · ⭐4.5 · ¥¥<br>客流：medium | 停留约 55min<br><i>安静舒适的咖啡馆，适合一个人静静地看书或工作。</i>").addTo(map);
+L.circleMarker([39.99194943118721,116.35561696587123],{radius:8,color:'#FF6699',fillColor:'#FF6699',fillOpacity:0.85,weight:1.5}).bindPopup("<b>艺廊</b><br>美术馆 · ⭐4.5 · ¥<br>客流：low | 停留约 50min<br><i>小众艺术展览空间，常有惊喜的当代艺术作品。</i>").addTo(map);
+L.circleMarker([39.99391767165133,116.33031961194189],{radius:15,color:'#FFDD22',fillColor:'#FFDD22',fillOpacity:0.85,weight:1.5}).bindPopup("<b>便利店A</b><br>便利店 · ⭐4.2 · ¥<br>客流：high | 停留约 10min<br><i>24小时便利，满足生活所需。</i>").addTo(map);
+L.circleMarker([39.99282535171385,116.34504952110282],{radius:15,color:'#EE44AA',fillColor:'#EE44AA',fillOpacity:0.85,weight:1.5}).bindPopup("<b>小酒馆</b><br>酒吧 · ⭐4.3 · ¥¥¥<br>客流：high | 停留约 90min<br><i>热闹的夜生活去处，小吃和酒都很有特色。</i>").addTo(map);
+L.circleMarker([39.99644247030457,116.33211505939084],{radius:15,color:'#FFB347',fillColor:'#FFB347',fillOpacity:0.85,weight:1.5}).bindPopup("<b>韩时烤肉</b><br>餐厅-日韩料理 · ⭐4.5 · ¥¥¥<br>客流：high | 停留约 90min<br><i>年轻人聚餐热门选择，烤肉很香！</i>").addTo(map);
+L.circleMarker([39.98819728449034,116.33576020366323],{radius:11,color:'#FFB347',fillColor:'#FFB347',fillOpacity:0.85,weight:1.5}).bindPopup("<b>味千拉面</b><br>餐厅-日韩料理 · ⭐4.2 · ¥¥<br>客流：medium | 停留约 45min<br><i>快捷方便的日式拉面，满足味蕾。</i>").addTo(map);
+L.circleMarker([40.00122965781428,116.35370494296905],{radius:11,color:'#FFB347',fillColor:'#FFB347',fillOpacity:0.85,weight:1.5}).bindPopup("<b>石二锅</b><br>餐厅-日韩料理 · ⭐4.3 · ¥¥<br>客流：medium | 停留约 60min<br><i>一人一锅，卫生又实惠。</i>").addTo(map);
+L.circleMarker([39.99338607304024,116.33724048693496],{radius:11,color:'#FFB347',fillColor:'#FFB347',fillOpacity:0.85,weight:1.5}).bindPopup("<b>大户屋</b><br>餐厅-日韩料理 · ⭐4.4 · ¥¥¥<br>客流：medium | 停留约 70min<br><i>日式定食的温馨选择。</i>").addTo(map);
+L.circleMarker([39.99384829004409,116.33030804834068],{radius:15,color:'#FFB347',fillColor:'#FFB347',fillOpacity:0.85,weight:1.5}).bindPopup("<b>摩打食堂</b><br>餐厅-日韩料理 · ⭐4.7 · ¥¥¥<br>客流：high | 停留约 75min<br><i>人气日料，招牌菜值得尝试。</i>").addTo(map);
+L.circleMarker([39.98591222729737,116.33304561136487],{radius:11,color:'#FFB347',fillColor:'#FFB347',fillOpacity:0.85,weight:1.5}).bindPopup("<b>吉野家</b><br>餐厅-日韩料理 · ⭐4 · ¥<br>客流：medium | 停留约 30min<br><i>平价快速的日式简餐。</i>").addTo(map);
+L.circleMarker([40.002531071441915,116.32648392899411],{radius:8,color:'#FFB347',fillColor:'#FFB347',fillOpacity:0.85,weight:1.5}).bindPopup("<b>味蕾日料</b><br>餐厅-日韩料理 · ⭐4.5 · ¥¥¥<br>客流：low | 停留约 70min<br><i>小众精致日料，适合安静品尝。</i>").addTo(map);
+L.circleMarker([39.991714655144946,116.3241714655145],{radius:11,color:'#FFB347',fillColor:'#FFB347',fillOpacity:0.85,weight:1.5}).bindPopup("<b>鳗鳗的爱</b><br>餐厅-日韩料理 · ⭐4.6 · ¥¥¥<br>客流：medium | 停留约 60min<br><i>招牌鳗鱼饭，不容错过。</i>").addTo(map);
+L.circleMarker([39.9920647325478,116.3380825893019],{radius:15,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>星巴克（五道口店）</b><br>咖啡厅 · ⭐4.3 · ¥¥<br>客流：high | 停留约 60min<br><i>熟悉的味道，五道口的活力聚集地。</i>").addTo(map);
+L.circleMarker([40.00276309952295,116.33500263574835],{radius:11,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>瑞幸咖啡（清华东路店）</b><br>咖啡厅 · ⭐4.2 · ¥<br>客流：medium | 停留约 45min<br><i>性价比之王，快速补充能量。</i>").addTo(map);
+L.circleMarker([39.99509322727594,116.32477968182782],{radius:11,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>Seesaw Coffee</b><br>咖啡厅 · ⭐4.5 · ¥¥<br>客流：medium | 停留约 75min<br><i>有设计感的空间，品味一杯好咖啡。</i>").addTo(map);
+L.circleMarker([39.991854796815275,116.34650913280255],{radius:11,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>Tims咖啡</b><br>咖啡厅 · ⭐4.1 · ¥¥<br>客流：medium | 停留约 45min<br><i>加拿大风味，快速提神。</i>").addTo(map);
+L.circleMarker([39.988226020148595,116.33316130100744],{radius:11,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>M Stand</b><br>咖啡厅 · ⭐4.4 · ¥¥<br>客流：medium | 停留约 60min<br><i>工业风设计，出片率高。</i>").addTo(map);
+L.circleMarker([39.980216766702405,116.32302167667024],{radius:11,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>Peet's Coffee</b><br>咖啡厅 · ⭐4.3 · ¥¥<br>客流：medium | 停留约 70min<br><i>美式咖啡的醇厚选择。</i>").addTo(map);
+L.circleMarker([39.997837990886595,116.3424878493165],{radius:11,color:'#FF88CC',fillColor:'#FF88CC',fillOpacity:0.85,weight:1.5}).bindPopup("<b>满记甜品</b><br>奶茶甜品 · ⭐4.3 · ¥¥<br>客流：medium | 停留约 45min<br><i>经典的港式甜品。</i>").addTo(map);
+L.circleMarker([39.985,116.33349963872486],{radius:15,color:'#FF88CC',fillColor:'#FF88CC',fillOpacity:0.85,weight:1.5}).bindPopup("<b>CoCo都可</b><br>奶茶甜品 · ⭐4.1 · ¥<br>客流：high | 停留约 20min<br><i>随处可见的平价奶茶。</i>").addTo(map);
+L.circleMarker([39.9986131138327,116.34736452455331],{radius:15,color:'#FF88CC',fillColor:'#FF88CC',fillOpacity:0.85,weight:1.5}).bindPopup("<b>一点点</b><br>奶茶甜品 · ⭐4.2 · ¥<br>客流：high | 停留约 20min<br><i>经典奶茶，总有你的爱。</i>").addTo(map);
+L.circleMarker([39.989495151005634,116.33307273491543],{radius:15,color:'#FF88CC',fillColor:'#FF88CC',fillOpacity:0.85,weight:1.5}).bindPopup("<b>喜茶</b><br>奶茶甜品 · ⭐4.5 · ¥¥<br>客流：high | 停留约 30min<br><i>网红奶茶，颜值与口味并存。</i>").addTo(map);
+L.circleMarker([39.995616360701234,116.35582465442805],{radius:11,color:'#FF88CC',fillColor:'#FF88CC',fillOpacity:0.85,weight:1.5}).bindPopup("<b>Lady M</b><br>奶茶甜品 · ⭐4.6 · ¥¥¥<br>客流：medium | 停留约 45min<br><i>精致蛋糕，下午茶的仪式感。</i>").addTo(map);
+L.circleMarker([39.99025628172884,116.33561894956588],{radius:11,color:'#44DDBB',fillColor:'#44DDBB',fillOpacity:0.85,weight:1.5}).bindPopup("<b>Keep健身房</b><br>健身/瑜伽 · ⭐4.5 · ¥¥¥<br>客流：medium | 停留约 90min<br><i>科技感健身，为年轻身体充电。</i>").addTo(map);
+L.circleMarker([39.995580287414036,116.32683942517193],{radius:8,color:'#44DDBB',fillColor:'#44DDBB',fillOpacity:0.85,weight:1.5}).bindPopup("<b>Space瑜伽</b><br>健身/瑜伽 · ⭐4.7 · ¥¥¥<br>客流：low | 停留约 75min<br><i>静谧空间，找回内心的平静。</i>").addTo(map);
+L.circleMarker([39.985143664985436,116.33598922512608],{radius:11,color:'#44DDBB',fillColor:'#44DDBB',fillOpacity:0.85,weight:1.5}).bindPopup("<b>热练营</b><br>健身/瑜伽 · ⭐4.4 · ¥¥¥<br>客流：medium | 停留约 60min<br><i>活力四射的团课体验。</i>").addTo(map);
+L.circleMarker([39.998735485319024,116.33110322797853],{radius:11,color:'#44DDBB',fillColor:'#44DDBB',fillOpacity:0.85,weight:1.5}).bindPopup("<b>CrossFit XYZ</b><br>健身/瑜伽 · ⭐4.6 · ¥¥¥¥<br>客流：medium | 停留约 75min<br><i>挑战极限，释放激情。</i>").addTo(map);
+L.circleMarker([40.00097080414594,116.35603883216584],{radius:11,color:'#FFDD22',fillColor:'#FFDD22',fillOpacity:0.85,weight:1.5}).bindPopup("<b>7-Eleven（五道口店）</b><br>便利店 · ⭐4 · ¥<br>客流：medium | 停留约 10min<br><i>24小时的便利之选。</i>").addTo(map);
+L.circleMarker([40.00452511142176,116.35618100445687],{radius:11,color:'#FFDD22',fillColor:'#FFDD22',fillOpacity:0.85,weight:1.5}).bindPopup("<b>罗森（清华东路店）</b><br>便利店 · ⭐4.1 · ¥<br>客流：medium | 停留约 10min<br><i>温暖的小确幸，日系便利。</i>").addTo(map);
+L.circleMarker([40.002994470772244,116.34472353861219],{radius:11,color:'#FFDD22',fillColor:'#FFDD22',fillOpacity:0.85,weight:1.5}).bindPopup("<b>全家FamilyMart</b><br>便利店 · ⭐4.1 · ¥<br>客流：medium | 停留约 10min<br><i>满足日常所需，方便快捷。</i>").addTo(map);
+L.circleMarker([39.99924691654052,116.33187037481079],{radius:11,color:'#33CC77',fillColor:'#33CC77',fillOpacity:0.85,weight:1.5}).bindPopup("<b>五道口公园</b><br>公园绿地 · ⭐4.2 · <br>客流：medium | 停留约 60min<br><i>城市绿洲，放松身心。</i>").addTo(map);
+L.circleMarker([39.985,116.33353598178039],{radius:11,color:'#33CC77',fillColor:'#33CC77',fillOpacity:0.85,weight:1.5}).bindPopup("<b>清华大学校园绿化带</b><br>公园绿地 · ⭐4.5 · <br>客流：medium | 停留约 90min<br><i>校园内的宁静角落。</i>").addTo(map);
+L.circleMarker([39.991974246523434,116.34832219847677],{radius:8,color:'#33CC77',fillColor:'#33CC77',fillOpacity:0.85,weight:1.5}).bindPopup("<b>北京林业大学校园绿化</b><br>公园绿地 · ⭐4.4 · <br>客流：low | 停留约 90min<br><i>绿意盎然，生态优美。</i>").addTo(map);
+L.circleMarker([39.98824011640942,116.33316200582047],{radius:8,color:'#33CC77',fillColor:'#33CC77',fillOpacity:0.85,weight:1.5}).bindPopup("<b>小公园</b><br>公园绿地 · ⭐4.1 · <br>客流：low | 停留约 45min<br><i>闹市中的一片宁静。</i>").addTo(map);
+L.circleMarker([39.99863219713875,116.3346098569374],{radius:15,color:'#FF4444',fillColor:'#FF4444',fillOpacity:0.85,weight:1.5}).bindPopup("<b>串串香</b><br>夜宵烧烤 · ⭐4.3 · ¥¥<br>客流：high | 停留约 70min<br><i>夜晚的烟火气，学生最爱。</i>").addTo(map);
+L.circleMarker([39.98650950798773,116.33307547539938],{radius:11,color:'#FF4444',fillColor:'#FF4444',fillOpacity:0.85,weight:1.5}).bindPopup("<b>新疆羊肉串</b><br>夜宵烧烤 · ⭐4.4 · ¥¥<br>客流：medium | 停留约 60min<br><i>深夜的诱惑，烤串的香气。</i>").addTo(map);
+L.circleMarker([39.98711098903969,116.33584167582202],{radius:15,color:'#FF4444',fillColor:'#FF4444',fillOpacity:0.85,weight:1.5}).bindPopup("<b>烧烤排档</b><br>夜宵烧烤 · ⭐4.2 · ¥¥<br>客流：high | 停留约 75min<br><i>热闹的夜市，满足各种口味。</i>").addTo(map);
+L.circleMarker([39.99896906969709,116.34876278788337],{radius:8,color:'#FF99BB',fillColor:'#FF99BB',fillOpacity:0.85,weight:1.5}).bindPopup("<b>鲜花小铺</b><br>花店 · ⭐4.5 · ¥¥<br>客流：low | 停留约 20min<br><i>生活中的小确幸，装点你的心情。</i>").addTo(map);
+L.circleMarker([39.995911381364685,116.33826835360234],{radius:8,color:'#FF99BB',fillColor:'#FF99BB',fillOpacity:0.85,weight:1.5}).bindPopup("<b>花漾年华</b><br>花店 · ⭐4.6 · ¥¥<br>客流：low | 停留约 25min<br><i>精致的花艺，点亮生活。</i>").addTo(map);
+L.circleMarker([39.99117630642252,116.34205881532112],{radius:8,color:'#FF99BB',fillColor:'#FF99BB',fillOpacity:0.85,weight:1.5}).bindPopup("<b>芬芳花坊</b><br>花店 · ⭐4.3 · ¥<br>客流：low | 停留约 15min<br><i>平价鲜花，温暖的角落。</i>").addTo(map);
+L.circleMarker([39.99648534613551,116.32834853461355],{radius:15,color:'#FF6633',fillColor:'#FF6633',fillOpacity:0.85,weight:1.5}).bindPopup("<b>京味儿炸酱面</b><br>餐厅-北京风味 · ⭐4.3 · ¥<br>客流：high | 停留约 45min<br><i>地道的北京炸酱面，量大实惠，是学生党和附近居民的心头好。</i>").addTo(map);
+L.circleMarker([40.00039622316653,116.35601584892666],{radius:15,color:'#FF6633',fillColor:'#FF6633',fillOpacity:0.85,weight:1.5}).bindPopup("<b>老诚一锅(五道口店)</b><br>餐厅-北京风味 · ⭐4.5 · ¥¥<br>客流：high | 停留约 60min<br><i>麻辣鲜香的羊蝎子火锅，是冬天聚餐的好去处。</i>").addTo(map);
+L.circleMarker([39.99141404617751,116.32582809235501],{radius:11,color:'#FF6633',fillColor:'#FF6633',fillOpacity:0.85,weight:1.5}).bindPopup("<b>爆肚冯(五道口店)</b><br>餐厅-北京风味 · ⭐4.4 · ¥¥<br>客流：medium | 停留约 40min<br><i>传统的北京爆肚，口感脆嫩，搭配麻酱小料，风味独特。</i>").addTo(map);
+L.circleMarker([39.990263829233946,116.32402638292339],{radius:11,color:'#FF6633',fillColor:'#FF6633',fillOpacity:0.85,weight:1.5}).bindPopup("<b>宫门口马记</b><br>餐厅-北京风味 · ⭐4.2 · ¥<br>客流：medium | 停留约 30min<br><i>经典的北京小吃，如卤煮、炒肝等，价格实惠，味道地道。</i>").addTo(map);
+L.circleMarker([39.98604342471522,116.3552626054829],{radius:11,color:'#FF6633',fillColor:'#FF6633',fillOpacity:0.85,weight:1.5}).bindPopup("<b>京酱肉丝家常菜</b><br>餐厅-北京风味 · ⭐4.3 · ¥¥<br>客流：medium | 停留约 75min<br><i>提供多种家常菜，口味偏北京风味，适合家庭朋友聚餐。</i>").addTo(map);
+L.circleMarker([39.990491469023716,116.32404914690237],{radius:11,color:'#FF6633',fillColor:'#FF6633',fillOpacity:0.85,weight:1.5}).bindPopup("<b>卤煮小肠</b><br>餐厅-北京风味 · ⭐4.1 · ¥<br>客流：medium | 停留约 40min<br><i>专注卤煮，口味浓郁，是体验地道北京风味的好地方。</i>").addTo(map);
+L.circleMarker([39.988574414116904,116.33917872070585],{radius:8,color:'#FF6633',fillColor:'#FF6633',fillOpacity:0.85,weight:1.5}).bindPopup("<b>豆汁焦圈</b><br>餐厅-北京风味 · ⭐3.9 · ¥<br>客流：low | 停留约 30min<br><i>提供传统的豆汁和焦圈，是体验北京特色早餐的选择。</i>").addTo(map);
+L.circleMarker([39.98790386237534,116.33578221032185],{radius:11,color:'#99DD44',fillColor:'#99DD44',fillOpacity:0.85,weight:1.5}).bindPopup("<b>Green Leaf Kitchen</b><br>餐厅-素食轻食 · ⭐4.5 · ¥¥<br>客流：medium | 停留约 50min<br><i>提供多种健康美味的素食和轻食选择，适合追求健康饮食的年轻人。</i>").addTo(map);
+L.circleMarker([40.004675658369564,116.35618702633478],{radius:11,color:'#99DD44',fillColor:'#99DD44',fillOpacity:0.85,weight:1.5}).bindPopup("<b>Vegan Garden</b><br>餐厅-素食轻食 · ⭐4.4 · ¥¥<br>客流：medium | 停留约 50min<br><i>提供创意素食料理，摆盘精致，味道也不错。</i>").addTo(map);
+L.circleMarker([39.99234363444777,116.34211718172239],{radius:15,color:'#99DD44',fillColor:'#99DD44',fillOpacity:0.85,weight:1.5}).bindPopup("<b>轻食主义</b><br>餐厅-素食轻食 · ⭐4.3 · ¥<br>客流：high | 停留约 45min<br><i>主打健康轻食，价格亲民，是学生党常去的午餐地点。</i>").addTo(map);
+L.circleMarker([39.994238170137876,116.32825446758585],{radius:11,color:'#99DD44',fillColor:'#99DD44',fillOpacity:0.85,weight:1.5}).bindPopup("<b>蔬食生活</b><br>餐厅-素食轻食 · ⭐4.6 · ¥¥<br>客流：medium | 停留约 50min<br><i>环境优美，菜品颜值高，适合拍照打卡，味道也健康。</i>").addTo(map);
+L.circleMarker([39.99434697482109,116.34514081848926],{radius:8,color:'#99DD44',fillColor:'#99DD44',fillOpacity:0.85,weight:1.5}).bindPopup("<b>谷物天堂</b><br>餐厅-素食轻食 · ⭐4.2 · ¥¥<br>客流：low | 停留约 45min<br><i>提供各种谷物碗和健康饮品，注重食材的天然与营养。</i>").addTo(map);
+L.circleMarker([39.99204309113769,116.34654051518962],{radius:11,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>角落里的咖啡馆</b><br>咖啡厅 · ⭐4.7 · ¥¥<br>客流：medium | 停留约 90min<br><i>隐藏在小巷里的独立咖啡馆，环境安静舒适，适合阅读和发呆。</i>").addTo(map);
+L.circleMarker([39.99192622621834,116.35451681783445],{radius:15,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>星辰咖啡</b><br>咖啡厅 · ⭐4.4 · ¥¥<br>客流：high | 停留约 60min<br><i>位于购物中心，交通便利，是逛街休息的好选择。</i>").addTo(map);
+L.circleMarker([39.99859812499816,116.33290624990796],{radius:15,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>青年空间咖啡</b><br>咖啡厅 · ⭐4.3 · ¥<br>客流：high | 停留约 70min<br><i>价格实惠，提供免费Wi-Fi，是学生党常去的学习和社交场所。</i>").addTo(map);
+L.circleMarker([39.99219728231083,116.33159511912075],{radius:8,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>文艺复兴咖啡</b><br>咖啡厅 · ⭐4.8 · ¥¥¥<br>客流：low | 停留约 80min<br><i>主打精品咖啡，店内艺术氛围浓厚，经常举办小型艺术展览。</i>").addTo(map);
+L.circleMarker([39.985775855504535,116.32357758555045],{radius:11,color:'#A87CFF',fillColor:'#A87CFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>深夜咖啡馆</b><br>咖啡厅 · ⭐4.5 · ¥¥<br>客流：medium | 停留约 120min<br><i>营业至凌晨的咖啡馆，环境舒适，适合夜猫子和需要深夜学习的人。</i>").addTo(map);
+L.circleMarker([39.98567860004911,116.33903393000246],{radius:11,color:'#88AAFF',fillColor:'#88AAFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>静思空间</b><br>共享空间/自习室 · ⭐4.6 · ¥¥<br>客流：medium | 停留约 180min<br><i>安静舒适的自习空间，提供独立座位和小组讨论区，是备考学生的理想场所。</i>").addTo(map);
+L.circleMarker([39.985,116.3360070005375],{radius:8,color:'#88AAFF',fillColor:'#88AAFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>灵感工坊</b><br>共享空间/自习室 · ⭐4.4 · ¥¥<br>客流：low | 停留约 150min<br><i>提供创意工作空间，有独立工位和会议室，适合自由职业者和创业团队。</i>").addTo(map);
+L.circleMarker([40.0029072399133,116.34036199566481],{radius:11,color:'#88AAFF',fillColor:'#88AAFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>书香角落</b><br>共享空间/自习室 · ⭐4.5 · ¥¥<br>客流：medium | 停留约 120min<br><i>结合了书店和自习室的功能，环境安静，藏书丰富。</i>").addTo(map);
+L.circleMarker([39.98738167449872,116.35290458137531],{radius:15,color:'#88AAFF',fillColor:'#88AAFF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>青春驿站</b><br>共享空间/自习室 · ⭐4.2 · ¥<br>客流：high | 停留约 180min<br><i>价格低廉，24小时开放，是学生党考前冲刺的首选。</i>").addTo(map);
+L.circleMarker([40.002627608058454,116.32954092185115],{radius:11,color:'#CC3388',fillColor:'#CC3388',fillOpacity:0.85,weight:1.5}).bindPopup("<b>时光酒吧</b><br>酒吧清吧 · ⭐4.5 · ¥¥¥<br>客流：medium | 停留约 90min<br><i>氛围轻松，音乐好听，是下班后小酌一杯的好地方。</i>").addTo(map);
+L.circleMarker([39.99280923871798,116.34704855432308],{radius:15,color:'#CC3388',fillColor:'#CC3388',fillOpacity:0.85,weight:1.5}).bindPopup("<b>学生时代</b><br>酒吧清吧 · ⭐4.3 · ¥¥<br>客流：high | 停留约 80min<br><i>以青春怀旧为主题，价格实惠，是学生党聚会的热门选择。</i>").addTo(map);
+L.circleMarker([40.003177959939634,116.35478779667999],{radius:11,color:'#C9A0FF',fillColor:'#C9A0FF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>猫咪的秘密花园</b><br>宠物友好咖啡 · ⭐4.7 · ¥¥<br>客流：medium | 停留约 75min<br><i>有可爱的猫咪陪伴，环境舒适，是爱猫人士的聚集地。</i>").addTo(map);
+L.circleMarker([39.99563670238188,116.32672659523624],{radius:11,color:'#C9A0FF',fillColor:'#C9A0FF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>汪星人的乐园</b><br>宠物友好咖啡 · ⭐4.5 · ¥¥<br>客流：medium | 停留约 70min<br><i>有狗狗活动区，主人可以带着狗狗一起玩耍，咖啡和零食也很棒。</i>").addTo(map);
+L.circleMarker([40.00289731524662,116.35611589260986],{radius:11,color:'#C9A0FF',fillColor:'#C9A0FF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>萌宠下午茶</b><br>宠物友好咖啡 · ⭐4.3 · ¥¥<br>客流：medium | 停留约 60min<br><i>提供宠物友好的环境和餐饮，价格适中，是带宠物出门的好去处。</i>").addTo(map);
+L.circleMarker([39.99206430142853,116.33856985714687],{radius:8,color:'#C9A0FF',fillColor:'#C9A0FF',fillOpacity:0.85,weight:1.5}).bindPopup("<b>爱宠之家</b><br>宠物友好咖啡 · ⭐4.6 · ¥¥<br>客流：low | 停留约 80min<br><i>环境干净整洁，有专门的宠物区域，咖啡和甜点也很精致。</i>").addTo(map);
+L.circleMarker([39.99497304388334,116.34227297829125],{radius:15,color:'#AAAAAA',fillColor:'#AAAAAA',fillOpacity:0.85,weight:1.5}).bindPopup("<b>快洗生活</b><br>洗衣生活服务 · ⭐4.2 · ¥<br>客流：high | 停留约 20min<br><i>提供快速洗衣和干洗服务，价格实惠，是学生和上班族的首选。</i>").addTo(map);
+L.circleMarker([39.985,116.33327600498019],{radius:11,color:'#AAAAAA',fillColor:'#AAAAAA',fillOpacity:0.85,weight:1.5}).bindPopup("<b>便捷洗衣</b><br>洗衣生活服务 · ⭐4.1 · ¥<br>客流：medium | 停留约 25min<br><i>提供自助洗衣和烘干服务，方便快捷。</i>").addTo(map);
+L.circleMarker([39.985,116.33336821452642],{radius:8,color:'#AAAAAA',fillColor:'#AAAAAA',fillOpacity:0.85,weight:1.5}).bindPopup("<b>时光洗衣</b><br>洗衣生活服务 · ⭐4.3 · ¥<br>客流：low | 停留约 30min<br><i>提供洗衣、烘干、熨烫等全方位服务，价格透明。</i>").addTo(map);
+L.circleMarker([39.99858536597795,116.33226829889769],{radius:15,color:'#AAAAAA',fillColor:'#AAAAAA',fillOpacity:0.85,weight:1.5}).bindPopup("<b>高效洗衣</b><br>洗衣生活服务 · ⭐4 · ¥<br>客流：high | 停留约 20min<br><i>营业时间长，适合各种时间段的需求。</i>").addTo(map);
+L.circleMarker([39.9903666555664,116.34201833277832],{radius:15,color:'#FF3366',fillColor:'#FF3366',fillOpacity:0.85,weight:1.5}).bindPopup("<b>五道口 Livehouse</b><br>livehouse · ⭐4.6 · ¥¥<br>客流：high | 停留约 120min<br><i>经常有乐队演出，氛围热烈，是年轻人感受音乐的好地方。</i>").addTo(map);
+L.circleMarker([39.99644555327499,116.3306445553275],{radius:11,color:'#FF3366',fillColor:'#FF3366',fillOpacity:0.85,weight:1.5}).bindPopup("<b>青年节拍</b><br>livehouse · ⭐4.4 · ¥¥<br>客流：medium | 停留约 100min<br><i>主打独立音乐和实验性演出，吸引了不少喜欢小众音乐的年轻人。</i>").addTo(map);
+L.circleMarker([39.99193430278578,116.35347494063424],{radius:15,color:'#FF3366',fillColor:'#FF3366',fillOpacity:0.85,weight:1.5}).bindPopup("<b>青春回响</b><br>livehouse · ⭐4.7 · ¥¥<br>客流：high | 停留约 130min<br><i>是五道口最早的livehouse之一，承载了很多年轻人的音乐梦想。</i>").addTo(map);
+</script>
+</body>
+</html>
