@@ -6,3 +6,9 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Personal tooling — not shared with team
+.agents/
+skills-lock.json
+.claude/skills/
+.claude/settings.local.json
