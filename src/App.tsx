@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute } from "./types";
 import { ExploreScreen } from "./screens/ExploreScreen";
 import { StoryScreen } from "./screens/StoryScreen";
@@ -7,6 +7,9 @@ import { MineScreen } from "./screens/MineScreen";
 import { EventDetailScreen } from "./screens/EventDetailScreen";
 import { SettingsScreen } from "./screens/SettingsScreen";
 import { generateRoute } from "./agents/routeAgent";
+import { ORIGIN } from "./components/mapProjection";
+import { positionFromStep } from "./lib/derivePosition";
+import type { LatLng } from "./components/mapProjection";
 import { motion, AnimatePresence } from "motion/react";
 
 export default function App() {
@@ -22,37 +25,59 @@ export default function App() {
   // 如果出错，存储错误信息
   const [generateError, setGenerateError] = useState<string | null>(null);
 
+  // 用户拖动小人模拟走路时设置；非空就盖过 step-derived 位置（用于测试）
+  // 路线重新生成时清空，避免上一次的拖动位置粘在新路线上
+  const [overridePosition, setOverridePosition] = useState<LatLng | null>(null);
+
+  // 根据当前 ExploreStep + 路线推导用户在地图上的位置
+  const stepPosition = useMemo(
+    () => positionFromStep(exploreStep, generatedRoute, ORIGIN),
+    [exploreStep, generatedRoute]
+  );
+  const currentPosition = overridePosition ?? stepPosition;
+
   const navigate = (next: ScreenType) => {
     setScreen(next);
   };
 
-  // 用户在偏好页点"生成今日剧情"时调用
-  const handlePreferenceConfirm = (prefs: UserPreferences) => {
-    setPreferences(prefs);
-    // 先跳到装备确认页
-    setExploreStep("gear_confirmation");
+  // 用户没填偏好就直接"开始探索"时用的默认值（探索 / 1 小时 / 步行 / 不挑）
+  const DEFAULT_PREFERENCES: UserPreferences = {
+    mood: "explore",
+    duration: "1h",
+    transport: "walk",
+    special: [],
+    foodPreference: [],
+    intensity: "normal",
   };
 
-  // 用户在装备确认页点"开始探索"时调用
-  const handleGearConfirm = async () => {
-    if (!preferences) return;
-
+  // 生成路线主流程：从任意入口（直接开始 / 偏好页确认）汇聚到这里
+  const runGeneration = async (prefs: UserPreferences) => {
+    setPreferences(prefs);
     setIsGenerating(true);
     setGenerateError(null);
-
     try {
-      const route = await generateRoute(preferences);
+      const route = await generateRoute(prefs);
       setGeneratedRoute(route);
-      console.log("AI 生成的路线：", route); // 先在控制台看一下效果
+      setOverridePosition(null); // 新路线 = 清掉拖动位置
+      console.log("AI 生成的路线：", route);
       setExploreStep("initial");
     } catch (err) {
       console.error("生成路线失败：", err);
       setGenerateError("路线生成失败，请重试");
-      // 出错了也让用户继续，用默认的模拟数据
       setExploreStep("initial");
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  // intro → 直接开始
+  const handleDirectStart = () => {
+    runGeneration(DEFAULT_PREFERENCES);
+  };
+
+  // 偏好页确认
+  const handlePreferenceConfirm = (prefs: UserPreferences) => {
+    runGeneration(prefs);
   };
 
   return (
@@ -91,8 +116,10 @@ export default function App() {
               setStep={setExploreStep}
               onNavigate={navigate}
               onPreferenceConfirm={handlePreferenceConfirm}
-              onGearConfirm={handleGearConfirm}
+              onDirectStart={handleDirectStart}
               generatedRoute={generatedRoute}
+              currentPosition={currentPosition}
+              onUserDrag={setOverridePosition}
             />
           )}
           {screen === "story" && <StoryScreen onNavigate={navigate} />}

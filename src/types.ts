@@ -54,6 +54,8 @@ export interface Waypoint {
   reward: string;       // 奖励描述，如"美团单车7天畅骑卡"
   emoji: string;        // 地图上显示的图标，如"☕"
   distanceText: string; // 距离描述，如"步行约8分钟"
+  lat: number;          // 真实坐标，地图组件用
+  lng: number;
 }
 
 // AI 生成的完整路线

@@ -3,6 +3,8 @@ import { Sparkles, Zap, BookOpen, Compass, Gift, Navigation, HelpCircle, Clock, 
 import { motion, AnimatePresence } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
 import { BottomNav } from "../components/CommonUI";
+import { Map } from "../components/Map";
+import type { LatLng } from "../components/mapProjection";
 import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute } from "../types";
 
 export function ExploreScreen({
@@ -10,15 +12,19 @@ export function ExploreScreen({
   step,
   setStep,
   onPreferenceConfirm,
-  onGearConfirm,
+  onDirectStart,
   generatedRoute,
+  currentPosition,
+  onUserDrag,
 }: {
   onNavigate: (s: ScreenType) => void;
   step: ExploreStep;
   setStep: (s: ExploreStep) => void;
   onPreferenceConfirm: (prefs: UserPreferences) => void;
-  onGearConfirm: () => void;
+  onDirectStart: () => void;
   generatedRoute: GeneratedRoute | null;
+  currentPosition: LatLng;
+  onUserDrag?: (p: LatLng) => void;
 }) {
 
   const handleInitialComplete = () => {
@@ -37,12 +43,14 @@ export function ExploreScreen({
     setStep("reward_hidden");
   };
 
-  const isGameStarted = !["intro", "preference_selection", "gear_confirmation"].includes(step);
+  const isGameStarted = !["intro", "preference_selection"].includes(step);
   const isCapturing = ["checkin_initial", "checkin_hidden", "checkin_next"].includes(step);
 
   return (
     <AppLayout>
-      <CityMapTexture />
+      <div className="absolute inset-0 z-0 overflow-hidden bg-[#07101d]">
+        <Map route={generatedRoute} currentPosition={currentPosition} onUserDrag={onUserDrag} />
+      </div>
       <FogLayer />
       {(step === "intro" || (isGameStarted && !isCapturing)) && <ExploreHeader />}
       {isGameStarted && !isCapturing && <ProgressPanel step={step} />}
@@ -55,17 +63,14 @@ export function ExploreScreen({
       
       <AnimatePresence>
         {step === "intro" && (
-          <IntroOverlay 
-            key="intro" 
-            onDirectStart={() => setStep("gear_confirmation")} 
-            onCustomize={() => setStep("preference_selection")} 
+          <IntroOverlay
+            key="intro"
+            onDirectStart={onDirectStart}
+            onCustomize={() => setStep("preference_selection")}
           />
         )}
         {step === "preference_selection" && (
           <PreferenceOverlay key="preference" onConfirm={onPreferenceConfirm} onBack={() => setStep("intro")} />
-        )}
-        {step === "gear_confirmation" && (
-          <GearConfirmationOverlay key="gear" onConfirm={onGearConfirm} onBack={() => setStep("preference_selection")} />
         )}
       </AnimatePresence>
 

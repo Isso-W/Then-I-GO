@@ -71,6 +71,8 @@ function hydrate(sel: GeminiSelection, poi: POI): Waypoint {
     reward: sel.reward,
     emoji: sel.emoji,
     distanceText: walkingTimeText(dist),
+    lat: poi.lat,
+    lng: poi.lng,
   };
 }
 
@@ -150,6 +152,8 @@ ${buildCandidateBlock(candidates)}
         distanceText: walkingTimeText(
           distanceMeters(ORIGIN, { lat: poi.lat, lng: poi.lng })
         ),
+        lat: poi.lat,
+        lng: poi.lng,
       });
     });
   }
