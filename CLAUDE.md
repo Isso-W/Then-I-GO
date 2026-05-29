@@ -175,6 +175,8 @@ ExploreScreen（地图界面）
 npm run dev            # Start dev server at http://localhost:3000
 npm run build          # Production build
 npm run lint           # TypeScript type-check (tsc --noEmit) — the only linter
+npm test               # Run the vitest suite once（tests/ 目录）
+npm run test:watch     # vitest watch mode
 npm run preview        # Preview the production build
 npm run clean          # Remove dist/
 npm run generate:pois  # 一次性生成 POI 模拟数据 → src/data/pois.json（需要 GEMINI_API_KEY）
@@ -187,7 +189,7 @@ npx tsx scripts/snapPOIsToRoads.ts        # POI 按类目落位（依赖 terrain
 npx tsx scripts/visualizeStreetNetwork.ts # 可视化地图 → scripts/data/street-network.html
 ```
 
-There is no test suite.
+Tests live in `tests/` and run with `npm test` (vitest), covering the pure routing/geo logic（`poiFilter`、`roadGraph`、`mapProjection`、`derivePosition`）。
 
 ## Environment
 
