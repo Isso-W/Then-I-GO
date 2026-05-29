@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import type { UserPreferences, GeneratedRoute, POI, Waypoint } from "../types";
+import type { UserPreferences, UserProfile, GeneratedRoute, POI, Waypoint } from "../types";
 import {
   filterCandidates,
   distanceMeters,
@@ -76,7 +76,10 @@ function hydrate(sel: GeminiSelection, poi: POI): Waypoint {
   };
 }
 
-export async function generateRoute(prefs: UserPreferences): Promise<GeneratedRoute> {
+export async function generateRoute(
+  prefs: UserPreferences,
+  profile: UserProfile | null = null
+): Promise<GeneratedRoute> {
   const candidates = filterCandidates(prefs);
   if (candidates.length === 0) {
     throw new Error("没有可用的 POI 候选");
@@ -85,10 +88,22 @@ export async function generateRoute(prefs: UserPreferences): Promise<GeneratedRo
   const targetCount = DURATION_TO_WAYPOINTS[prefs.duration] ?? 2;
   const actualCount = Math.min(targetCount, candidates.length);
 
+  // 长期属性（冷启动收集）和当下偏好分两块写进 prompt
+  const profileLines: string[] = [];
+  if (profile?.mbti) profileLines.push(`- MBTI 人格：${profile.mbti}`);
+  if (profile?.interests && profile.interests.length > 0) {
+    profileLines.push(
+      `- 长期兴趣：${profile.interests.map((s) => SPECIAL_LABELS[s] ?? s).join("、")}`
+    );
+  }
+  const profileBlock = profileLines.length > 0
+    ? `\n用户长期属性（影响整体文案语气和选址倾向）：\n${profileLines.join("\n")}\n`
+    : "";
+
   const prompt = `
 你是一个城市探索助手，为用户从下面的候选地点里挑选 ${actualCount} 个组成一条五道口周末散步路线。
-
-用户当前信息：
+${profileBlock}
+用户当下偏好：
 - 心情：${MOOD_LABELS[prefs.mood] ?? prefs.mood}
 - 游玩时长：${DURATION_LABELS[prefs.duration] ?? prefs.duration}
 - 出行方式：${TRANSPORT_LABELS[prefs.transport] ?? prefs.transport}

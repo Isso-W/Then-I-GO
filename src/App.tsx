@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute } from "./types";
+import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute, UserProfile } from "./types";
 import { ExploreScreen } from "./screens/ExploreScreen";
+import { OnboardingScreen } from "./screens/OnboardingScreen";
 import { StoryScreen } from "./screens/StoryScreen";
 import { BagScreen } from "./screens/BagScreen";
 import { MineScreen } from "./screens/MineScreen";
@@ -12,8 +13,24 @@ import { positionFromStep } from "./lib/derivePosition";
 import type { LatLng } from "./components/mapProjection";
 import { motion, AnimatePresence } from "motion/react";
 
+const PROFILE_KEY = "userProfile";
+
+function loadProfile(): UserProfile | null {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as UserProfile;
+    if (typeof parsed?.completedAt !== "number") return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
 export default function App() {
-  const [screen, setScreen] = useState<ScreenType>("explore");
+  // 首启时从 localStorage 读取 profile，缺失则进 onboarding；否则直接 explore
+  const [profile, setProfile] = useState<UserProfile | null>(() => loadProfile());
+  const [screen, setScreen] = useState<ScreenType>(() => (loadProfile() ? "explore" : "onboarding"));
   const [exploreStep, setExploreStep] = useState<ExploreStep>("intro");
 
   // 存储用户填写的偏好
@@ -56,7 +73,7 @@ export default function App() {
     setIsGenerating(true);
     setGenerateError(null);
     try {
-      const route = await generateRoute(prefs);
+      const route = await generateRoute(prefs, profile);
       setGeneratedRoute(route);
       setOverridePosition(null); // 新路线 = 清掉拖动位置
       console.log("AI 生成的路线：", route);
@@ -68,6 +85,17 @@ export default function App() {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  // 冷启动完成
+  const handleOnboardingComplete = (p: UserProfile) => {
+    try {
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
+    } catch (e) {
+      console.warn("写 userProfile 到 localStorage 失败：", e);
+    }
+    setProfile(p);
+    setScreen("explore");
   };
 
   // intro → 直接开始
@@ -110,6 +138,9 @@ export default function App() {
            transition={{ duration: 0.3 }}
            className="h-full w-full"
         >
+          {screen === "onboarding" && (
+            <OnboardingScreen onComplete={handleOnboardingComplete} />
+          )}
           {screen === "explore" && (
             <ExploreScreen
               step={exploreStep}

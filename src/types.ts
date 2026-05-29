@@ -1,6 +1,14 @@
 import type { ReactNode } from 'react';
 
-export type ScreenType = 'explore' | 'story' | 'bag' | 'mine' | 'event' | 'settings';
+export type ScreenType = 'onboarding' | 'explore' | 'story' | 'bag' | 'mine' | 'event' | 'settings';
+
+// 冷启动收集的长期属性。持久化到 localStorage 的 userProfile 键。
+// mbti / interests 都可以为 null/[]（用户跳过）；只要 completedAt 存在就不再展示 onboarding。
+export interface UserProfile {
+  mbti: string | null;
+  interests: string[];
+  completedAt: number;
+}
 
 export type ExploreStep = 
   | "intro"
