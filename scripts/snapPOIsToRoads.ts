@@ -12,17 +12,8 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { StreetNetwork } from "./fetchStreetNetwork.js";
+import type { TerrainData } from "./generateTerrain.js";
 import type { POI } from "../src/types.js";
-
-type TerrainType = "campus" | "park" | "water" | "commercial";
-interface TerrainPolygon {
-  name: string;
-  type: TerrainType;
-  points: { lat: number; lng: number }[];
-}
-interface TerrainData {
-  polygons: TerrainPolygon[];
-}
 
 const network: StreetNetwork = JSON.parse(
   readFileSync(resolve("scripts/data/street-network.json"), "utf-8")
