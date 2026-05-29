@@ -722,7 +722,7 @@ function VlogSuccessOverlay({ onContinue }: { onContinue: () => void }) {
   );
 }
 
-function IntroOverlay({ onDirectStart, onCustomize }: { onDirectStart: () => void; onCustomize: () => void }) {
+const IntroOverlay: React.FC<{ onDirectStart: () => void; onCustomize: () => void }> = ({ onDirectStart, onCustomize }) => {
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -881,7 +881,7 @@ function AchievementOverlay({ onContinue }: { onContinue: () => void }) {
   );
 }
 
-function PreferenceOverlay({ onConfirm, onBack }: { onConfirm: (prefs: import("../types").UserPreferences) => void; onBack: () => void }) {
+const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void; onBack: () => void }> = ({ onConfirm, onBack }) => {
   const [mood, setMood] = useState("happy");
   const [duration, setDuration] = useState("1h");
   const [transport, setTransport] = useState("walk");
@@ -928,7 +928,7 @@ function PreferenceOverlay({ onConfirm, onBack }: { onConfirm: (prefs: import(".
     { id: "coffee", icon: Coffee, label: "甜品咖啡" },
   ];
 
-  const intensities = [
+  const intensities: { id: string; icon: typeof Target; label: string; sub?: string; recommended?: boolean }[] = [
     { id: "relaxed", icon: Target, label: "轻松带路" },
     { id: "normal", icon: Book, label: "正常探索" },
     { id: "don't_think", icon: Wand2, label: "别让我思考", recommended: true },
