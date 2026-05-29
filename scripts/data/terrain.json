@@ -1,0 +1,135 @@
+{
+  "area": "北京五道口",
+  "bbox": {
+    "south": 39.98,
+    "west": 116.32,
+    "north": 40.005,
+    "east": 116.358
+  },
+  "note": "手工标注，参考真实五道口地理。坐标精度 ±50m 量级。",
+  "polygons": [
+    {
+      "name": "清华大学校园",
+      "nameEn": "Tsinghua University Campus",
+      "type": "campus",
+      "points": [
+        { "lat": 40.005, "lng": 116.321 },
+        { "lat": 40.005, "lng": 116.340 },
+        { "lat": 39.998, "lng": 116.341 },
+        { "lat": 39.993, "lng": 116.338 },
+        { "lat": 39.993, "lng": 116.323 },
+        { "lat": 39.999, "lng": 116.321 }
+      ]
+    },
+    {
+      "name": "北京林业大学",
+      "nameEn": "Beijing Forestry University",
+      "type": "campus",
+      "points": [
+        { "lat": 40.004, "lng": 116.343 },
+        { "lat": 40.004, "lng": 116.357 },
+        { "lat": 39.997, "lng": 116.357 },
+        { "lat": 39.997, "lng": 116.343 }
+      ]
+    },
+    {
+      "name": "中国地质大学（北京）",
+      "nameEn": "China University of Geosciences",
+      "type": "campus",
+      "points": [
+        { "lat": 39.996, "lng": 116.344 },
+        { "lat": 39.996, "lng": 116.351 },
+        { "lat": 39.991, "lng": 116.351 },
+        { "lat": 39.991, "lng": 116.344 }
+      ]
+    },
+    {
+      "name": "北京语言大学",
+      "nameEn": "Beijing Language and Culture University",
+      "type": "campus",
+      "points": [
+        { "lat": 39.990, "lng": 116.348 },
+        { "lat": 39.990, "lng": 116.357 },
+        { "lat": 39.985, "lng": 116.357 },
+        { "lat": 39.985, "lng": 116.348 }
+      ]
+    },
+    {
+      "name": "北京航空航天大学（北侧）",
+      "nameEn": "Beihang University (North Edge)",
+      "type": "campus",
+      "points": [
+        { "lat": 39.984, "lng": 116.343 },
+        { "lat": 39.984, "lng": 116.357 },
+        { "lat": 39.980, "lng": 116.357 },
+        { "lat": 39.980, "lng": 116.343 }
+      ]
+    },
+    {
+      "name": "清华校园绿地",
+      "nameEn": "Tsinghua Central Green",
+      "type": "park",
+      "points": [
+        { "lat": 40.002, "lng": 116.331 },
+        { "lat": 40.002, "lng": 116.337 },
+        { "lat": 39.999, "lng": 116.337 },
+        { "lat": 39.999, "lng": 116.331 }
+      ]
+    },
+    {
+      "name": "双清苑",
+      "nameEn": "Shuangqing Garden",
+      "type": "park",
+      "points": [
+        { "lat": 40.004, "lng": 116.326 },
+        { "lat": 40.004, "lng": 116.330 },
+        { "lat": 40.001, "lng": 116.330 },
+        { "lat": 40.001, "lng": 116.326 }
+      ]
+    },
+    {
+      "name": "林大苗圃",
+      "nameEn": "BFU Nursery",
+      "type": "park",
+      "points": [
+        { "lat": 40.003, "lng": 116.350 },
+        { "lat": 40.003, "lng": 116.355 },
+        { "lat": 40.000, "lng": 116.355 },
+        { "lat": 40.000, "lng": 116.350 }
+      ]
+    },
+    {
+      "name": "清华荷塘",
+      "nameEn": "Tsinghua Lotus Pond",
+      "type": "water",
+      "points": [
+        { "lat": 40.001, "lng": 116.328 },
+        { "lat": 40.001, "lng": 116.331 },
+        { "lat": 39.999, "lng": 116.331 },
+        { "lat": 39.999, "lng": 116.328 }
+      ]
+    },
+    {
+      "name": "五道口购物中心",
+      "nameEn": "Wudaokou Shopping Center",
+      "type": "commercial",
+      "points": [
+        { "lat": 39.993, "lng": 116.337 },
+        { "lat": 39.993, "lng": 116.342 },
+        { "lat": 39.991, "lng": 116.342 },
+        { "lat": 39.991, "lng": 116.337 }
+      ]
+    },
+    {
+      "name": "华清嘉园商圈",
+      "nameEn": "Huaqing Jiayuan Area",
+      "type": "commercial",
+      "points": [
+        { "lat": 39.996, "lng": 116.337 },
+        { "lat": 39.996, "lng": 116.342 },
+        { "lat": 39.993, "lng": 116.342 },
+        { "lat": 39.993, "lng": 116.337 }
+      ]
+    }
+  ]
+}

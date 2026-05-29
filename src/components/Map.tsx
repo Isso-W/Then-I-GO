@@ -1,6 +1,7 @@
-import { useMemo, useRef, useState, useEffect } from "react";
+import { useMemo, useRef, useState, useEffect, type MouseEvent } from "react";
 import { motion } from "motion/react";
 import streetNetwork from "../../scripts/data/street-network.json";
+import terrainRaw from "../../scripts/data/terrain.json";
 import {
   projectLatLng,
   unprojectXY,
@@ -18,6 +19,20 @@ const network = streetNetwork as { streets: Street[]; bbox: BBox };
 
 // 路网图只构建一次（modules 顶层，模块缓存即可，无需 React state）
 const ROAD_GRAPH = buildGraph(network.streets);
+
+// 地表多边形 —— 校园 / 公园 / 水体 / 商业区
+interface TerrainPolygon {
+  name: string;
+  type: "campus" | "park" | "water" | "commercial";
+  points: LatLng[];
+}
+const terrain = terrainRaw as { polygons: TerrainPolygon[] };
+const TERRAIN_STYLE: Record<TerrainPolygon["type"], { fill: string; opacity: number }> = {
+  campus: { fill: "#1F1B47", opacity: 0.55 },
+  park: { fill: "#0F3A24", opacity: 0.55 },
+  water: { fill: "#0E3B47", opacity: 0.7 },
+  commercial: { fill: "#3D3013", opacity: 0.45 },
+};
 
 // 不同等级道路的渲染样式（stroke 用 non-scaling-stroke，单位 = CSS px）
 const HIGHWAY_STYLE: Record<string, { stroke: string; width: number; dash?: string }> = {
@@ -43,6 +58,16 @@ function pointsToPath(points: LatLng[], bbox: BBox): string {
   return d;
 }
 
+// 多边形 → SVG polygon 的 points 属性字符串
+function polygonPointsAttr(points: LatLng[], bbox: BBox): string {
+  return points
+    .map((p) => {
+      const xy = projectLatLng(p, bbox);
+      return `${xy.x.toFixed(2)},${xy.y.toFixed(2)}`;
+    })
+    .join(" ");
+}
+
 // 容器宽度 ≈ 500px。marker 用这个 scale 来抵消 viewBox 缩放，保证在屏上大小恒定
 const REFERENCE_WIDTH_PX = 500;
 
@@ -58,6 +83,8 @@ export function Map({
 }) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  // 拖动期间设为 true，用来在随后的 click 事件里识别"这是拖动结尾，不是点击"
+  const dragMovedRef = useRef(false);
 
   // 跟随模式：视野始终以"显示位置"为中心，固定半径。
   // - 拖动时 displayPosition 1:1 跟随 currentPosition（跟手不延迟）
@@ -106,6 +133,14 @@ export function Map({
     }));
   }, [viewBox]);
 
+  const terrainShapes = useMemo(() => {
+    return terrain.polygons.map((poly, idx) => ({
+      key: `terrain-${idx}-${poly.name}`,
+      pts: polygonPointsAttr(poly.points, viewBox),
+      style: TERRAIN_STYLE[poly.type],
+    }));
+  }, [viewBox]);
+
   // 路线 polyline：用路网图寻路得到沿街折线，起点固定 ORIGIN
   const routeData = useMemo(() => {
     if (!route || route.waypoints.length === 0) return null;
@@ -140,6 +175,7 @@ export function Map({
   useEffect(() => {
     if (!isDragging || !onUserDrag) return;
     const onMove = (e: PointerEvent) => {
+      dragMovedRef.current = true;
       const ll = clientToLatLng(e.clientX, e.clientY);
       if (!ll) return;
       onUserDrag(snapToRoad(ll, ROAD_GRAPH));
@@ -156,13 +192,41 @@ export function Map({
     // viewBox 变化时也要重绑，让 clientToLatLng 用最新投影
   }, [isDragging, onUserDrag, viewBox]);
 
+  // 点击地图任意位置 → snap 到最近的路 → 瞬移过去（viewBox 平滑跟过去）
+  // 拖动结尾的 pointerup 会带出一个 click，用 dragMovedRef 屏蔽
+  const handleMapClick = (e: MouseEvent<SVGSVGElement>) => {
+    if (!onUserDrag) return;
+    if (dragMovedRef.current) {
+      dragMovedRef.current = false;
+      return;
+    }
+    const ll = clientToLatLng(e.clientX, e.clientY);
+    if (!ll) return;
+    onUserDrag(snapToRoad(ll, ROAD_GRAPH));
+  };
+
   return (
     <svg
       ref={svgRef}
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="xMidYMid slice"
       className="absolute inset-0 h-full w-full"
+      style={{ cursor: onUserDrag ? "pointer" : "default" }}
+      onClick={handleMapClick}
     >
+      {/* 地表色块（校园/公园/水体/商业区）—— 在路网下方 */}
+      <g>
+        {terrainShapes.map((t) => (
+          <polygon
+            key={t.key}
+            points={t.pts}
+            fill={t.style.fill}
+            opacity={t.style.opacity}
+            stroke="none"
+          />
+        ))}
+      </g>
+
       {/* 路网底图 */}
       <g opacity={0.65}>
         {streetPaths.map((s) => (
