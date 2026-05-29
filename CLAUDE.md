@@ -63,15 +63,26 @@ npx tsx scripts/fetchStreetNetwork.ts   # 生成 scripts/data/street-network.jso
 输出 35 条路段（主路/次路/支路/步行街）、76 条子线段，总长约 28km。
 覆盖成府路、中关村北大街、学院路、清华东路、双清路、王庄路等主要街道。
 
+### 地表数据（`scripts/data/terrain.json`）
+
+校园 / 公园 / 水体 / 商业区多边形，渲染在地图路网下方做底色，并作为 POI 落位依据。
+
+```bash
+npx tsx scripts/generateTerrain.ts   # 生成 scripts/data/terrain.json
+```
+
+与路网/POI 不同，这里是**确定性脚本**而非 Gemini 生成：地块边界是真实地理事实（清华校园、清华荷塘等），LLM 重画会失真、自交，且会和已落位的 POI 脱钩。脚本内联 11 个手工核定区域（5 校园/3 公园/1 水体/2 商业区），带 BBOX 与退化校验。`TerrainData` 类型由本脚本导出，`snapPOIsToRoads.ts` 直接复用。
+
 ### POI 数据（`src/data/pois.json`）
 
 不接入实时第三方 API（高德需付费，大众点评/美团不对外开放，Google Maps 国内受限）。改用 Gemini 分批生成，结果 commit 进仓库，demo 完全离线。
 
 ```bash
-# 完整生成流程（三步）：
-npx tsx scripts/generatePOIs.ts      # 1. 生成 POI 内容（分3批，每批~38个，共~105个）
-npx tsx scripts/snapPOIsToRoads.ts   # 2. 将 POI 坐标吸附到路网（按路段长度加权均匀分布）
-npx tsx scripts/visualizeStreetNetwork.ts  # 3. 可选：生成可视化地图 → scripts/data/street-network.html
+# 完整生成流程（snapPOIsToRoads 依赖 terrain.json，故须先跑 generateTerrain）：
+npx tsx scripts/generatePOIs.ts          # 1. 生成 POI 内容（分3批，每批~38个，共~105个）
+npx tsx scripts/generateTerrain.ts       # 2. 生成地表多边形 → scripts/data/terrain.json
+npx tsx scripts/snapPOIsToRoads.ts       # 3. POI 按类目落位（公园→park多边形 / 自习室→campus / 其余→路网加权）
+npx tsx scripts/visualizeStreetNetwork.ts  # 4. 可选：生成可视化地图 → scripts/data/street-network.html
 ```
 
 **POI 数据结构（`src/types.ts` → `POI` 接口）**
@@ -88,7 +99,7 @@ mood_match[], mbti_tags[]           偏好匹配维度
 best_time                           推荐游玩时段文案
 ```
 
-**生成策略**：分 3 批（西北区/东北区/南部区）各生成约 38 个，限定每批坐标范围，避免扎堆。生成后 `snapPOIsToRoads.ts` 按路段长度加权随机采样，将所有 POI 均匀分布到路网上。
+**生成策略**：分 3 批（西北区/东北区/南部区）各生成约 38 个，限定每批坐标范围，避免扎堆。生成后 `snapPOIsToRoads.ts` 按 category 落位：公园绿地落进 park 多边形、共享空间/自习室落进 campus 多边形（rejection sampling + 射线检测），其余 POI 按路段长度加权随机分布到路网上。
 
 **POI 类型覆盖**（20 种）：咖啡厅、餐厅系列（日韩/北京风味/素食）、奶茶甜品、书店、文创小店、美术馆、livehouse、公园绿地、酒吧系列、夜宵烧烤、便利店、花店、健身瑜伽、共享自习室、洗衣生活服务、宠物友好咖啡。
 
@@ -171,7 +182,8 @@ npm run generate:pois  # 一次性生成 POI 模拟数据 → src/data/pois.json
 # 地理数据生成（一次性，结果 commit 进仓库）
 npx tsx scripts/fetchStreetNetwork.ts      # 生成路网 → scripts/data/street-network.json
 npx tsx scripts/generatePOIs.ts           # 生成 POI → src/data/pois.json
-npx tsx scripts/snapPOIsToRoads.ts        # POI 吸附到路网（覆盖 pois.json）
+npx tsx scripts/generateTerrain.ts        # 生成地表多边形 → scripts/data/terrain.json
+npx tsx scripts/snapPOIsToRoads.ts        # POI 按类目落位（依赖 terrain.json，覆盖 pois.json）
 npx tsx scripts/visualizeStreetNetwork.ts # 可视化地图 → scripts/data/street-network.html
 ```
 
