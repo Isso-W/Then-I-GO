@@ -1036,7 +1036,7 @@ function SectionTitle({ num, title, sub, help }: { num: number | string; title: 
       {help && (
         <span className="group relative inline-flex">
           <HelpCircle size={12} className="text-white/30 hover:text-white/70 cursor-help transition-colors" />
-          <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 w-60 rounded-xl border border-white/10 bg-[#14142B] p-3 text-left text-[11px] leading-relaxed text-white/70 opacity-0 shadow-[0_12px_30px_rgba(0,0,0,0.55)] transition-opacity duration-150 group-hover:opacity-100">
+          <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full z-50 mt-2 w-56 rounded-xl border border-white/10 bg-[#14142B] p-3 text-left text-[11px] leading-relaxed text-white/70 opacity-0 shadow-[0_12px_30px_rgba(0,0,0,0.55)] transition-opacity duration-150 group-hover:opacity-100">
             {help}
           </span>
         </span>
