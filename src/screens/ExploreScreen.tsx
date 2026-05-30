@@ -74,7 +74,6 @@ export function ExploreScreen({
       <FogLayer />
       {(step === "intro" || (isGameStarted && !isCapturing)) && <ExploreHeader />}
       {isGameStarted && !isCapturing && <ProgressPanel step={step} />}
-      {isGameStarted && !isCapturing && <UnknownMarkers step={step} />}
       {isGameStarted && !isCapturing && <FloatingActions onAction={(a) => a === 'event' && onNavigate('event')} />}
       {isGameStarted && !isCapturing && <Legend step={step} />}
       
@@ -214,29 +213,6 @@ function ProgressPanel({ step }: { step: ExploreStep }) {
         <span className="font-bold text-[#FFD166]">85</span>
       </div>
     </Glass>
-  );
-}
-
-function UnknownMarkers({ step }: { step: ExploreStep }) {
-  if (step !== "initial" && step !== "hidden_found") return null;
-  
-  return (
-    <>
-      <motion.div 
-        animate={{ scale: [1, 1.05, 1] }}
-        transition={{ duration: 4, repeat: Infinity }}
-        className="absolute right-[20%] top-[45%] z-20 flex h-12 w-12 items-center justify-center rounded-full border border-white/10 bg-white/5 text-2xl font-bold text-white/20 backdrop-blur-sm"
-      >
-        ?
-      </motion.div>
-      <motion.div 
-        animate={{ scale: [1, 1.1, 1] }}
-        transition={{ duration: 5, repeat: Infinity }}
-        className="absolute left-[25%] top-[55%] z-20 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xl font-bold text-white/20 backdrop-blur-sm"
-      >
-        ?
-      </motion.div>
-    </>
   );
 }
 
