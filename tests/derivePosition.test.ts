@@ -82,7 +82,7 @@ describe("positionFromStep（step → 位置 映射）", () => {
   });
 
   it("origin 参数被尊重（不是硬编码五道口）", () => {
-    const customOrigin = { lat: 31.23, lng: 121.47 }; // 上海
+    const customOrigin = { lat: 39.9087, lng: 116.3975 }; // 北京天安门（区别于默认五道口）
     expect(positionFromStep("intro", routeTwo, customOrigin)).toEqual(customOrigin);
   });
 

@@ -68,7 +68,7 @@ export interface Waypoint {
 
 // AI 生成的完整路线
 export interface GeneratedRoute {
-  title: string;        // 今日路线标题，如"静安区的隐秘下午"
+  title: string;        // 今日路线标题，如"五道口的隐秘下午"
   waypoints: Waypoint[];
 }
 

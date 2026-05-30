@@ -273,7 +273,7 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute }: {
     if (isHiddenActive) return {
       title: "秘密：转角咖啡店",
       desc: "开启特殊的视频打卡",
-      detail: "通过泰康路的老木门，走进那家复古咖啡店。在那里的某个靠窗位置，藏着一段旧时光。",
+      detail: "穿过成府路的老木门，走进那家复古咖啡店。在那里的某个靠窗位置，藏着一段旧时光。",
       reward: "+50 XP",
       color: "#F59E0B",
     };
@@ -577,7 +577,7 @@ const IntroOverlay: React.FC<{ onDirectStart: () => void; onCustomize: () => voi
               <h2 className="text-lg font-black text-white italic tracking-tight">当前位置</h2>
             </div>
             <div className="flex items-center gap-1.5 rounded-full bg-[#FFD166]/10 border border-[#FFD166]/20 px-3 py-1">
-               <span className="text-[10px] font-bold text-[#FFD166] uppercase tracking-wider">静安区 · 上海</span>
+               <span className="text-[10px] font-bold text-[#FFD166] uppercase tracking-wider">五道口 · 北京</span>
             </div>
           </div>
           
@@ -797,14 +797,14 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
         <div className="relative mb-6 mt-1 overflow-hidden rounded-3xl bg-gradient-to-br from-[#1E293B] to-[#0F172A] p-4 shadow-xl border border-white/5">
           <img 
             src="https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=600&q=80" 
-            alt="Berlin Skyline" 
+            alt="北京天际线"
             className="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-overlay"
           />
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#6C5CFF]/10 blur-[60px] rounded-full" />
           <div className="flex justify-between items-start relative z-10">
             <div>
               <div className="flex items-center gap-1.5 rounded-full bg-white/5 border border-white/10 px-2.5 py-1 text-[10px] font-bold text-white/80 w-fit">
-                <MapPin size={10} /> 柏林 <ChevronDown size={10} />
+                <MapPin size={10} /> 五道口 <ChevronDown size={10} />
               </div>
               <div className="mt-3 flex items-center gap-2">
                 <div className="text-3xl font-black text-white">22°C</div>

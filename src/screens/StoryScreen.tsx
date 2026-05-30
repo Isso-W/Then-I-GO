@@ -20,7 +20,7 @@ export function StoryScreen({ onNavigate }: { onNavigate: (s: ScreenType) => voi
       { time: "12:05", title: "城市公园", desc: "湖边风景真美，心情大好！", icon: <Star size={17} />, img: "bg-gradient-to-br from-green-900 to-sky-300" }
     ],
     "05.23": [
-      { time: "14:20", title: "雨中漫步", desc: "柏林的雨总是很突然。", icon: <MapPin size={17} />, img: "bg-gradient-to-br from-blue-700 to-slate-600" },
+      { time: "14:20", title: "雨中漫步", desc: "北京的雨总是来得突然。", icon: <MapPin size={17} />, img: "bg-gradient-to-br from-blue-700 to-slate-600" },
       { time: "16:45", title: "小店避雨", desc: "在一个复古唱片店呆了一个下午。", icon: <Star size={17} />, img: "bg-gradient-to-br from-purple-700 to-indigo-900" }
     ]
   };
@@ -30,9 +30,9 @@ export function StoryScreen({ onNavigate }: { onNavigate: (s: ScreenType) => voi
   ];
 
   const historicalVlogs = [
-    { id: 1, date: "2024.05.23", title: "柏林雨后漫步", duration: "01:24", views: 128, img: "https://images.unsplash.com/photo-1559564484-e48b3e040ff4?auto=format&fit=crop&w=400&q=80" },
+    { id: 1, date: "2024.05.23", title: "五道口雨后漫步", duration: "01:24", views: 128, img: "https://images.unsplash.com/photo-1559564484-e48b3e040ff4?auto=format&fit=crop&w=400&q=80" },
     { id: 2, date: "2024.05.20", title: "周末的艺术之旅", duration: "02:10", views: 256, img: "https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&w=400&q=80" },
-    { id: 3, date: "2024.05.15", title: "重访波茨坦广场", duration: "00:58", views: 89, img: "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=400&q=80" },
+    { id: 3, date: "2024.05.15", title: "重访清华西门", duration: "00:58", views: 89, img: "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=400&q=80" },
   ];
 
   return (
