@@ -5,7 +5,7 @@ import { Glass, AppLayout } from "../components/Layout";
 import { BottomNav } from "../components/CommonUI";
 import { Map } from "../components/Map";
 import type { LatLng } from "../components/mapProjection";
-import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute } from "../types";
+import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute, Waypoint } from "../types";
 
 export function ExploreScreen({
   onNavigate,
@@ -49,7 +49,7 @@ export function ExploreScreen({
   return (
     <AppLayout>
       <div className="absolute inset-0 z-0 overflow-hidden bg-[#07101d]">
-        <Map route={generatedRoute} currentPosition={currentPosition} onUserDrag={onUserDrag} />
+        <Map route={generatedRoute} currentPosition={currentPosition} onUserDrag={onUserDrag} step={step} />
       </div>
       <FogLayer />
       {(step === "intro" || (isGameStarted && !isCapturing)) && <ExploreHeader />}
@@ -73,7 +73,7 @@ export function ExploreScreen({
 
       <AnimatePresence>
         {step === "hidden_found" && (
-          <HiddenTaskAlert onAccept={startHiddenTask} />
+          <HiddenTaskAlert hiddenTask={generatedRoute?.hiddenTask} onAccept={startHiddenTask} />
         )}
       </AnimatePresence>
 
@@ -261,6 +261,7 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute }: {
 
   const wp0 = generatedRoute?.waypoints[0];
   const wp1 = generatedRoute?.waypoints[1];
+  const hidden = generatedRoute?.hiddenTask;
 
   const getTaskContent = () => {
     if (isInitial) return {
@@ -271,10 +272,10 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute }: {
       color: "#6C5CFF",
     };
     if (isHiddenActive) return {
-      title: "秘密：转角咖啡店",
-      desc: "开启特殊的视频打卡",
-      detail: "穿过成府路的老木门，走进那家复古咖啡店。在那里的某个靠窗位置，藏着一段旧时光。",
-      reward: "+50 XP",
+      title: hidden?.name ? `秘密：${hidden.name}` : "隐藏坐标",
+      desc: hidden?.task ?? "开启特殊的视频打卡",
+      detail: hidden?.description ?? "附近藏着一个未公开的坐标，去发现它，完成一次特别打卡。",
+      reward: hidden?.reward ?? "+50 XP",
       color: "#F59E0B",
     };
     if (isNext) return {
@@ -362,7 +363,7 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute }: {
   );
 }
 
-function HiddenTaskAlert({ onAccept }: { onAccept: () => void }) {
+function HiddenTaskAlert({ hiddenTask, onAccept }: { hiddenTask?: Waypoint; onAccept: () => void }) {
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -393,10 +394,10 @@ function HiddenTaskAlert({ onAccept }: { onAccept: () => void }) {
           <div className="rounded-2xl bg-white/5 p-4 text-left border border-white/10">
             <div className="flex items-center gap-2 text-amber-400">
                <MapPin size={16} />
-               <span className="text-[14px] font-bold">转角咖啡店</span>
+               <span className="text-[14px] font-bold">{hiddenTask?.name ?? "隐藏坐标"}</span>
             </div>
             <p className="mt-2 text-[12px] leading-relaxed text-white/50">
-              那里不仅有醇厚的香气，还藏着这个街区十年前的秘密瞬间。
+              {hiddenTask?.description ?? "附近藏着一个未公开的坐标，藏着这个街区的某个秘密瞬间。"}
             </p>
           </div>
           

@@ -97,3 +97,21 @@ export function filterCandidates(
   }
   return [];
 }
+
+/**
+ * 从候选里挑若干"未探索"标记的坐标（排除已用作 waypoint / 隐藏任务的 POI）。
+ * 纯函数、确定性：按候选既有顺序取前 n 个未排除的。地图上渲染成"?"。
+ */
+export function pickUnknownPOIs(
+  candidates: POI[],
+  excludeIds: Set<string>,
+  n: number
+): { lat: number; lng: number }[] {
+  const out: { lat: number; lng: number }[] = [];
+  for (const p of candidates) {
+    if (excludeIds.has(p.id)) continue;
+    out.push({ lat: p.lat, lng: p.lng });
+    if (out.length >= n) break;
+  }
+  return out;
+}

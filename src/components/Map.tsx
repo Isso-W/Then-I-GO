@@ -13,7 +13,7 @@ import {
   type BBox,
 } from "./mapProjection";
 import { buildGraph, routePolyline, snapToRoad, type Street } from "../lib/roadGraph";
-import type { GeneratedRoute } from "../types";
+import type { GeneratedRoute, ExploreStep } from "../types";
 
 const network = streetNetwork as { streets: Street[]; bbox: BBox };
 
@@ -75,11 +75,14 @@ export function Map({
   route,
   currentPosition = ORIGIN,
   onUserDrag,
+  step,
 }: {
   route: GeneratedRoute | null;
   currentPosition?: LatLng;
   /** 用户拖动红点（测试用模拟走路）。回调收到的坐标已经吸附到路上。 */
   onUserDrag?: (p: LatLng) => void;
+  /** 当前探索阶段，用来决定隐藏任务针 / "?"标记的显隐 */
+  step?: ExploreStep;
 }) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -154,6 +157,28 @@ export function Map({
       })),
     };
   }, [route, viewBox]);
+
+  // "?" 未探索标记 + 隐藏任务针：真坐标投影，跟随地图平移
+  const unknownMarks = useMemo(
+    () => (route?.unknownPOIs ?? []).map((p, i) => ({ key: i, ...projectLatLng(p, viewBox) })),
+    [route, viewBox]
+  );
+  const hiddenMark = useMemo(
+    () =>
+      route?.hiddenTask
+        ? {
+            ...projectLatLng({ lat: route.hiddenTask.lat, lng: route.hiddenTask.lng }, viewBox),
+            emoji: route.hiddenTask.emoji,
+          }
+        : null,
+    [route, viewBox]
+  );
+  const showUnknown = step === "initial" || step === "hidden_found";
+  const showHidden =
+    step === "hidden_found" ||
+    step === "hidden_active" ||
+    step === "checkin_hidden" ||
+    step === "reward_hidden";
 
   const currentPos = projectLatLng(currentPosition, viewBox);
 
@@ -302,6 +327,36 @@ export function Map({
           </g>
         </g>
       ))}
+
+      {/* "?" 未探索标记（真坐标，随地图平移） */}
+      {showUnknown &&
+        unknownMarks.map((m) => (
+          <g key={`unknown-${m.key}`} transform={`translate(${m.x}, ${m.y}) scale(${markerScale})`}>
+            <circle r={14} fill="#FFFFFF" opacity={0.06} />
+            <circle r={14} fill="none" stroke="#FFFFFF" strokeOpacity={0.18} strokeWidth={1} />
+            <text
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={16}
+              fontWeight={800}
+              fill="#FFFFFF"
+              fillOpacity={0.4}
+            >
+              ?
+            </text>
+          </g>
+        ))}
+
+      {/* 隐藏任务针（真坐标） */}
+      {showHidden && hiddenMark && (
+        <g transform={`translate(${hiddenMark.x}, ${hiddenMark.y}) scale(${markerScale})`}>
+          <circle r={24} fill="#F59E0B" opacity={0.2} />
+          <circle r={16} fill="#D97706" stroke="#FCD34D" strokeWidth={2} />
+          <text textAnchor="middle" dominantBaseline="central" fontSize={18}>
+            {hiddenMark.emoji}
+          </text>
+        </g>
+      )}
 
       {/* 当前位置：红色脉冲点。
         - 普通状态：spring 跟随 currentPos（check-in 切站时平滑）

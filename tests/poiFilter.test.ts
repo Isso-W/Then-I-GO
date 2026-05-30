@@ -6,6 +6,7 @@ import {
   isOpenAt,
   scorePOI,
   ORIGIN,
+  pickUnknownPOIs,
 } from "../src/agents/poiFilter";
 import type { POI, UserPreferences } from "../src/types";
 
@@ -232,5 +233,41 @@ describe("filterCandidates 渐进降级", () => {
     const prefs = makePrefs({ special: [] });
     const result = filterCandidates(prefs, NOON, pool);
     expect(result.length).toBe(6);
+  });
+});
+
+describe("pickUnknownPOIs", () => {
+  it("排除 excludeIds 中的 POI", () => {
+    const pool = [makePOI({ id: "a" }), makePOI({ id: "b" }), makePOI({ id: "c" })];
+    const result = pickUnknownPOIs(pool, new Set(["a"]), 5);
+    expect(result.length).toBe(2); // b, c
+  });
+
+  it("最多返回 n 个", () => {
+    const pool = Array.from({ length: 6 }, (_, i) => makePOI({ id: `u${i}` }));
+    expect(pickUnknownPOIs(pool, new Set(), 3).length).toBe(3);
+  });
+
+  it("只暴露 lat/lng（不剧透其他字段）", () => {
+    const pool = [makePOI({ id: "a", lat: 39.99, lng: 116.34 })];
+    const result = pickUnknownPOIs(pool, new Set(), 1);
+    expect(Object.keys(result[0]).sort()).toEqual(["lat", "lng"]);
+    expect(result[0]).toEqual({ lat: 39.99, lng: 116.34 });
+  });
+
+  it("全部被排除时返回空数组", () => {
+    const pool = [makePOI({ id: "a" }), makePOI({ id: "b" })];
+    expect(pickUnknownPOIs(pool, new Set(["a", "b"]), 3)).toEqual([]);
+  });
+
+  it("保持候选既有顺序（确定性）", () => {
+    const pool = [
+      makePOI({ id: "x", lat: 1, lng: 1 }),
+      makePOI({ id: "y", lat: 2, lng: 2 }),
+    ];
+    expect(pickUnknownPOIs(pool, new Set(), 2)).toEqual([
+      { lat: 1, lng: 1 },
+      { lat: 2, lng: 2 },
+    ]);
   });
 });

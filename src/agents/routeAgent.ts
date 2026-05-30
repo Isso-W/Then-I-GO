@@ -4,6 +4,7 @@ import {
   filterCandidates,
   distanceMeters,
   walkingTimeText,
+  pickUnknownPOIs,
   ORIGIN,
 } from "./poiFilter";
 
@@ -48,6 +49,7 @@ interface GeminiSelection {
 interface GeminiResponse {
   title: string;
   selections: GeminiSelection[];
+  hidden?: GeminiSelection;
 }
 
 function buildCandidateBlock(candidates: POI[]): string {
@@ -118,6 +120,7 @@ ${buildCandidateBlock(candidates)}
 1. 从候选里挑选 ${actualCount} 个 poi_id，按推荐游玩顺序排列
 2. 给每个挑选的地点写故事氛围、打卡任务、奖励文案、emoji
 3. 写一个 10 字以内有意境的路线标题
+4. 另外再选 1 个与上面都不同的地点作为"隐藏任务"（藏在附近的惊喜坐标），同样写神秘氛围/打卡任务/奖励/emoji，放进 hidden 字段
 
 严格按照以下 JSON 格式返回，不要有任何其他文字：
 {
@@ -130,7 +133,14 @@ ${buildCandidateBlock(candidates)}
       "reward": "完成后的奖励（如：美团单车7天卡、餐饮券8折）",
       "emoji": "一个代表这个地点的 emoji"
     }
-  ]
+  ],
+  "hidden": {
+    "poi_id": "另一个与 selections 都不同的候选 id",
+    "description": "隐藏地点的神秘氛围描述（30字以内）",
+    "task": "隐藏打卡任务提示（20字以内）",
+    "reward": "隐藏奖励（如：限定徽章、隐藏菜单券）",
+    "emoji": "一个代表这个地点的 emoji"
+  }
 }
 `;
 
@@ -148,16 +158,19 @@ ${buildCandidateBlock(candidates)}
   const parsed = JSON.parse(jsonMatch[0]) as GeminiResponse;
   const byId = new Map(candidates.map((p) => [p.id, p]));
 
+  const usedIds = new Set<string>();
   const waypoints: Waypoint[] = [];
   for (const sel of parsed.selections ?? []) {
     const poi = byId.get(sel.poi_id);
-    if (!poi) continue; // Gemini 如果幻觉了 id 就跳过
+    if (!poi || usedIds.has(sel.poi_id)) continue; // 幻觉 id 或重复就跳过
+    usedIds.add(sel.poi_id);
     waypoints.push(hydrate(sel, poi));
   }
 
   // Gemini 全跳过了的兜底：拿前 N 个候选直接生成简易 waypoint
   if (waypoints.length === 0) {
     candidates.slice(0, actualCount).forEach((poi) => {
+      usedIds.add(poi.id);
       waypoints.push({
         name: poi.name,
         description: poi.review_summary,
@@ -173,8 +186,38 @@ ${buildCandidateBlock(candidates)}
     });
   }
 
+  // 隐藏任务：优先用 Gemini 选的 hidden（须是另一个有效候选），否则取第一个未用候选兜底
+  let hiddenTask: Waypoint | undefined;
+  const hsel = parsed.hidden;
+  if (hsel && byId.has(hsel.poi_id) && !usedIds.has(hsel.poi_id)) {
+    hiddenTask = hydrate(hsel, byId.get(hsel.poi_id)!);
+    usedIds.add(hsel.poi_id);
+  } else {
+    const leftover = candidates.find((p) => !usedIds.has(p.id));
+    if (leftover) {
+      hiddenTask = {
+        name: leftover.name,
+        description: leftover.review_summary,
+        task: "找到这个隐藏坐标，完成一次特别打卡",
+        reward: "隐藏奖励 +50 XP",
+        emoji: "✨",
+        distanceText: walkingTimeText(
+          distanceMeters(ORIGIN, { lat: leftover.lat, lng: leftover.lng })
+        ),
+        lat: leftover.lat,
+        lng: leftover.lng,
+      };
+      usedIds.add(leftover.id);
+    }
+  }
+
+  // 未探索标记：剩余候选里取最多 3 个坐标，地图上渲染成"?"
+  const unknownPOIs = pickUnknownPOIs(candidates, usedIds, 3);
+
   return {
     title: parsed.title ?? "五道口漫游",
     waypoints,
+    hiddenTask,
+    unknownPOIs,
   };
 }
