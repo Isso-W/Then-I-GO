@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
 import { BottomNav } from "../components/CommonUI";
 import { Map } from "../components/Map";
+import { distanceMeters } from "../agents/poiFilter";
 import type { LatLng } from "../components/mapProjection";
 import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute, Waypoint, RouteBranch } from "../types";
 
@@ -47,6 +48,23 @@ export function ExploreScreen({
 
   const isGameStarted = !["intro", "preference_selection"].includes(step);
   const isCapturing = ["checkin_initial", "checkin_hidden", "checkin_next"].includes(step);
+
+  // 接近触发打卡（模拟 LBS）：红点进入激活 waypoint 半径内才允许打卡。
+  // 没有路线/目标时不拦截（保留兜底流程）。
+  const CHECKIN_RADIUS_M = 30;
+  const activeTarget =
+    step === "initial" || step === "checkin_initial"
+      ? generatedRoute?.waypoints[0]
+      : step === "hidden_active" || step === "checkin_hidden"
+      ? generatedRoute?.hiddenTask
+      : step === "next_objective" || step === "checkin_next"
+      ? generatedRoute?.waypoints[1]
+      : undefined;
+  const distToTarget = activeTarget
+    ? distanceMeters(currentPosition, { lat: activeTarget.lat, lng: activeTarget.lng })
+    : 0;
+  const inRange = !activeTarget || distToTarget <= CHECKIN_RADIUS_M;
+  const rangeLabel = activeTarget && !inRange ? `还差 ${Math.round(distToTarget)}m` : null;
 
   return (
     <AppLayout>
@@ -96,6 +114,9 @@ export function ExploreScreen({
                 if (step === "next_objective") setStep("checkin_next");
               }}
               generatedRoute={generatedRoute}
+              inRange={inRange}
+              hasTarget={!!activeTarget}
+              rangeLabel={rangeLabel}
             />
           </motion.div>
         )}
@@ -255,11 +276,14 @@ function Legend({ step }: { step?: ExploreStep }) {
   );
 }
 
-function TaskCard({ step, onComplete, onCheckIn, generatedRoute }: {
+function TaskCard({ step, onComplete, onCheckIn, generatedRoute, inRange, hasTarget, rangeLabel }: {
   step: ExploreStep;
   onComplete: () => void;
   onCheckIn: () => void;
   generatedRoute: GeneratedRoute | null;
+  inRange: boolean;
+  hasTarget: boolean;
+  rangeLabel: string | null;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -300,6 +324,7 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute }: {
 
   const handleAction = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!inRange) return; // 没到范围内不能打卡
     onCheckIn();
   };
 
@@ -316,6 +341,15 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute }: {
           <h2 className="text-[16px] font-bold uppercase tracking-tight">
             {isInitial ? "首站探索" : isHiddenActive ? "触发：隐藏任务" : isNext ? "今日终点" : "探索中"}
           </h2>
+          {hasTarget && (
+            <span
+              className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
+                inRange ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-white/45"
+              }`}
+            >
+              {inRange ? "✓ 已到达" : rangeLabel}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1.5 text-[16px] font-mono font-bold text-white/80">
           <Clock size={14} />
@@ -356,12 +390,15 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute }: {
                 {content.detail}
               </p>
               
-              <button 
+              <button
                 onClick={handleAction}
-                className="w-full rounded-xl bg-gradient-to-r from-[#6C5CFF] to-[#8F5CFF] py-3 text-[14px] font-bold text-white shadow-lg active:scale-[0.98] transition-transform"
-                style={{ backgroundImage: `linear-gradient(to right, ${content.color}, #5B21B6)` }}
+                disabled={!inRange}
+                className={`w-full rounded-xl py-3 text-[14px] font-bold text-white shadow-lg transition-transform ${
+                  inRange ? "active:scale-[0.98]" : "opacity-40 cursor-not-allowed"
+                }`}
+                style={inRange ? { backgroundImage: `linear-gradient(to right, ${content.color}, #5B21B6)` } : { background: "rgba(255,255,255,0.08)" }}
               >
-                开启打卡 / 记录 VLOG
+                {inRange ? "开启打卡 / 记录 VLOG" : `走近目标再打卡${rangeLabel ? `（${rangeLabel}）` : ""}`}
               </button>
             </div>
           </motion.div>
