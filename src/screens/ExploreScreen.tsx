@@ -64,7 +64,7 @@ export function ExploreScreen({
     ? distanceMeters(currentPosition, { lat: activeTarget.lat, lng: activeTarget.lng })
     : 0;
   const inRange = !activeTarget || distToTarget <= CHECKIN_RADIUS_M;
-  const rangeLabel = activeTarget && !inRange ? `还差 ${Math.round(distToTarget)}m` : null;
+  const rangeLabel = activeTarget && !inRange ? `${Math.round(distToTarget)}m` : null;
 
   return (
     <AppLayout>
@@ -324,8 +324,7 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, inRange, hasTar
 
   const handleAction = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!inRange) return; // 没到范围内不能打卡
-    onCheckIn();
+    onCheckIn(); // 随时可打卡/记录；接近只做提醒，不拦截
   };
 
   return (
@@ -347,7 +346,7 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, inRange, hasTar
                 inRange ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-white/45"
               }`}
             >
-              {inRange ? "✓ 已到达" : rangeLabel}
+              {inRange ? "✓ 到了 · 可打卡" : `距目标 ${rangeLabel}`}
             </span>
           )}
         </div>
@@ -392,13 +391,10 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, inRange, hasTar
               
               <button
                 onClick={handleAction}
-                disabled={!inRange}
-                className={`w-full rounded-xl py-3 text-[14px] font-bold text-white shadow-lg transition-transform ${
-                  inRange ? "active:scale-[0.98]" : "opacity-40 cursor-not-allowed"
-                }`}
-                style={inRange ? { backgroundImage: `linear-gradient(to right, ${content.color}, #5B21B6)` } : { background: "rgba(255,255,255,0.08)" }}
+                className="w-full rounded-xl py-3 text-[14px] font-bold text-white shadow-lg active:scale-[0.98] transition-transform"
+                style={{ backgroundImage: `linear-gradient(to right, ${content.color}, #5B21B6)` }}
               >
-                {inRange ? "开启打卡 / 记录 VLOG" : `走近目标再打卡${rangeLabel ? `（${rangeLabel}）` : ""}`}
+                开启打卡 / 记录 VLOG
               </button>
             </div>
           </motion.div>
