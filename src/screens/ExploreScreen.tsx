@@ -978,7 +978,17 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
           ))}
         </div>
 
-        <SectionTitle num={5} title="今天想被安排什么程度？" />
+        <SectionTitle
+          num={5}
+          title="今天想被安排什么程度？"
+          help={
+            <div className="space-y-1.5">
+              <div><span className="font-bold text-white">别让我思考</span>：不用选，直接带你逛</div>
+              <div><span className="font-bold text-white">正常探索</span>：路上有岔路，你来选</div>
+              <div><span className="font-bold text-white">惊喜模式</span>：目的地藏起来，到了才揭晓</div>
+            </div>
+          }
+        />
         <div className="grid grid-cols-3 gap-2 mb-6">
           {intensities.map((i) => (
             <button
@@ -1017,13 +1027,20 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
   );
 }
 
-function SectionTitle({ num, title, sub }: { num: number | string; title: string, sub?: string }) {
+function SectionTitle({ num, title, sub, help }: { num: number | string; title: string, sub?: string, help?: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2 mb-3">
       {num !== "" && <span className="text-base font-black text-[#6C5CFF]">{num}.</span>}
       <h3 className="text-[13px] font-black text-white tracking-wide">{title}</h3>
       {sub && <span className="text-[10px] text-white/20 font-medium">{sub}</span>}
-      {title.includes("程度") && <HelpCircle size={12} className="text-white/20" />}
+      {help && (
+        <span className="group relative inline-flex">
+          <HelpCircle size={12} className="text-white/30 hover:text-white/70 cursor-help transition-colors" />
+          <span className="pointer-events-none absolute right-0 top-full z-50 mt-2 w-60 rounded-xl border border-white/10 bg-[#14142B] p-3 text-left text-[11px] leading-relaxed text-white/70 opacity-0 shadow-[0_12px_30px_rgba(0,0,0,0.55)] transition-opacity duration-150 group-hover:opacity-100">
+            {help}
+          </span>
+        </span>
+      )}
     </div>
   );
 }
