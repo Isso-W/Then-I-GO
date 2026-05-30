@@ -164,7 +164,7 @@ export default function App() {
           )}
           {screen === "story" && <StoryScreen onNavigate={navigate} generatedRoute={generatedRoute} />}
           {screen === "bag" && <BagScreen onNavigate={navigate} generatedRoute={generatedRoute} />}
-          {screen === "mine" && <MineScreen onNavigate={navigate} profile={profile} />}
+          {screen === "mine" && <MineScreen onNavigate={navigate} profile={profile} generatedRoute={generatedRoute} />}
           {screen === "event" && <EventDetailScreen onBack={() => navigate("explore")} />}
           {screen === "settings" && <SettingsScreen onBack={() => navigate("mine")} />}
         </motion.div>
