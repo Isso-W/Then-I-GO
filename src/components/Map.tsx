@@ -158,6 +158,20 @@ export function Map({
     };
   }, [route, viewBox]);
 
+  // 隐藏任务导航线：从第一站（或起点）沿街走到隐藏点（仅隐藏阶段显示）
+  const hiddenRouteData = useMemo(() => {
+    if (!route?.hiddenTask) return null;
+    const start = route.waypoints[0] ?? ORIGIN;
+    const poly = routePolyline(
+      [
+        { lat: start.lat, lng: start.lng },
+        { lat: route.hiddenTask.lat, lng: route.hiddenTask.lng },
+      ],
+      ROAD_GRAPH
+    );
+    return pointsToPath(poly, viewBox);
+  }, [route, viewBox]);
+
   // "?" 未探索标记 + 隐藏任务针：真坐标投影，跟随地图平移
   const unknownMarks = useMemo(
     () => (route?.unknownPOIs ?? []).map((p, i) => ({ key: i, ...projectLatLng(p, viewBox) })),
@@ -307,6 +321,21 @@ export function Map({
             vectorEffect="non-scaling-stroke"
           />
         </g>
+      )}
+
+      {/* 隐藏任务导航线（amber 虚线，仅隐藏阶段显示） */}
+      {showHidden && hiddenRouteData && (
+        <path
+          d={hiddenRouteData}
+          fill="none"
+          stroke="#F59E0B"
+          strokeWidth={3}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeDasharray="6 6"
+          opacity={0.85}
+          vectorEffect="non-scaling-stroke"
+        />
       )}
 
       {/* Waypoint markers — 用 scale 保持屏上大小恒定 */}
