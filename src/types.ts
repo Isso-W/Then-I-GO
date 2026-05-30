@@ -19,8 +19,9 @@ export type ExploreStep =
   | "hidden_found" 
   | "hidden_active" 
   | "checkin_hidden" 
-  | "reward_hidden" 
-  | "next_objective" 
+  | "reward_hidden"
+  | "branch_choice"
+  | "next_objective"
   | "checkin_next" 
   | "vlog_ready"
   | "achievement_unlock";
@@ -72,12 +73,19 @@ export interface UnknownPOI {
   lng: number;
 }
 
+// 第二站的 A/B 抉择：两个气质相反的候选 + 一句抉择提示
+export interface RouteBranch {
+  axis: string;                   // 抉择提示，如 "想安静还是想热闹？"
+  options: [Waypoint, Waypoint];  // 恰好两个候选第二站
+}
+
 // AI 生成的完整路线
 export interface GeneratedRoute {
   title: string;        // 今日路线标题，如"五道口的隐秘下午"
   waypoints: Waypoint[];
   hiddenTask?: Waypoint;        // 隐藏任务：不在主线里的真实 POI，Gemini 生成故事/任务/奖励
   unknownPOIs?: UnknownPOI[];   // 地图上若干"?"未探索标记的真实坐标
+  branch?: RouteBranch;         // 可选：第二站的 A/B 分叉（intensity 门控，只在用户想参与时出现）
 }
 
 // POI 数据库里的一条记录

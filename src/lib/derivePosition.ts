@@ -8,6 +8,7 @@ const AT_OR_PAST_WP0: ReadonlySet<ExploreStep> = new Set<ExploreStep>([
   "hidden_active",
   "checkin_hidden",
   "reward_hidden",
+  "branch_choice",
   "next_objective",
 ]);
 

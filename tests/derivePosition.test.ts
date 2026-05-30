@@ -50,6 +50,7 @@ describe("positionFromStep（step → 位置 映射）", () => {
       "hidden_active",
       "checkin_hidden",
       "reward_hidden",
+      "branch_choice",
       "next_objective",
     ];
     for (const s of wp0Steps) {

@@ -10,6 +10,7 @@ import { SettingsScreen } from "./screens/SettingsScreen";
 import { generateRoute } from "./agents/routeAgent";
 import { ORIGIN } from "./components/mapProjection";
 import { positionFromStep } from "./lib/derivePosition";
+import { commitBranchChoice } from "./lib/branch";
 import type { LatLng } from "./components/mapProjection";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -108,6 +109,13 @@ export default function App() {
     runGeneration(prefs);
   };
 
+  // 二叉树 A/B：用户选定第二站 → 写回 waypoints[1] → 进 next_objective
+  const handleBranchChoice = (index: number) => {
+    setGeneratedRoute((r) => (r ? commitBranchChoice(r, index) : r));
+    setOverridePosition(null); // 清掉拖动位置，让小人/镜头走向所选的第二站
+    setExploreStep("next_objective");
+  };
+
   return (
     <div className="h-full w-full bg-[#05060F] font-[PingFang_SC,Inter,system-ui,sans-serif] text-white">
       {/* 加载中的全屏遮罩 */}
@@ -151,6 +159,7 @@ export default function App() {
               generatedRoute={generatedRoute}
               currentPosition={currentPosition}
               onUserDrag={setOverridePosition}
+              onBranchChoice={handleBranchChoice}
             />
           )}
           {screen === "story" && <StoryScreen onNavigate={navigate} />}

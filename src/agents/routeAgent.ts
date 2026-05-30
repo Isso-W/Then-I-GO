@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import type { UserPreferences, UserProfile, GeneratedRoute, POI, Waypoint } from "../types";
+import type { UserPreferences, UserProfile, GeneratedRoute, POI, Waypoint, RouteBranch } from "../types";
 import {
   filterCandidates,
   distanceMeters,
@@ -7,6 +7,7 @@ import {
   pickUnknownPOIs,
   ORIGIN,
 } from "./poiFilter";
+import { wantsBranch, pickContrastingPair } from "../lib/branch";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
@@ -46,10 +47,15 @@ interface GeminiSelection {
   reward: string;
   emoji: string;
 }
+interface GeminiBranch {
+  axis: string;
+  options: GeminiSelection[];
+}
 interface GeminiResponse {
   title: string;
   selections: GeminiSelection[];
   hidden?: GeminiSelection;
+  branch?: GeminiBranch;
 }
 
 function buildCandidateBlock(candidates: POI[]): string {
@@ -102,8 +108,39 @@ export async function generateRoute(
     ? `\n用户长期属性（影响整体文案语气和选址倾向）：\n${profileLines.join("\n")}\n`
     : "";
 
+  // intensity 门控：选了"别让我思考"或不足 2 站 → 不分叉
+  const branchEnabled = wantsBranch(prefs, actualCount);
+  // 分叉时主线只要 1 个第一站，第二站由 branch 的两个候选二选一
+  const selectionCount = branchEnabled ? 1 : actualCount;
+
+  const tasks = [
+    `从候选里挑选 ${selectionCount} 个 poi_id，按推荐游玩顺序排列`,
+    `给每个挑选的地点写故事氛围、打卡任务、奖励文案、emoji`,
+    `写一个 10 字以内有意境的路线标题`,
+  ];
+  if (branchEnabled) {
+    tasks.push(
+      `再选 2 个气质明显相反的地点作为"第二站"的两个候选（一安静一热闹 / 一文艺一烟火气 / 一室内一户外…），并给这次二选一写一句抉择提示 axis（如"想安静还是想热闹？"），放进 branch 字段；这 2 个要和 selections、hidden 都不同`
+    );
+  }
+  tasks.push(
+    `另外再选 1 个与上面都不同的地点作为"隐藏任务"（藏在附近的惊喜坐标），写神秘氛围/打卡任务/奖励/emoji，放进 hidden 字段`
+  );
+  const taskBlock = tasks.map((t, i) => `${i + 1}. ${t}`).join("\n");
+
+  const branchJson = branchEnabled
+    ? `,
+  "branch": {
+    "axis": "二选一的抉择提示（如：想安静还是想热闹？）",
+    "options": [
+      { "poi_id": "候选 id", "description": "30字以内", "task": "20字以内", "reward": "奖励文案", "emoji": "emoji" },
+      { "poi_id": "另一个气质相反的候选 id", "description": "30字以内", "task": "20字以内", "reward": "奖励文案", "emoji": "emoji" }
+    ]
+  }`
+    : "";
+
   const prompt = `
-你是一个城市探索助手，为用户从下面的候选地点里挑选 ${actualCount} 个组成一条五道口周末散步路线。
+你是一个城市探索助手，为用户从下面的候选地点里挑选地点组成一条五道口周末散步路线。
 ${profileBlock}
 用户当下偏好：
 - 心情：${MOOD_LABELS[prefs.mood] ?? prefs.mood}
@@ -117,10 +154,7 @@ ${profileBlock}
 ${buildCandidateBlock(candidates)}
 
 任务：
-1. 从候选里挑选 ${actualCount} 个 poi_id，按推荐游玩顺序排列
-2. 给每个挑选的地点写故事氛围、打卡任务、奖励文案、emoji
-3. 写一个 10 字以内有意境的路线标题
-4. 另外再选 1 个与上面都不同的地点作为"隐藏任务"（藏在附近的惊喜坐标），同样写神秘氛围/打卡任务/奖励/emoji，放进 hidden 字段
+${taskBlock}
 
 严格按照以下 JSON 格式返回，不要有任何其他文字：
 {
@@ -140,7 +174,7 @@ ${buildCandidateBlock(candidates)}
     "task": "隐藏打卡任务提示（20字以内）",
     "reward": "隐藏奖励（如：限定徽章、隐藏菜单券）",
     "emoji": "一个代表这个地点的 emoji"
-  }
+  }${branchJson}
 }
 `;
 
@@ -167,9 +201,9 @@ ${buildCandidateBlock(candidates)}
     waypoints.push(hydrate(sel, poi));
   }
 
-  // Gemini 全跳过了的兜底：拿前 N 个候选直接生成简易 waypoint
+  // Gemini 全跳过了的兜底：拿前 N 个候选直接生成简易 waypoint（分叉时只要 1 个第一站）
   if (waypoints.length === 0) {
-    candidates.slice(0, actualCount).forEach((poi) => {
+    candidates.slice(0, selectionCount).forEach((poi) => {
       usedIds.add(poi.id);
       waypoints.push({
         name: poi.name,
@@ -184,6 +218,42 @@ ${buildCandidateBlock(candidates)}
         lng: poi.lng,
       });
     });
+  }
+
+  // A/B 分叉：优先用 Gemini 的 branch（2 个有效且未用的候选），否则兜底挑对比对
+  let branch: RouteBranch | undefined;
+  if (branchEnabled) {
+    const opts = parsed.branch?.options ?? [];
+    const valid = opts.filter((o) => byId.has(o.poi_id) && !usedIds.has(o.poi_id));
+    const uniqueValid = valid.filter(
+      (o, i) => valid.findIndex((x) => x.poi_id === o.poi_id) === i
+    );
+    if (parsed.branch?.axis && uniqueValid.length >= 2) {
+      const a = hydrate(uniqueValid[0], byId.get(uniqueValid[0].poi_id)!);
+      const b = hydrate(uniqueValid[1], byId.get(uniqueValid[1].poi_id)!);
+      usedIds.add(uniqueValid[0].poi_id);
+      usedIds.add(uniqueValid[1].poi_id);
+      branch = { axis: parsed.branch.axis, options: [a, b] };
+    } else {
+      const pair = pickContrastingPair(candidates, usedIds);
+      if (pair) {
+        const mk = (poi: POI): Waypoint => ({
+          name: poi.name,
+          description: poi.review_summary,
+          task: "到这儿打个卡",
+          reward: "探索经验 +20",
+          emoji: "📍",
+          distanceText: walkingTimeText(
+            distanceMeters(ORIGIN, { lat: poi.lat, lng: poi.lng })
+          ),
+          lat: poi.lat,
+          lng: poi.lng,
+        });
+        usedIds.add(pair[0].id);
+        usedIds.add(pair[1].id);
+        branch = { axis: "换个气质走走？", options: [mk(pair[0]), mk(pair[1])] };
+      }
+    }
   }
 
   // 隐藏任务：优先用 Gemini 选的 hidden（须是另一个有效候选），否则取第一个未用候选兜底
@@ -219,5 +289,6 @@ ${buildCandidateBlock(candidates)}
     waypoints,
     hiddenTask,
     unknownPOIs,
+    branch,
   };
 }

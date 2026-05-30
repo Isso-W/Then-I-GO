@@ -5,7 +5,7 @@ import { Glass, AppLayout } from "../components/Layout";
 import { BottomNav } from "../components/CommonUI";
 import { Map } from "../components/Map";
 import type { LatLng } from "../components/mapProjection";
-import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute, Waypoint } from "../types";
+import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute, Waypoint, RouteBranch } from "../types";
 
 export function ExploreScreen({
   onNavigate,
@@ -16,6 +16,7 @@ export function ExploreScreen({
   generatedRoute,
   currentPosition,
   onUserDrag,
+  onBranchChoice,
 }: {
   onNavigate: (s: ScreenType) => void;
   step: ExploreStep;
@@ -25,6 +26,7 @@ export function ExploreScreen({
   generatedRoute: GeneratedRoute | null;
   currentPosition: LatLng;
   onUserDrag?: (p: LatLng) => void;
+  onBranchChoice: (index: number) => void;
 }) {
 
   const handleInitialComplete = () => {
@@ -78,7 +80,7 @@ export function ExploreScreen({
       </AnimatePresence>
 
       <AnimatePresence>
-        {isGameStarted && !isCapturing && (
+        {isGameStarted && !isCapturing && step !== "branch_choice" && (
           <motion.div
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -119,8 +121,14 @@ export function ExploreScreen({
       <AnimatePresence>
         {step === "reward_hidden" && (
           <RewardOverlay 
-            onContinue={() => setStep("next_objective")} 
+            onContinue={() => setStep(generatedRoute?.branch ? "branch_choice" : "next_objective")}
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {step === "branch_choice" && (
+          <BranchChoiceOverlay branch={generatedRoute?.branch} onPick={onBranchChoice} />
         )}
       </AnimatePresence>
 
@@ -411,6 +419,46 @@ function HiddenTaskAlert({ hiddenTask, onAccept }: { hiddenTask?: Waypoint; onAc
           </div>
         </div>
       </div>
+    </motion.div>
+  );
+}
+
+function BranchChoiceOverlay({ branch, onPick }: { branch?: RouteBranch; onPick: (index: number) => void }) {
+  if (!branch) return null;
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="absolute inset-0 z-50 flex flex-col items-center justify-center p-6 backdrop-blur-md bg-black/30"
+    >
+      <motion.h2
+        initial={{ y: -10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="mb-5 text-center text-[20px] font-black italic text-white drop-shadow-lg"
+      >
+        {branch.axis}
+      </motion.h2>
+      <div className="flex w-full max-w-sm gap-3">
+        {branch.options.map((opt, i) => (
+          <motion.button
+            key={i}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.08 * i }}
+            onClick={() => onPick(i)}
+            className="flex-1 rounded-3xl border border-white/10 bg-[#14142B]/90 p-4 text-left shadow-[0_18px_50px_rgba(0,0,0,.45)] active:scale-[0.97] transition-transform"
+          >
+            <div className="text-3xl">{opt.emoji}</div>
+            <div className="mt-2 text-[15px] font-bold text-white">{opt.name}</div>
+            <p className="mt-1 text-[11px] leading-relaxed text-white/45 line-clamp-3">{opt.description}</p>
+            <div className="mt-2 flex items-center gap-1 text-[10px] text-[#A98BFF]">
+              <MapPin size={11} /> {opt.distanceText}
+            </div>
+          </motion.button>
+        ))}
+      </div>
+      <p className="mt-4 text-[11px] text-white/40">点一张卡 = 选定第二站</p>
     </motion.div>
   );
 }

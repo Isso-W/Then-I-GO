@@ -180,6 +180,18 @@ export function Map({
     step === "checkin_hidden" ||
     step === "reward_hidden";
 
+  // A/B 分叉候选标记：branch_choice 时把两个候选画在真坐标上
+  const branchMarks = useMemo(
+    () =>
+      (route?.branch?.options ?? []).map((wp, i) => ({
+        key: i,
+        label: i === 0 ? "A" : "B",
+        ...projectLatLng({ lat: wp.lat, lng: wp.lng }, viewBox),
+      })),
+    [route, viewBox]
+  );
+  const showBranch = step === "branch_choice";
+
   const currentPos = projectLatLng(currentPosition, viewBox);
 
   // 客户端像素 → SVG 用户坐标系（米）→ 经纬度
@@ -357,6 +369,24 @@ export function Map({
           </text>
         </g>
       )}
+
+      {/* A/B 分叉候选标记（branch_choice 时显示） */}
+      {showBranch &&
+        branchMarks.map((m) => (
+          <g key={`branch-${m.key}`} transform={`translate(${m.x}, ${m.y}) scale(${markerScale})`}>
+            <circle r={24} fill="#6C5CFF" opacity={0.2} />
+            <circle r={17} fill="#5B3BFF" stroke="#A98BFF" strokeWidth={2} />
+            <text
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={16}
+              fontWeight={800}
+              fill="#FFFFFF"
+            >
+              {m.label}
+            </text>
+          </g>
+        ))}
 
       {/* 当前位置：红色脉冲点。
         - 普通状态：spring 跟随 currentPos（check-in 切站时平滑）
