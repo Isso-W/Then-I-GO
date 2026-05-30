@@ -160,6 +160,7 @@ export default function App() {
               currentPosition={currentPosition}
               onUserDrag={setOverridePosition}
               onBranchChoice={handleBranchChoice}
+              mystery={preferences?.intensity === "relaxed"}
             />
           )}
           {screen === "story" && <StoryScreen onNavigate={navigate} generatedRoute={generatedRoute} />}

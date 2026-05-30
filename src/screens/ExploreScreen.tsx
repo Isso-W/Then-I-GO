@@ -18,6 +18,7 @@ export function ExploreScreen({
   currentPosition,
   onUserDrag,
   onBranchChoice,
+  mystery,
 }: {
   onNavigate: (s: ScreenType) => void;
   step: ExploreStep;
@@ -28,6 +29,7 @@ export function ExploreScreen({
   currentPosition: LatLng;
   onUserDrag?: (p: LatLng) => void;
   onBranchChoice: (index: number) => void;
+  mystery?: boolean;
 }) {
 
   const handleInitialComplete = () => {
@@ -92,7 +94,7 @@ export function ExploreScreen({
 
       <AnimatePresence>
         {step === "hidden_found" && (
-          <HiddenTaskAlert hiddenTask={generatedRoute?.hiddenTask} onAccept={startHiddenTask} />
+          <HiddenTaskAlert hiddenTask={generatedRoute?.hiddenTask} onAccept={startHiddenTask} mystery={mystery} />
         )}
       </AnimatePresence>
 
@@ -116,6 +118,7 @@ export function ExploreScreen({
               inRange={inRange}
               hasTarget={!!activeTarget}
               rangeLabel={rangeLabel}
+              mystery={mystery}
             />
           </motion.div>
         )}
@@ -148,7 +151,7 @@ export function ExploreScreen({
 
       <AnimatePresence>
         {step === "branch_choice" && (
-          <BranchChoiceOverlay branch={generatedRoute?.branch} onPick={onBranchChoice} />
+          <BranchChoiceOverlay branch={generatedRoute?.branch} onPick={onBranchChoice} mystery={mystery} />
         )}
       </AnimatePresence>
 
@@ -252,7 +255,7 @@ function Legend({ step }: { step?: ExploreStep }) {
   );
 }
 
-function TaskCard({ step, onComplete, onCheckIn, generatedRoute, inRange, hasTarget, rangeLabel }: {
+function TaskCard({ step, onComplete, onCheckIn, generatedRoute, inRange, hasTarget, rangeLabel, mystery }: {
   step: ExploreStep;
   onComplete: () => void;
   onCheckIn: () => void;
@@ -260,6 +263,7 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, inRange, hasTar
   inRange: boolean;
   hasTarget: boolean;
   rangeLabel: string | null;
+  mystery?: boolean;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -297,6 +301,8 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, inRange, hasTar
   };
 
   const content = getTaskContent();
+  // 惊喜模式：到达（inRange）前藏起目的地名字，到了才揭晓；故事/任务文案仍作预告
+  const displayTitle = mystery && hasTarget && !inRange ? "？？？" : content.title;
 
   const handleAction = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -343,7 +349,7 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, inRange, hasTar
           <Camera size={20} />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="text-[15px] font-bold truncate text-white">{content.title}</div>
+          <div className="text-[15px] font-bold truncate text-white">{displayTitle}</div>
           <p className="text-[11px] text-white/40 truncate">{content.desc}</p>
         </div>
         <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-lg">
@@ -380,7 +386,7 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, inRange, hasTar
   );
 }
 
-function HiddenTaskAlert({ hiddenTask, onAccept }: { hiddenTask?: Waypoint; onAccept: () => void }) {
+function HiddenTaskAlert({ hiddenTask, onAccept, mystery }: { hiddenTask?: Waypoint; onAccept: () => void; mystery?: boolean }) {
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -411,7 +417,7 @@ function HiddenTaskAlert({ hiddenTask, onAccept }: { hiddenTask?: Waypoint; onAc
           <div className="rounded-2xl bg-white/5 p-4 text-left border border-white/10">
             <div className="flex items-center gap-2 text-amber-400">
                <MapPin size={16} />
-               <span className="text-[14px] font-bold">{hiddenTask?.name ?? "隐藏坐标"}</span>
+               <span className="text-[14px] font-bold">{mystery ? "？？？" : (hiddenTask?.name ?? "隐藏坐标")}</span>
             </div>
             <p className="mt-2 text-[12px] leading-relaxed text-white/50">
               {hiddenTask?.description ?? "附近藏着一个未公开的坐标，藏着这个街区的某个秘密瞬间。"}
@@ -432,7 +438,7 @@ function HiddenTaskAlert({ hiddenTask, onAccept }: { hiddenTask?: Waypoint; onAc
   );
 }
 
-function BranchChoiceOverlay({ branch, onPick }: { branch?: RouteBranch; onPick: (index: number) => void }) {
+function BranchChoiceOverlay({ branch, onPick, mystery }: { branch?: RouteBranch; onPick: (index: number) => void; mystery?: boolean }) {
   if (!branch) return null;
   return (
     <motion.div
@@ -459,7 +465,7 @@ function BranchChoiceOverlay({ branch, onPick }: { branch?: RouteBranch; onPick:
             className="flex-1 rounded-3xl border border-white/10 bg-[#14142B]/90 p-4 text-left shadow-[0_18px_50px_rgba(0,0,0,.45)] active:scale-[0.97] transition-transform"
           >
             <div className="text-3xl">{opt.emoji}</div>
-            <div className="mt-2 text-[15px] font-bold text-white">{opt.name}</div>
+            <div className="mt-2 text-[15px] font-bold text-white">{mystery ? "？？？" : opt.name}</div>
             <p className="mt-1 text-[11px] leading-relaxed text-white/45 line-clamp-3">{opt.description}</p>
             <div className="mt-2 flex items-center gap-1 text-[10px] text-[#A98BFF]">
               <MapPin size={11} /> {opt.distanceText}
@@ -818,10 +824,11 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
     { id: "coffee", icon: Coffee, label: "甜品咖啡" },
   ];
 
+  // 省心 → 冒险 的梯子，每档行为不同（sub 写明区别，就在「程度」问号旁的选择区里）
   const intensities: { id: string; icon: typeof Target; label: string; sub?: string; recommended?: boolean }[] = [
-    { id: "relaxed", icon: Target, label: "轻松带路" },
-    { id: "normal", icon: Book, label: "正常探索" },
-    { id: "don't_think", icon: Wand2, label: "别让我思考", recommended: true },
+    { id: "don't_think", icon: Wand2, label: "别让我思考", sub: "不用选·直接带路", recommended: true },
+    { id: "normal", icon: Book, label: "正常探索", sub: "有岔路·你来选" },
+    { id: "relaxed", icon: Sparkles, label: "惊喜模式", sub: "藏目的地·到了揭晓" },
   ];
 
   const toggleList = (list: string[], setList: (l: string[]) => void, id: string) => {
