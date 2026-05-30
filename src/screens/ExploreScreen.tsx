@@ -54,10 +54,7 @@ export function ExploreScreen({
       <FogLayer />
       {(step === "intro" || (isGameStarted && !isCapturing)) && <ExploreHeader />}
       {isGameStarted && !isCapturing && <ProgressPanel step={step} />}
-      {isGameStarted && !isCapturing && <DottedPath step={step} />}
-      {isGameStarted && !isCapturing && <NextTarget step={step} generatedRoute={generatedRoute} />}
       {isGameStarted && !isCapturing && <UnknownMarkers step={step} />}
-      {!isCapturing && <UserAvatar step={step} />}
       {isGameStarted && !isCapturing && <FloatingActions onAction={(a) => a === 'event' && onNavigate('event')} />}
       {isGameStarted && !isCapturing && <Legend step={step} />}
       
@@ -138,19 +135,6 @@ export function ExploreScreen({
   );
 }
 
-function CityMapTexture() {
-  return (
-    <div className="absolute inset-0 z-0 overflow-hidden bg-[#07101d]">
-      <div className="absolute inset-0 opacity-50 [background-image:linear-gradient(32deg,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(122deg,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:64px_64px,86px_86px]" />
-      <div className="absolute inset-0 opacity-40 [background-image:radial-gradient(circle_at_18%_42%,rgba(50,120,255,.20),transparent_18%),radial-gradient(circle_at_72%_40%,rgba(108,92,255,.15),transparent_22%),radial-gradient(circle_at_60%_80%,rgba(0,229,255,.12),transparent_18%)]" />
-      {Array.from({ length: 28 }).map((_, i) => (
-        <div key={i} className="absolute rounded-sm bg-white/[0.035]" style={{ left: `${(i * 37) % 92}%`, top: `${12 + ((i * 11) % 80)}%`, width: `${24 + ((i * 17) % 58)}px`, height: `${12 + ((i * 13) % 42)}px`, transform: `rotate(${(i * 19) % 70 - 35}deg)` }} />
-      ))}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#061225] via-transparent to-[#081020]" />
-    </div>
-  );
-}
-
 function FogLayer() {
   return (
     <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
@@ -201,158 +185,6 @@ function ProgressPanel({ step }: { step: ExploreStep }) {
         <span className="font-bold text-[#FFD166]">85</span>
       </div>
     </Glass>
-  );
-}
-
-function DottedPath({ step }: { step: ExploreStep }) {
-  const isHiddenTarget = step === "hidden_active" || step === "checkin_hidden" || step === "reward_hidden";
-  const isNextTarget = step === "next_objective" || step === "checkin_next";
-  
-  return (
-    <div className={`absolute z-20 flex -translate-x-1/2 flex-col items-center justify-between transition-all duration-1000 ${
-      isHiddenTarget ? "left-[62%] top-[38%] bottom-[35%] -rotate-45" : 
-      isNextTarget ? "left-[35%] top-[25%] bottom-[40%] rotate-90" :
-      "left-[49%] top-[30%] bottom-[42%] rotate-0"
-    }`}>
-      {Array.from({ length: 8 }).map((_, i) => (
-        <motion.span 
-          key={i} 
-          animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.8, 0.4] }}
-          transition={{ duration: 2, delay: i * 0.1, repeat: Infinity }}
-          className="block rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,.6)]" 
-          style={{ 
-            width: 5, 
-            height: 5, 
-            transform: (isHiddenTarget || isNextTarget) ? "none" : `translateX(${Math.sin(i / 1.6) * 18}px)`, 
-            backgroundColor: (i < 4 || isHiddenTarget || isNextTarget) ? "#8F5CFF" : "#ffffff" 
-          }} 
-        />
-      ))}
-    </div>
-  );
-}
-
-function UserAvatar({ step }: { step?: ExploreStep }) {
-  const isIntro = step === "intro";
-  return (
-    <div className={`absolute left-1/2 z-[35] -translate-x-1/2 transition-all duration-700 ${isIntro ? "bottom-[54%]" : "bottom-[38%]"}`}>
-      <motion.div 
-        animate={{ 
-          scale: [1, 1.2, 1], 
-          opacity: [0.3, 0.5, 0.3],
-          boxShadow: isIntro ? ["0 0 20px rgba(0,163,255,0.4)", "0 0 40px rgba(0,163,255,0.6)", "0 0 20px rgba(0,163,255,0.4)"] : "none"
-        }}
-        transition={{ duration: 3, repeat: Infinity }}
-        className="absolute left-1/2 top-1/2 h-20 w-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#00A3FF]/20 blur-xl" 
-      />
-      
-      {/* Outer Blue Ring from Reference */}
-      <motion.div 
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="absolute -inset-8 rounded-full border-[1.5px] border-[#168DFF]/30 bg-[#168DFF]/5 shadow-[0_0_30px_rgba(0,110,255,0.2)]" 
-      />
-      
-      {/* Inner Avatar Container */}
-      <div className="relative flex h-[84px] w-[84px] items-center justify-center rounded-full border-[3px] border-[#58A6FF] bg-[#18244C] p-1 shadow-[0_4px_20px_rgba(0,0,0,0.5),0_0_20px_rgba(24,114,255,0.6)]">
-        <div className="h-full w-full overflow-hidden rounded-full border border-white/10">
-          <img 
-            src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=200" 
-            alt="Avatar" 
-            className="h-full w-full object-cover"
-          />
-        </div>
-      </div>
-      
-      {/* Reflection under avatar */}
-      <div className="absolute left-1/2 -bottom-4 h-2 w-12 -translate-x-1/2 bg-black/40 blur-md rounded-full" />
-    </div>
-  );
-}
-
-function NextTarget({ step, generatedRoute }: { step: ExploreStep; generatedRoute: GeneratedRoute | null }) {
-  const isHiddenActive = step === "hidden_active" || step === "checkin_hidden" || step === "reward_hidden";
-  const isNextObjective = step === "next_objective" || step === "checkin_next";
-
-  const wp0 = generatedRoute?.waypoints[0];
-  const wp1 = generatedRoute?.waypoints[1];
-
-  return (
-    <AnimatePresence mode="wait">
-      {isHiddenActive ? (
-        <motion.div
-          key="hidden-target"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="absolute right-[18%] top-[33%] z-30"
-        >
-          <div className="relative">
-            <motion.div
-              animate={{ y: [0, -4, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-amber-400 bg-amber-600 shadow-[0_0_15px_rgba(251,191,36,0.6)]"
-            >
-              <div className="absolute -bottom-2.5 h-5 w-5 rotate-45 rounded-br-md bg-amber-600" />
-              <span className="relative text-xl">☕</span>
-            </motion.div>
-            <Glass className="absolute left-[120%] top-0 w-[110px] rounded-lg p-2 text-white">
-              <div className="text-[9px] text-amber-200">秘密坐标</div>
-              <div className="text-[12px] font-bold text-amber-100">转角咖啡店</div>
-              <div className="text-[10px] text-white/40">30 米</div>
-            </Glass>
-          </div>
-        </motion.div>
-      ) : isNextObjective ? (
-        <motion.div
-          key="next-target"
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="absolute left-[18%] top-[15%] z-30"
-        >
-          <div className="relative">
-            <motion.div
-              animate={{ y: [0, -4, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#00E5FF] bg-[#0066FF] shadow-[0_0_15px_rgba(0,229,255,0.6)]"
-            >
-              <div className="absolute -bottom-2.5 h-5 w-5 rotate-45 rounded-br-md bg-[#0066FF]" />
-              <span className="relative text-xl">{wp1?.emoji ?? "📚"}</span>
-            </motion.div>
-            <Glass className="absolute left-[120%] top-0 w-[110px] rounded-lg p-2 text-white">
-              <div className="text-[10px] text-[#00E5FF]">下一站</div>
-              <div className="text-[12px] font-bold">{wp1?.name ?? "下一目标"}</div>
-              <div className="text-[10px] text-white/40">{wp1?.distanceText ?? "210 米"}</div>
-            </Glass>
-          </div>
-        </motion.div>
-      ) : (
-        <motion.div
-          key="initial-target"
-          className="absolute"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <div className="absolute left-[48%] top-[25%] z-30 -translate-x-1/2">
-            <motion.div
-              animate={{ y: [0, -4, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="relative flex h-11 w-11 items-center justify-center rounded-full border-2 border-[#8F5CFF] bg-[#5B3BFF] shadow-[0_0_15px_rgba(108,92,255,0.6)]"
-            >
-              <div className="absolute -bottom-2.5 h-5 w-5 rotate-45 rounded-br-md bg-[#5B3BFF]" />
-              <span className="relative text-xl">{wp0?.emoji ?? "🚇"}</span>
-            </motion.div>
-            {wp0 && (
-              <Glass className="absolute left-[120%] top-0 w-[110px] rounded-lg p-2 text-white" style={{ top: "-8px" }}>
-                <div className="text-[10px] text-[#A98BFF]">第一站</div>
-                <div className="text-[12px] font-bold">{wp0.name}</div>
-                <div className="text-[10px] text-white/40">{wp0.distanceText}</div>
-              </Glass>
-            )}
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
   );
 }
 

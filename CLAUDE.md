@@ -151,7 +151,6 @@ GearConfirmationOverlay
           → step 切换到 initial
 
 ExploreScreen（地图界面）
-  ├── NextTarget   使用 waypoints[0/1].name / emoji / distanceText
   └── TaskCard     使用 waypoints[0/1].name / task / description / reward
       · waypoints[0] → initial / checkin_initial 阶段
       · waypoints[1] → next_objective / checkin_next 阶段
