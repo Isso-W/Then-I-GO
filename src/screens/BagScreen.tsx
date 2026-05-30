@@ -3,9 +3,9 @@ import { HelpCircle, Utensils, Bike, Car, Coffee, Info, ChevronRight, Star, Gift
 import { motion, AnimatePresence } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
 import { BottomNav, PageTitle, TabBar } from "../components/CommonUI";
-import { ScreenType, Coupon } from "../types";
+import { ScreenType, Coupon, GeneratedRoute } from "../types";
 
-export function BagScreen({ onNavigate }: { onNavigate: (s: ScreenType) => void }) {
+export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: ScreenType) => void; generatedRoute?: GeneratedRoute | null }) {
   const [activeTab, setActiveTab] = useState(0);
   const [gear, setGear] = useState<string[]>([]);
 
@@ -16,11 +16,38 @@ export function BagScreen({ onNavigate }: { onNavigate: (s: ScreenType) => void 
     }
   }, []);
   
-  const coupons: Coupon[] = [
+  const demoCoupons: Coupon[] = [
     { title: "餐饮优惠券", desc: "满60减20", date: "06.01", amount: "¥20", icon: <Utensils size={20} />, color: "from-[#B46B08] to-[#654010]", tag: "限时" },
     { title: "单车骑行卡", desc: "7天畅骑卡", date: "05.28", amount: "¥3", icon: <Bike size={20} />, color: "from-[#00A99D] to-[#07566A]" },
     { title: "打车优惠券", desc: "最高减10元", date: "06.05", amount: "¥10", icon: <Car size={20} />, color: "from-[#006CDC] to-[#073B8C]" },
   ];
+  // 今日路线赚到的奖励 → 优惠券（接真实 reward），叠在已有钱包之上
+  const earnedColors = ["from-[#7C3AED] to-[#3B0F73]", "from-[#0EA5E9] to-[#075985]", "from-[#F59E0B] to-[#7C4A02]"];
+  const earnedCoupons: Coupon[] = generatedRoute
+    ? [
+        ...generatedRoute.waypoints.map((wp, i) => ({
+          title: wp.reward,
+          desc: `来自「${wp.name}」`,
+          date: "本周",
+          amount: "领",
+          icon: <Gift size={20} />,
+          color: earnedColors[i % earnedColors.length],
+          tag: "今日",
+        })),
+        ...(generatedRoute.hiddenTask
+          ? [{
+              title: generatedRoute.hiddenTask.reward,
+              desc: `隐藏任务：${generatedRoute.hiddenTask.name}`,
+              date: "本周",
+              amount: "领",
+              icon: <Star size={20} />,
+              color: "from-[#B45309] to-[#7C2D12]",
+              tag: "隐藏",
+            }]
+          : []),
+      ]
+    : [];
+  const coupons: Coupon[] = [...earnedCoupons, ...demoCoupons];
 
   const items = [
     { title: "能量棒", desc: "恢复 20 能量", count: 3, icon: "🧀", rarity: "普通" },
@@ -64,7 +91,7 @@ export function BagScreen({ onNavigate }: { onNavigate: (s: ScreenType) => void 
                 <div className="relative z-10">
                   <p className="text-[11px] font-bold uppercase tracking-widest text-white/30">可用资产</p>
                   <div className="mt-1 flex items-baseline gap-1.5">
-                    <span className="text-[28px] font-black text-[#FFD166]">3</span>
+                    <span className="text-[28px] font-black text-[#FFD166]">{coupons.length}</span>
                     <span className="text-[13px] font-bold text-white/50">张优惠券</span>
                   </div>
                 </div>

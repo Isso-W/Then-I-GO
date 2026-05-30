@@ -3,9 +3,9 @@ import { Bell, Settings, Trophy, HelpCircle, Star, ChevronRight, Medal, TreePine
 import { motion } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
 import { BottomNav, PageTitle } from "../components/CommonUI";
-import { ScreenType } from "../types";
+import { ScreenType, UserProfile } from "../types";
 
-export function MineScreen({ onNavigate }: { onNavigate: (s: ScreenType) => void }) {
+export function MineScreen({ onNavigate, profile }: { onNavigate: (s: ScreenType) => void; profile?: UserProfile | null }) {
   return (
     <AppLayout>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_16%,rgba(255,209,102,.12),transparent_20%)]" />
@@ -28,7 +28,14 @@ export function MineScreen({ onNavigate }: { onNavigate: (s: ScreenType) => void
         <div className="flex items-center gap-4 mt-2">
           <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#6C5CFF]/60 bg-gradient-to-br from-[#FFD7BD] to-[#7B4B3A] text-4xl shadow-lg ring-4 ring-[#6C5CFF]/10">🧑🏻</div>
           <div>
-            <div className="text-[20px] font-bold">那我走</div>
+            <div className="flex items-center gap-2">
+              <div className="text-[20px] font-bold">那我走</div>
+              {profile?.mbti && (
+                <span className="rounded-full bg-[#6C5CFF]/20 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-[#A98BFF]">
+                  {profile.mbti}
+                </span>
+              )}
+            </div>
             <div className="mt-1 flex items-center gap-2">
                <span className="text-[12px] text-[#A98BFF] font-black uppercase">LV.12</span>
                <div className="h-1.5 w-[100px] rounded-full bg-white/10">

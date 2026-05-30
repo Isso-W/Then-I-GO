@@ -3,9 +3,9 @@ import { MapPin, Gift, Coffee, Star, PlayCircle, ChevronDown, Sparkles, X, Loade
 import { motion, AnimatePresence } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
 import { BottomNav, PageTitle, TabBar } from "../components/CommonUI";
-import { ScreenType, TimelineItemData } from "../types";
+import { ScreenType, TimelineItemData, GeneratedRoute } from "../types";
 
-export function StoryScreen({ onNavigate }: { onNavigate: (s: ScreenType) => void }) {
+export function StoryScreen({ onNavigate, generatedRoute }: { onNavigate: (s: ScreenType) => void; generatedRoute?: GeneratedRoute | null }) {
   const [activeTab, setActiveTab] = React.useState(0);
   const [selectedDate, setSelectedDate] = React.useState("今日");
   const [isGenerating, setIsGenerating] = React.useState(false);
@@ -25,9 +25,41 @@ export function StoryScreen({ onNavigate }: { onNavigate: (s: ScreenType) => voi
     ]
   };
 
-  const currentItems = itemsByDate[selectedDate] || [
-    { time: "15:00", title: "日常记录", desc: "在这个城市的惬意午后。", icon: <MapPin size={17} />, img: "bg-gradient-to-br from-slate-700 to-slate-900" }
+  // 今日素材集：有 AI 路线时用真实路线的站点（含隐藏任务），否则回退到示例
+  const routeGradients = [
+    "bg-gradient-to-br from-[#3B2417] to-[#EEE0C8]",
+    "bg-gradient-to-br from-green-900 to-sky-300",
+    "bg-gradient-to-br from-purple-700 to-indigo-900",
+    "bg-gradient-to-br from-blue-700 to-slate-600",
   ];
+  const routeItems: TimelineItemData[] | null = generatedRoute
+    ? [
+        { time: "出发", title: "从五道口出发", desc: `今日路线：${generatedRoute.title}`, icon: <MapPin size={17} />, img: "bg-gradient-to-br from-green-700 to-yellow-300" },
+        ...generatedRoute.waypoints.map((wp, i) => ({
+          time: `第${i + 1}站`,
+          title: `${wp.emoji} ${wp.name}`,
+          desc: wp.description,
+          icon: <MapPin size={17} />,
+          img: routeGradients[i % routeGradients.length],
+        })),
+        ...(generatedRoute.hiddenTask
+          ? [{
+              time: "隐藏",
+              title: `${generatedRoute.hiddenTask.emoji} 秘密：${generatedRoute.hiddenTask.name}`,
+              desc: generatedRoute.hiddenTask.description,
+              icon: <Sparkles size={17} />,
+              img: "bg-gradient-to-br from-amber-700 to-yellow-300",
+            }]
+          : []),
+      ]
+    : null;
+
+  const currentItems =
+    selectedDate === "今日" && routeItems
+      ? routeItems
+      : itemsByDate[selectedDate] || [
+          { time: "15:00", title: "日常记录", desc: "在这个城市的惬意午后。", icon: <MapPin size={17} />, img: "bg-gradient-to-br from-slate-700 to-slate-900" },
+        ];
 
   const historicalVlogs = [
     { id: 1, date: "2024.05.23", title: "五道口雨后漫步", duration: "01:24", views: 128, img: "https://images.unsplash.com/photo-1559564484-e48b3e040ff4?auto=format&fit=crop&w=400&q=80" },

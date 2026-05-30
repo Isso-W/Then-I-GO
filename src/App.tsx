@@ -162,9 +162,9 @@ export default function App() {
               onBranchChoice={handleBranchChoice}
             />
           )}
-          {screen === "story" && <StoryScreen onNavigate={navigate} />}
-          {screen === "bag" && <BagScreen onNavigate={navigate} />}
-          {screen === "mine" && <MineScreen onNavigate={navigate} />}
+          {screen === "story" && <StoryScreen onNavigate={navigate} generatedRoute={generatedRoute} />}
+          {screen === "bag" && <BagScreen onNavigate={navigate} generatedRoute={generatedRoute} />}
+          {screen === "mine" && <MineScreen onNavigate={navigate} profile={profile} />}
           {screen === "event" && <EventDetailScreen onBack={() => navigate("explore")} />}
           {screen === "settings" && <SettingsScreen onBack={() => navigate("mine")} />}
         </motion.div>
