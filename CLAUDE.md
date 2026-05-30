@@ -31,18 +31,20 @@ The AI backend is organized around distinct agents, each with a single responsib
 
 ## Geolocation
 
-`metadata.json` declares `requestFramePermissions: ["geolocation"]`. The intended use is LBS-based check-in validation: the system confirms the user is physically within range of a waypoint before allowing the check-in capture to proceed. The current frontend simulates this with the `CameraInterface` component; real distance checks against the Geolocation API are not yet wired up.
+`metadata.json` declares `requestFramePermissions: ["geolocation"]`. The intended use is LBS-based check-in validation: the system confirms the user is physically within range of a waypoint before allowing the check-in capture to proceed. The current frontend simulates this with the `CameraInterface` component. **Update:** a *simulated* proximity check is now implemented (距离取自拖动/点击得到的当前位置，30m 内才提示可打卡；见「探索体验 → 接近打卡」)。真实 `navigator.geolocation` 仍未接入。
 
 ## Planned / Not Yet Implemented
 
-Features specified but not present in the current frontend prototype:
+Features still not present in the current prototype:
 
-- **Cold-start onboarding screen** — first-launch flow collecting MBTI and base interest tags. No corresponding `ScreenType` value or screen component exists yet; this needs a new `onboarding` screen added to `App.tsx`.
-- **Binary tree route UI** — the `ExploreStep` machine currently has a linear path. A/B decision nodes need a new step type and a choice overlay component.
-- **Real LBS validation** — `navigator.geolocation` integration for proximity checks before check-in is allowed.
-- **Preference self-learning write-back** — backend call after trip completion to update the user profile.
-- **Vlog style selection** — UI for picking cyberpunk / retro film / Japanese fresh before Vlog generation (currently `StoryScreen` has no style picker).
+- **Preference self-learning write-back** — backend call after trip completion to update the user profile (needs cross-trip persistence; not done).
+- **Vlog style selection** — UI for picking cyberpunk / retro film / Japanese fresh before Vlog generation (currently `StoryScreen` has the generation overlay but no style picker).
 - **Social sharing reward** — sharing a generated Vlog to an external platform grants in-app titles or bonus items.
+- **Real GPS LBS** — the proximity check-in is currently *simulated* (see 探索体验 → 接近打卡); true `navigator.geolocation` is still not wired.
+
+Done since this list was written (see **探索体验 — Implemented**):
+- ~~Cold-start onboarding screen~~ — done (`OnboardingScreen.tsx` + `UserProfile` + `onboarding` screen).
+- ~~Binary tree route UI~~ — done (`branch_choice` step + `BranchChoiceOverlay` + `RouteBranch`).
 - ~~Multi-player collaborative routing~~ — scoped out for the hackathon.
 
 ## 地理数据层 — Implemented
@@ -103,9 +105,9 @@ best_time                           推荐游玩时段文案
 
 **POI 类型覆盖**（20 种）：咖啡厅、餐厅系列（日韩/北京风味/素食）、奶茶甜品、书店、文创小店、美术馆、livehouse、公园绿地、酒吧系列、夜宵烧烤、便利店、花店、健身瑜伽、共享自习室、洗衣生活服务、宠物友好咖啡。
 
-### 路由逻辑（待实现）
+### 路由逻辑 — Implemented
 
-生成数据后，`routeAgent.ts` 的工作流应升级为：
+`routeAgent.ts` + `poiFilter.ts` 已实现下面的工作流（详见 AI Route Generation 节）：
 
 ```
 1. 按用户偏好标签过滤 pois.json（tags 交集）
@@ -116,7 +118,7 @@ best_time                           推荐游玩时段文案
 6. Gemini 负责：最终选择 + 排序 + 写故事 + 生成打卡任务
 ```
 
-这样 Gemini 不再凭空编造地点，而是从真实结构化数据里做最终决策。
+这样 Gemini 不再凭空编造地点，而是从真实结构化数据里做最终决策。过滤在 `poiFilter.filterCandidates`（strict→no_wait→no_tags→all 渐进降级，有单测），最终选择 + 故事 + 任务由 `routeAgent.generateRoute` 调 Gemini 完成。
 
 ## AI Route Generation — Implemented
 
@@ -168,6 +170,50 @@ ExploreScreen（地图界面）
 - API Key 通过 `process.env.GEMINI_API_KEY` 注入（由 `vite.config.ts` 的 `define` 字段在构建时替换）。
 - 脚本层通过 `$env:GEMINI_API_KEY="..."; npx tsx scripts/xxx.ts` 传入，或读取 `.env.local`。
 
+## 探索体验 — Implemented
+
+把原型从"线性写死流程"做成了真实数据驱动、intensity 分档的可玩闭环。所有数据都来自当前 session（`generatedRoute` / `preferences` / `profile` / localStorage），**无后端**。
+
+### 冷启动 onboarding（`src/screens/OnboardingScreen.tsx`）
+首启收集 MBTI + 兴趣标签，存 localStorage `userProfile`（`UserProfile`）。`App.tsx` 首启无 profile → `onboarding`，否则直接 `explore`。`routeAgent` 把长期画像（MBTI/兴趣）与当下偏好分两块写进 prompt。
+
+### 二叉树 A/B 抉择（`branch_choice` step）
+第一站打卡后弹两个**气质相反**的候选第二站 + 一句抉择提示 `axis`，二选一。
+
+| 件 | 角色 |
+|---|---|
+| `types.ts` → `RouteBranch { axis, options:[Waypoint,Waypoint] }` + `GeneratedRoute.branch?` | 数据模型 |
+| `src/lib/branch.ts`（纯函数，有单测）| `wantsBranch(prefs,stops)` 门控、`commitBranchChoice(route,i)` 把选中项写回 `waypoints[1]`（不可变）、`pickContrastingPair` 兜底挑对比对 |
+| `routeAgent.ts` | 分叉时 prompt 要 1 个第一站 + branch（2 候选 + axis）；幻觉/缺失时确定性兜底 |
+| `ExploreScreen` → `BranchChoiceOverlay` | 抉择浮层；`App.handleBranchChoice` 写回后进 `next_objective`，下游照常读 `waypoints[1]`（无需改） |
+| `Map` | `branch_choice` 时把 A/B 候选画在真坐标上 |
+
+### 安排程度梯子 + 惊喜模式（`intensity`）
+偏好第 5 项「想被安排什么程度？」是一条 省心→冒险 梯子，卡片副标题写明区别，标题旁 `?` hover 出 tooltip：
+
+- **别让我思考**（`don't_think`，默认/推荐）：名字清楚、无岔路、直线
+- **正常探索**（`normal`）：名字清楚 + A/B 岔路
+- **惊喜模式**（`relaxed`）：A/B 岔路 + **目的地名字藏成 `？？？`，到达打卡半径才揭晓**
+
+`mystery = preferences?.intensity === "relaxed"`（App 计算）下传给 `TaskCard` / `BranchChoiceOverlay` / `HiddenTaskAlert` 做名字遮罩；故事/任务/emoji/距离仍作预告，导航照常。
+
+### 接近打卡（模拟 LBS）
+打卡按钮**不拦截**（路上随手可记录）；走到当前目标 `CHECKIN_RADIUS_M`(30m) 内时卡头亮「✓ 到了 · 可打卡」，否则显示「距目标 Nm」。目标按 step 自动切（`initial`→wp0 / `hidden_active`→hiddenTask / `next_objective`→wp1），用 `distanceMeters(currentPosition, target)` 判定。
+
+### 隐藏任务真实化
+`GeneratedRoute.hiddenTask?: Waypoint`——Gemini 在主路线之外额外选一个真实 POI（带故事/任务/奖励），幻觉时确定性兜底。`HiddenTaskAlert`/`TaskCard` 读它（删掉了写死的"转角咖啡店"）；`Map` 画隐藏针 + amber 导航虚线（隐藏阶段显示）。
+
+### 地图层（`src/components/Map.tsx` / `mapProjection.ts` / `src/lib/roadGraph.ts`）
+SVG 地图：terrain 多边形底色（仅视觉）、真实路网底图、Dijkstra 沿街寻路（`roadGraph.ts`，有单测）、镜头跟随当前位置、**拖动/点击地图 → 吸附最近路 → 走过去**。所有 POI 都落在路上（保证可达可走）。退役了一批旧 mockup 的固定屏幕位置覆盖层（DottedPath / UnknownMarkers / 旧 NextTarget 等）。
+
+### 其它屏幕接真实数据
+- **StoryScreen 今日素材集** ← `generatedRoute` 站点（出发 + waypoints + 隐藏任务），过去日期回退示例
+- **BagScreen 优惠券** ← 今日各站 `reward`（叠在示例钱包上），资产数随之变真
+- **MineScreen** ← profile 的 MBTI 徽章；**铃铛=「通知」**(session 动态事件)、**系统消息=「系统消息」**(常驻公告)，各自弹底部面板
+- 刻意保留"有人气"的占位统计（28天/86km 等）——demo 卖愿景，做成真会显空账号
+
+> 测试：`src/lib/*` 与 `poiFilter` 的纯逻辑有 vitest 单测（`tests/`，`npm test`）。UI/屏幕不单测。
+
 ## Commands
 
 ```bash
@@ -199,7 +245,7 @@ Copy `.env.example` to `.env.local` and set `GEMINI_API_KEY`. The app is designe
 **Screen routing** is handled entirely in `src/App.tsx` via a `screen: ScreenType` React state value — there is no router library. `onNavigate(screen)` callbacks are passed down to each screen component. The six screens are: `explore`, `story`, `bag`, `mine`, `event`, `settings`.
 
 **ExploreScreen sub-state machine**: The Explore screen has its own `step: ExploreStep` state (also owned by `App.tsx` so it survives tab switches). The step drives which overlays, map markers, task cards, and camera interfaces are rendered. The progression is:
-`intro` → `preference_selection` → `gear_confirmation` → `initial` → `checkin_initial` → `hidden_found` → `hidden_active` → `checkin_hidden` → `reward_hidden` → `next_objective` → `checkin_next` → `achievement_unlock` → (back to `intro`).
+`intro` → `preference_selection` → `gear_confirmation` → `initial` → `checkin_initial` → `hidden_found` → `hidden_active` → `checkin_hidden` → `reward_hidden` → `branch_choice`（仅当 `route.branch` 存在，即正常/惊喜档）→ `next_objective` → `checkin_next` → `achievement_unlock` → (back to `intro`)。`vlog_ready` 也是已定义的 step。位置由 `src/lib/derivePosition.ts` 的 `positionFromStep(step, route)` 推导。
 
 **Shared layout components** (`src/components/Layout.tsx`):
 - `AppLayout` — outer shell that constrains width to 500px and renders a simulated iOS status bar. Every screen wraps its content in this.
@@ -210,8 +256,9 @@ Copy `.env.example` to `.env.local` and set `GEMINI_API_KEY`. The app is designe
 - `PageTitle`, `TabBar` — used in secondary screens.
 
 **Types** (`src/types.ts`): 所有共享接口都在这里定义。
-- UI 基础类型：`ScreenType`、`ExploreStep`、`Coupon`、`TimelineItemData`
-- AI 路线类型：`UserPreferences`（偏好输入）、`Waypoint`（单个打卡点）、`GeneratedRoute`（完整路线，含 `title` 和 `waypoints[]`）
+- UI 基础类型：`ScreenType`（含 `onboarding`）、`ExploreStep`（含 `branch_choice`）、`Coupon`、`TimelineItemData`
+- 用户画像：`UserProfile`（冷启动收集的 MBTI / 兴趣，持久化到 localStorage `userProfile`）
+- AI 路线类型：`UserPreferences`（偏好输入）、`Waypoint`（单个打卡点）、`RouteBranch`（第二站 A/B 抉择）、`GeneratedRoute`（含 `title`、`waypoints[]`、可选 `hiddenTask`、`branch`）
 - POI 数据类型：`POI`（数据库记录，含评价语料、时间约束、偏好匹配字段）
 
 **Gear persistence**: The gear checklist confirmed in `GearConfirmationOverlay` is saved to `localStorage` under the key `confirmedGear` (JSON array of string IDs). `BagScreen` reads this to populate the Equipment tab.
