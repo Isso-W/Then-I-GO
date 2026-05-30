@@ -4,7 +4,6 @@ import {
   filterCandidates,
   distanceMeters,
   walkingTimeText,
-  pickUnknownPOIs,
   ORIGIN,
 } from "./poiFilter";
 import { wantsBranch, pickContrastingPair } from "../lib/branch";
@@ -281,14 +280,10 @@ ${taskBlock}
     }
   }
 
-  // 未探索标记：剩余候选里取最多 3 个坐标，地图上渲染成"?"
-  const unknownPOIs = pickUnknownPOIs(candidates, usedIds, 3);
-
   return {
     title: parsed.title ?? "五道口漫游",
     waypoints,
     hiddenTask,
-    unknownPOIs,
     branch,
   };
 }

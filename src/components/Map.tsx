@@ -172,11 +172,7 @@ export function Map({
     return pointsToPath(poly, viewBox);
   }, [route, viewBox]);
 
-  // "?" 未探索标记 + 隐藏任务针：真坐标投影，跟随地图平移
-  const unknownMarks = useMemo(
-    () => (route?.unknownPOIs ?? []).map((p, i) => ({ key: i, ...projectLatLng(p, viewBox) })),
-    [route, viewBox]
-  );
+  // 隐藏任务针：真坐标投影，跟随地图平移
   const hiddenMark = useMemo(
     () =>
       route?.hiddenTask
@@ -187,7 +183,6 @@ export function Map({
         : null,
     [route, viewBox]
   );
-  const showUnknown = step === "initial" || step === "hidden_found";
   const showHidden =
     step === "hidden_found" ||
     step === "hidden_active" ||
@@ -368,25 +363,6 @@ export function Map({
           </g>
         </g>
       ))}
-
-      {/* "?" 未探索标记（真坐标，随地图平移） */}
-      {showUnknown &&
-        unknownMarks.map((m) => (
-          <g key={`unknown-${m.key}`} transform={`translate(${m.x}, ${m.y}) scale(${markerScale})`}>
-            <circle r={14} fill="#FFFFFF" opacity={0.06} />
-            <circle r={14} fill="none" stroke="#FFFFFF" strokeOpacity={0.18} strokeWidth={1} />
-            <text
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontSize={16}
-              fontWeight={800}
-              fill="#FFFFFF"
-              fillOpacity={0.4}
-            >
-              ?
-            </text>
-          </g>
-        ))}
 
       {/* 隐藏任务针（真坐标） */}
       {showHidden && hiddenMark && (

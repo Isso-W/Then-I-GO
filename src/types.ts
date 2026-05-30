@@ -67,12 +67,6 @@ export interface Waypoint {
   lng: number;
 }
 
-// 地图上的"未探索"标记，只暴露坐标（不剧透名字）
-export interface UnknownPOI {
-  lat: number;
-  lng: number;
-}
-
 // 第二站的 A/B 抉择：两个气质相反的候选 + 一句抉择提示
 export interface RouteBranch {
   axis: string;                   // 抉择提示，如 "想安静还是想热闹？"
@@ -84,7 +78,6 @@ export interface GeneratedRoute {
   title: string;        // 今日路线标题，如"五道口的隐秘下午"
   waypoints: Waypoint[];
   hiddenTask?: Waypoint;        // 隐藏任务：不在主线里的真实 POI，Gemini 生成故事/任务/奖励
-  unknownPOIs?: UnknownPOI[];   // 地图上若干"?"未探索标记的真实坐标
   branch?: RouteBranch;         // 可选：第二站的 A/B 分叉（intensity 门控，只在用户想参与时出现）
 }
 
