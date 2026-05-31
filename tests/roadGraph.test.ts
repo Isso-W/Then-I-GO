@@ -73,10 +73,12 @@ describe("shortestPath", () => {
       { lat: 39.994, lng: 116.34 },  // 南北路北端
       g
     );
-    // 头尾是真实输入坐标，中间是节点序列
+    // 头尾是 snap 到路面后的坐标（可能有微小浮点偏移），不再是严格输入坐标
     expect(path.length).toBeGreaterThanOrEqual(2);
-    expect(path[0]).toEqual({ lat: 39.99, lng: 116.34 });
-    expect(path[path.length - 1]).toEqual({ lat: 39.994, lng: 116.34 });
+    expect(path[0].lat).toBeCloseTo(39.99, 4);
+    expect(path[0].lng).toBeCloseTo(116.34, 4);
+    expect(path[path.length - 1].lat).toBeCloseTo(39.994, 4);
+    expect(path[path.length - 1].lng).toBeCloseTo(116.34, 4);
   });
 
   it("拐弯：从南北路一端到东西路一端，路径会经过交叉口", () => {
@@ -119,9 +121,11 @@ describe("routePolyline", () => {
       { lat: 39.992, lng: 116.342 },
     ];
     const poly = routePolyline(stops, g);
-    // 头尾必须对得上
-    expect(poly[0]).toEqual(stops[0]);
-    expect(poly[poly.length - 1]).toEqual(stops[stops.length - 1]);
+    // 头尾是 snap 后的坐标，与输入近似相等
+    expect(poly[0].lat).toBeCloseTo(stops[0].lat, 4);
+    expect(poly[0].lng).toBeCloseTo(stops[0].lng, 4);
+    expect(poly[poly.length - 1].lat).toBeCloseTo(stops[stops.length - 1].lat, 4);
+    expect(poly[poly.length - 1].lng).toBeCloseTo(stops[stops.length - 1].lng, 4);
     // 长度 ≥ stops 数（中间会有节点）
     expect(poly.length).toBeGreaterThanOrEqual(stops.length);
   });

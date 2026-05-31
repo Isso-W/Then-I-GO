@@ -7,8 +7,8 @@
     "east": 116.358
   },
   "fetchedAt": "2026-05-26T17:00:43.135Z",
-  "totalStreets": 35,
-  "namedStreets": 35,
+  "totalStreets": 34,
+  "namedStreets": 34,
   "streets": [
     {
       "name": "成府路",
@@ -624,25 +624,6 @@
         {
           "lat": 39.992999999999995,
           "lng": 116.33299999999998
-        }
-      ]
-    },
-    {
-      "name": "清华科技园内部路",
-      "nameEn": "Tsinghua Science Park Internal Road",
-      "highway": "residential",
-      "points": [
-        {
-          "lat": 39.99,
-          "lng": 116.322
-        },
-        {
-          "lat": 39.9905,
-          "lng": 116.321
-        },
-        {
-          "lat": 39.991,
-          "lng": 116.3205
         }
       ]
     },

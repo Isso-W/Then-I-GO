@@ -207,20 +207,21 @@ function dijkstra(g: RoadGraph, src: number, dst: number): number[] | null {
 
 /**
  * 在路网上从 from 到 to 寻路，返回 LatLng polyline。
- * - polyline 头尾分别拼上 from / to 真实坐标，确保 marker 位置不跳
- * - 路网内无连通路径时返回 [from, to] 直线（不会让 UI 崩）
+ * - 头尾先 snapToRoad 到路面上（不再用真实坐标直接拼，避免线穿过无路区域）
+ * - 路网内无连通路径时返回 snap 后的直线（不会让 UI 崩）
  */
 export function shortestPath(from: LatLng, to: LatLng, g: RoadGraph): LatLng[] {
-  const srcId = nearestNode(from, g);
-  const dstId = nearestNode(to, g);
+  const snappedFrom = snapToRoad(from, g);
+  const snappedTo = snapToRoad(to, g);
+  const srcId = nearestNode(snappedFrom, g);
+  const dstId = nearestNode(snappedTo, g);
   if (srcId === null || dstId === null) {
-    return [from, to];
+    return [snappedFrom, snappedTo];
   }
   const ids = dijkstra(g, srcId, dstId);
-  if (!ids) return [from, to];
+  if (!ids) return [snappedFrom, snappedTo];
   const middle = ids.map((id) => ({ lat: g.nodes[id].lat, lng: g.nodes[id].lng }));
-  // 头尾接上真实坐标
-  return [from, ...middle, to];
+  return [snappedFrom, ...middle, snappedTo];
 }
 
 /** 一连串 waypoints 全部串起来：[ORIGIN, wp1, wp2, ...] → 长 polyline */
