@@ -81,6 +81,49 @@ export interface GeneratedRoute {
   branch?: RouteBranch;         // 可选：第二站的 A/B 分叉（intensity 门控，只在用户想参与时出现）
 }
 
+// ── Vlog 生成 ──────────────────────────────────────────────
+// 三种成片风格（对应 CLAUDE.md「Planned → Vlog style selection」）
+export type VlogStyle = "cyberpunk" | "retro" | "fresh";
+
+// 一个分镜：对应今日路线里的一个站点，AI 写一句旁白 + 一句字幕
+export interface VlogScene {
+  caption: string;      // 画面字幕（短，<=10字），如"暮色降临"
+  narration: string;    // 旁白（一句话，<=25字），播放时滚动显示
+  emoji: string;        // 这一幕的代表 emoji
+  frame: string;        // B-roll 图片路径（前端按站点关键词从占位图里挑，非 AI 决定）
+  durationSec: number;  // 这一幕停留秒数（2~4），驱动播放器自动推进
+}
+
+// 路线回放几何：由 StoryScreen 从 generatedRoute 沿街寻路算出（无 AI）。
+// 站点与 scenes 一一对应（scenes[i] ↔ stops[i]）。sample 日期无真实路线时为空。
+export interface VlogGeoStop {
+  lat: number;
+  lng: number;
+  emoji: string;
+  name: string;
+  reward: string;
+}
+export interface VlogGeo {
+  fullPath: { lat: number; lng: number }[];   // ORIGIN→…→末站，沿街完整折线（画底线）
+  legs: { lat: number; lng: number }[][];      // legs[i]：上一站→stops[i]，驱动小人逐段走
+  stops: VlogGeoStop[];
+  distanceKm: number;
+  walkMin: number;
+}
+
+// AI 生成的一支完整 Vlog 脚本
+export interface GeneratedVlog {
+  id: string;
+  title: string;        // Vlog 标题，如"五道口的黄昏漫游"
+  style: VlogStyle;
+  scenes: VlogScene[];
+  bgm: string;          // BGM 情绪描述，如"慵懒 Lo-fi · 90 BPM"
+  shareCaption: string; // 分享文案（含话题标签）
+  verdict: string;      // 人格化总结金句（战报卡用），如"今天你是个 City Walker"
+  geo?: VlogGeo;        // 路线回放几何（有真实路线时才有）
+  createdAt: number;    // 生成时间戳
+}
+
 // POI 数据库里的一条记录
 export interface POI {
   id: string;

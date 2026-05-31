@@ -25,7 +25,7 @@ The AI backend is organized around distinct agents, each with a single responsib
 | **POI Sourcing Agent** | Queries nearby points of interest filtered by current location, operating hours, weather, and traffic. Ranks candidates against the user profile. |
 | **Routing Agent** | Assembles POIs into a walkable sequence. Produces **binary tree decision nodes** at key junctures — two meaningfully different options (e.g. quiet bookstore vs. lively café) so the user navigates like a text adventure rather than following a fixed plan. |
 | **Narrative Agent** | Wraps each waypoint in story context and generates the hidden-task trigger text, check-in prompts, and reward copy. |
-| **Vlog Agent** | Post-trip: ingests captured clips and location timestamps, then produces a short edited Vlog with style filter applied (planned styles: cyberpunk, retro film, Japanese fresh). |
+| **Vlog Agent** | Post-trip: 把今天的路线站点 + 选定风格交给 Gemini，产出 Vlog 脚本（标题/每站旁白字幕/BGM/分享文案/人格金句）。成片形态 = 真实地图路线回放 + 到站照片 Live2D 特写 + City Walk 战报卡。三种风格（赛博朋克 / 复古胶片 / 日系清新）已实现。详见 **Vlog 生成 — Implemented**。 |
 
 **Preference self-learning loop**: After each trip, the Profiling Agent reads which waypoints the user actually visited, how long they stayed, and whether they triggered hidden tasks, then automatically adjusts weights in the user profile. This closes the feedback loop without requiring explicit ratings.
 
@@ -38,14 +38,16 @@ The AI backend is organized around distinct agents, each with a single responsib
 Features still not present in the current prototype:
 
 - **Preference self-learning write-back** — backend call after trip completion to update the user profile (needs cross-trip persistence; not done).
-- **Vlog style selection** — UI for picking cyberpunk / retro film / Japanese fresh before Vlog generation (currently `StoryScreen` has the generation overlay but no style picker).
-- **Social sharing reward** — sharing a generated Vlog to an external platform grants in-app titles or bonus items.
+- **User-uploaded Vlog footage** — Vlog 画面目前用 3 张预生成占位 B-roll（见 **Vlog 生成 — Implemented**）；用户拍摄/上传真实片段的入口还没做。
+- **Social sharing reward** — sharing a generated Vlog to an external platform grants in-app titles or bonus items（目前分享只复制文案到剪贴板，无奖励回写）。
 - **Real GPS LBS** — the proximity check-in is currently *simulated* (see 探索体验 → 接近打卡); true `navigator.geolocation` is still not wired.
 
-Done since this list was written (see **探索体验 — Implemented**):
+Done since this list was written (see **探索体验 — Implemented** / **Vlog 生成 — Implemented**):
 - ~~Cold-start onboarding screen~~ — done (`OnboardingScreen.tsx` + `UserProfile` + `onboarding` screen).
 - ~~Binary tree route UI~~ — done (`branch_choice` step + `BranchChoiceOverlay` + `RouteBranch`).
 - ~~Multi-player collaborative routing~~ — scoped out for the hackathon.
+- ~~Vlog auto-generation~~ — done（`vlogAgent.ts` 生成分镜脚本 + 可播放器，见下节）。
+- ~~Vlog style selection~~ — done（赛博朋克 / 复古胶片 / 日系清新 三选一 `StylePickerOverlay`）。
 
 ## 地理数据层 — Implemented
 
@@ -170,6 +172,75 @@ ExploreScreen（地图界面）
 - API Key 通过 `process.env.GEMINI_API_KEY` 注入（由 `vite.config.ts` 的 `define` 字段在构建时替换）。
 - 脚本层通过 `$env:GEMINI_API_KEY="..."; npx tsx scripts/xxx.ts` 传入，或读取 `.env.local`。
 
+## Vlog 生成 — Implemented
+
+把 `StoryScreen` 里原本的"假进度条"做成了**真·AI 驱动的 Vlog 生成闭环**。Vlog 的形态最终定为 **「真实地图路线回放 + 到站照片 Live2D 特写 + City Walk 战报卡」**，而不是给图片加动效的幻灯片——因为后者对用户没价值（不会为"图片会动"花积分），而"我今天这趟走法"的个人化故事才值得生成/分享。纯前端、无后端。
+
+### 拆解视频 = 便宜的部分各自生成
+
+不调 Veo 这类按秒计费的视频模型（**per-user × per-second 成本 demo 扛不住**）。把"视频"解绑成各自便宜的部分：
+- **镜头清单/叙事/里程**：路线 `waypoints` 直接当分镜表 + 沿街寻路算几何（免费，复用现成资产）。
+- **旁白/字幕/标题/BGM/分享文案/人格金句**：一次文本补全（`gemini-2.5-flash-lite`）。
+- **画面运动**：地图回放（小人沿街走、轨迹生长）+ 用户照片的 Live2D idle 呼吸，都是前端程序化动画（0 token）。
+- **关键洞察**：「视频太贵」只适用于"每个用户每次都生成"。**3 张固定占位图是一次性资产**，故用 image-to-video 预渲染循环短片同理可行（本版未做，留作升级方向）。
+
+### B-roll 占位图（`public/vlog/{coffee,park,bookstore}.jpg`）
+
+仅 3 张 **demo 占位**，真实场景后续由**用户依次拍摄/上传**替换（已留好展示位）。用 `gemini-2.5-flash-image` 生成、`sharp` 压成 720×1280 JPEG（~100KB/张）。
+
+```bash
+$env:GEMINI_API_KEY="..."; npx tsx scripts/generateVlogFrames.ts   # 重新生成 3 张占位帧
+```
+
+`vlogAgent.assignFrames(stops)` 给所有站点**平衡分配**：先按站点名关键词命中（咖啡/酒→coffee、书/文创/展→bookstore、公园/绿/湖→park），剩下槽位填"用得最少"的图、并避开前后相邻帧——保证 3 张都尽量出场、不连续重复。`scene.frame` 由 agent 挂好。**接入用户上传后，直接替换 `scene.frame` 即可，回放/特写逻辑不用动**（scene[i] ↔ 站点 i 一一对应）。
+
+### Vlog Agent（`src/agents/vlogAgent.ts`）
+
+`generateVlog({ routeTitle, stops, style })` → `GeneratedVlog`（纯文本，一次调用）：
+- 三种风格 `VlogStyle = "cyberpunk" | "retro" | "fresh"`，各自的 vibe/BGM 写进 prompt 影响旁白语气。
+- 输出**按站点对齐**：每 stop 一个分镜（caption/narration/emoji/durationSec）；另出 title / bgm / shareCaption / **verdict（人格化金句，战报卡用）**。
+- 兜底：缺字段用 stop 本身补；幻觉/解析失败/无 stop 时整体 `fallbackVlog` 确定性兜底（照 `routeAgent` 范式）。
+
+### 路线几何（`src/lib/routeGeometry.ts`，纯函数 + 模块级路网图缓存）
+
+`computeVlogGeo(route)` 从 `generatedRoute` 沿街寻路（复用 `roadGraph.shortestPath`）算出回放几何：
+- `legs[]`（每段 ORIGIN/上一站→当前站的折线）、`fullPath`（拼接全程）、`stops[]`（坐标+emoji+name+reward）、`distanceKm`、`walkMin`。
+- 站点 = `waypoints`（+ 隐藏任务作末站）。辅助：`polyLenM` / `pointAlong`（按长度插值取点）/ `partialPoly`（取已走子折线）。
+
+### 地图回放（`src/components/RouteReplay.tsx`）
+
+复用地图引擎（terrain 底色 + 真实路网 + `projectLatLng`/`computeViewBox`），框住整条路线、固定视野：
+- rAF 驱动小人沿 `legs` 逐段走、轨迹按风格色生长、到站针"砰"地弹出；顶部 IG-stories 分段进度，走路时底部"前往 第N站"小条。
+- `frozen` 时画静态全貌（战报卡缩略图用）。
+- 到站停留（HOLD≈2.4s）经 `onStopChange(i)` 通知父组件切照片，离站走时回 `null`；全程结束 `onDone()`。
+- **回调走 ref**（不进 effect deps），避免父组件切照片重渲染把动画 effect 重启。
+
+### 到站照片 Live2D（`src/components/LivePhoto.tsx`）
+
+一张"会呼吸"的用户照片特写：Live2D idle 运镜池（持续往返的微呼吸 scale + 微摇 x + 微浮 y + 极小 rotate，循环 easeInOut，幅度极小不露边）+ 每风格纹理层（赛博扫描线+霓虹光带 / 复古胶片噪点+暖色暗角 / 清新漏光）+ 通用暗角 + 字幕旁白 + "第 i 站 / N"角标。
+
+### 数据类型（`src/types.ts`）
+
+`VlogStyle`、`VlogScene{caption,narration,emoji,frame,durationSec}`、`VlogGeoStop`、`VlogGeo{fullPath,legs,stops,distanceKm,walkMin}`、`GeneratedVlog{id,title,style,scenes[],bgm,shareCaption,verdict,geo?,createdAt}`。
+
+### UI 编排（`src/screens/StoryScreen.tsx`，状态在 `App.generatedVlogs` 跨 tab 存活）
+
+```
+点「生成今日 AI Vlog」
+  → StylePickerOverlay（底部弹出，3 风格带渐变预览）
+  → startGeneration(style)：有真实路线时 stops 取 waypoints(+隐藏任务)（与 geo 站点一一对应），否则退回示例素材
+      → generateVlog(...)（真实 await）；有路线则 vlog.geo = computeVlogGeo(route)
+      → VlogGenerationOverlay：进度条爬到 ~90% 等 Promise，ready 后冲 100%
+  → VlogPlayerOverlay 两阶段：
+      phase=replay：<RouteReplay>，onStopChange 到站盖上 <LivePhoto> 特写，onDone→card；右上「跳过/✕」恒在最上层
+      phase=card：City Walk 战报卡（风格标签 + 标题 + verdict 金句 + 路线缩略图(frozen RouteReplay)
+                  + 数据格子[里程/打卡点/奖励] + 分享文案 + 重看回放/分享）
+  → onVlogGenerated(v) 存进 App.generatedVlogs
+「历史记录」tab：本 session 真实生成的 Vlog（带风格徽章/BGM，可点击重播）叠在 3 条静态示例之上
+```
+
+容错：分享走 `navigator.clipboard`（失败也吞掉只提示）；无真实路线（示例日期）时跳过地图回放、直接出战报卡（数据格子退化为分镜数/时长/BGM）。
+
 ## 探索体验 — Implemented
 
 把原型从"线性写死流程"做成了真实数据驱动、intensity 分档的可玩闭环。所有数据都来自当前 session（`generatedRoute` / `preferences` / `profile` / localStorage），**无后端**。
@@ -232,6 +303,7 @@ npx tsx scripts/generatePOIs.ts           # 生成 POI → src/data/pois.json
 npx tsx scripts/generateTerrain.ts        # 生成地表多边形 → scripts/data/terrain.json
 npx tsx scripts/snapPOIsToRoads.ts        # POI 吸附到路网（覆盖 pois.json）
 npx tsx scripts/visualizeStreetNetwork.ts # 可视化地图 → scripts/data/street-network.html
+npx tsx scripts/generateVlogFrames.ts     # 生成 Vlog 占位 B-roll → public/vlog/*.jpg（gemini-2.5-flash-image + sharp）
 ```
 
 Tests live in `tests/` and run with `npm test` (vitest), covering the pure routing/geo logic（`poiFilter`、`roadGraph`、`mapProjection`、`derivePosition`）。
