@@ -6,6 +6,7 @@ import { BottomNav } from "../components/CommonUI";
 import { Map } from "../components/Map";
 import { distanceMeters } from "../agents/poiFilter";
 import type { LatLng } from "../components/mapProjection";
+import { ChatBubble, ChatPanel, type ChatMessage } from "../components/ChatPanel";
 import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute, Waypoint, RouteBranch } from "../types";
 
 export function ExploreScreen({
@@ -19,6 +20,9 @@ export function ExploreScreen({
   onUserDrag,
   onBranchChoice,
   mystery,
+  chatMessages,
+  chatLoading,
+  onChatSend,
 }: {
   onNavigate: (s: ScreenType) => void;
   step: ExploreStep;
@@ -30,7 +34,11 @@ export function ExploreScreen({
   onUserDrag?: (p: LatLng) => void;
   onBranchChoice: (index: number) => void;
   mystery?: boolean;
+  chatMessages?: ChatMessage[];
+  chatLoading?: boolean;
+  onChatSend?: (text: string) => void;
 }) {
+  const [chatOpen, setChatOpen] = useState(false);
 
   const handleInitialComplete = () => {
     setStep("checkin_initial");
@@ -168,6 +176,17 @@ export function ExploreScreen({
           <AchievementOverlay onContinue={() => setStep("intro")} />
         )}
       </AnimatePresence>
+
+      {isGameStarted && !isCapturing && !chatOpen && (
+        <ChatBubble onClick={() => setChatOpen(true)} hasRoute={!!generatedRoute} />
+      )}
+      <ChatPanel
+        open={chatOpen}
+        onClose={() => setChatOpen(false)}
+        messages={chatMessages ?? []}
+        onSend={onChatSend ?? (() => {})}
+        loading={chatLoading ?? false}
+      />
 
       <BottomNav active="explore" onNavigate={onNavigate} />
     </AppLayout>

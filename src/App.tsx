@@ -11,6 +11,8 @@ import { generateRoute } from "./agents/routeAgent";
 import { ORIGIN } from "./components/mapProjection";
 import { positionFromStep } from "./lib/derivePosition";
 import { commitBranchChoice } from "./lib/branch";
+import { chatWithRoute, type ChatAction } from "./agents/chatAgent";
+import type { ChatMessage } from "./components/ChatPanel";
 import type { LatLng } from "./components/mapProjection";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -55,6 +57,52 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   // 如果出错，存储错误信息
   const [generateError, setGenerateError] = useState<string | null>(null);
+
+  // Chatbot 状态
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatLoading, setChatLoading] = useState(false);
+
+  const handleChatSend = async (text: string) => {
+    setChatMessages((prev) => [...prev, { role: "user", text }]);
+    setChatLoading(true);
+    try {
+      const resp = await chatWithRoute(text, generatedRoute, preferences ?? DEFAULT_PREFERENCES, currentPosition);
+      setChatMessages((prev) => [...prev, { role: "assistant", text: resp.message }]);
+      applyAction(resp.action);
+    } catch {
+      setChatMessages((prev) => [...prev, { role: "assistant", text: "出了点问题，稍后再试" }]);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const applyAction = (action: ChatAction) => {
+    if (!action || action.type === "none" || !generatedRoute) return;
+    const wp = action.waypoint;
+    if (action.type === "replace_next" && wp) {
+      setGeneratedRoute((r) => {
+        if (!r) return r;
+        const wps = [...r.waypoints];
+        if (wps.length > 1) wps[wps.length - 1] = wp;
+        else wps.push(wp);
+        return { ...r, waypoints: wps };
+      });
+      setChatMessages((prev) => [...prev, { role: "system", text: `✓ 下一站已替换为「${wp.name}」` }]);
+    } else if (action.type === "skip_current") {
+      if (exploreStep === "initial" || exploreStep === "checkin_initial") {
+        setExploreStep("hidden_found");
+      } else if (exploreStep === "next_objective" || exploreStep === "checkin_next") {
+        setExploreStep("achievement_unlock");
+      }
+      setChatMessages((prev) => [...prev, { role: "system", text: "✓ 已跳过当前站" }]);
+    } else if (action.type === "add_stop" && wp) {
+      setGeneratedRoute((r) => {
+        if (!r) return r;
+        return { ...r, waypoints: [...r.waypoints, wp] };
+      });
+      setChatMessages((prev) => [...prev, { role: "system", text: `✓ 已在路线末尾加了「${wp.name}」` }]);
+    }
+  };
 
   // 用户拖动小人模拟走路时设置；非空就盖过 step-derived 位置（用于测试）
   // 路线重新生成时清空，避免上一次的拖动位置粘在新路线上
@@ -175,6 +223,9 @@ export default function App() {
               onUserDrag={setOverridePosition}
               onBranchChoice={handleBranchChoice}
               mystery={preferences?.intensity === "relaxed"}
+              chatMessages={chatMessages}
+              chatLoading={chatLoading}
+              onChatSend={handleChatSend}
             />
           )}
           {screen === "story" && (
