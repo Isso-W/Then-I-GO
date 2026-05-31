@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute, UserProfile } from "./types";
+import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute, UserProfile, GeneratedVlog } from "./types";
 import { ExploreScreen } from "./screens/ExploreScreen";
 import { OnboardingScreen } from "./screens/OnboardingScreen";
 import { StoryScreen } from "./screens/StoryScreen";
@@ -38,6 +38,8 @@ export default function App() {
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   // 存储 AI 生成的路线
   const [generatedRoute, setGeneratedRoute] = useState<GeneratedRoute | null>(null);
+  // 本 session 生成过的 Vlog（最新在前），跨 tab 存活
+  const [generatedVlogs, setGeneratedVlogs] = useState<GeneratedVlog[]>([]);
   // 是否正在加载
   const [isGenerating, setIsGenerating] = useState(false);
   // 如果出错，存储错误信息
@@ -163,7 +165,14 @@ export default function App() {
               mystery={preferences?.intensity === "relaxed"}
             />
           )}
-          {screen === "story" && <StoryScreen onNavigate={navigate} generatedRoute={generatedRoute} />}
+          {screen === "story" && (
+            <StoryScreen
+              onNavigate={navigate}
+              generatedRoute={generatedRoute}
+              vlogs={generatedVlogs}
+              onVlogGenerated={(v) => setGeneratedVlogs((prev) => [v, ...prev])}
+            />
+          )}
           {screen === "bag" && <BagScreen onNavigate={navigate} generatedRoute={generatedRoute} />}
           {screen === "mine" && <MineScreen onNavigate={navigate} profile={profile} generatedRoute={generatedRoute} />}
           {screen === "event" && <EventDetailScreen onBack={() => navigate("explore")} />}

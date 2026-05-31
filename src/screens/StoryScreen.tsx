@@ -1,14 +1,73 @@
 import React from "react";
-import { MapPin, Gift, Coffee, Star, PlayCircle, ChevronDown, Sparkles, X, Loader2, Wand2, Film, Music, CheckCircle2 } from "lucide-react";
+import { MapPin, Gift, Coffee, Star, PlayCircle, ChevronDown, ChevronRight, Sparkles, X, Loader2, Wand2, Film, Music, CheckCircle2, Play, Share2, RotateCcw, Check } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
 import { BottomNav, PageTitle, TabBar } from "../components/CommonUI";
-import { ScreenType, TimelineItemData, GeneratedRoute } from "../types";
+import { ScreenType, TimelineItemData, GeneratedRoute, GeneratedVlog, VlogStyle } from "../types";
+import { generateVlog, VlogStop } from "../agents/vlogAgent";
+import { computeVlogGeo } from "../lib/routeGeometry";
+import { RouteReplay } from "../components/RouteReplay";
+import { LivePhoto } from "../components/LivePhoto";
+import { MapPinned, Footprints, Ticket, ImagePlus } from "lucide-react";
 
-export function StoryScreen({ onNavigate, generatedRoute }: { onNavigate: (s: ScreenType) => void; generatedRoute?: GeneratedRoute | null }) {
+// 三种风格的展示信息（标签 + 预览渐变 + 播放器滤镜/主题）
+const STYLE_META: Record<VlogStyle, {
+  label: string; desc: string; preview: string; accent: string; filter: string; overlay: string;
+}> = {
+  cyberpunk: {
+    label: "赛博朋克", desc: "霓虹夜色 · 未来都市",
+    preview: "bg-gradient-to-br from-fuchsia-600 via-purple-800 to-cyan-500",
+    accent: "#00E5FF",
+    filter: "saturate-[1.5] contrast-[1.2]",
+    overlay: "bg-gradient-to-t from-fuchsia-900/60 via-transparent to-cyan-700/30 mix-blend-screen",
+  },
+  retro: {
+    label: "复古胶片", desc: "暖色颗粒 · City Pop",
+    preview: "bg-gradient-to-br from-amber-700 via-orange-800 to-yellow-600",
+    accent: "#FFD166",
+    filter: "sepia-[.35] contrast-[1.1] brightness-95",
+    overlay: "bg-gradient-to-t from-amber-950/70 via-orange-900/10 to-orange-800/20",
+  },
+  fresh: {
+    label: "日系清新", desc: "柔光治愈 · Lo-fi",
+    preview: "bg-gradient-to-br from-teal-400 via-sky-400 to-emerald-300",
+    accent: "#7FE7C4",
+    filter: "saturate-[1.1] brightness-110",
+    overlay: "bg-gradient-to-t from-slate-900/50 via-transparent to-white/10",
+  },
+};
+
+const STYLE_ORDER: VlogStyle[] = ["fresh", "retro", "cyberpunk"];
+
+// 去掉标题前缀的 emoji / "秘密：" 等，给 agent 干净的站点名
+function cleanName(title: string): string {
+  return title.replace(/^[\p{Extended_Pictographic}️\s]+/u, "").replace(/^秘密：/, "").trim();
+}
+
+function fmtDuration(scenes: { durationSec: number }[]): string {
+  const total = scenes.reduce((s, x) => s + x.durationSec, 0);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGenerated }: {
+  onNavigate: (s: ScreenType) => void;
+  generatedRoute?: GeneratedRoute | null;
+  vlogs?: GeneratedVlog[];
+  onVlogGenerated?: (v: GeneratedVlog) => void;
+}) {
   const [activeTab, setActiveTab] = React.useState(0);
   const [selectedDate, setSelectedDate] = React.useState("今日");
+  const [pickerOpen, setPickerOpen] = React.useState(false);
   const [isGenerating, setIsGenerating] = React.useState(false);
+  const [genReady, setGenReady] = React.useState(false); // 真实生成完成（让进度条收尾）
+  const [playingVlog, setPlayingVlog] = React.useState<GeneratedVlog | null>(null);
+  const pendingVlog = React.useRef<GeneratedVlog | null>(null);
+  // 用户为每一站上传的照片：站点 index → dataURL
+  const [uploads, setUploads] = React.useState<Record<number, string>>({});
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const uploadIdxRef = React.useRef<number>(-1);
 
   const dates = ["今日", "05.23", "05.22", "05.21", "05.20"];
 
@@ -61,10 +120,100 @@ export function StoryScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Sc
           { time: "15:00", title: "日常记录", desc: "在这个城市的惬意午后。", icon: <MapPin size={17} />, img: "bg-gradient-to-br from-slate-700 to-slate-900" },
         ];
 
-  const historicalVlogs = [
-    { id: 1, date: "2024.05.23", title: "五道口雨后漫步", duration: "01:24", views: 128, img: "https://images.unsplash.com/photo-1559564484-e48b3e040ff4?auto=format&fit=crop&w=400&q=80" },
-    { id: 2, date: "2024.05.20", title: "周末的艺术之旅", duration: "02:10", views: 256, img: "https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&w=400&q=80" },
-    { id: 3, date: "2024.05.15", title: "重访清华西门", duration: "00:58", views: 89, img: "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=400&q=80" },
+  const routeTitle =
+    selectedDate === "今日"
+      ? generatedRoute?.title ?? "今日漫游"
+      : `${selectedDate} 漫游`;
+
+  // Vlog 是"今天这趟走法"的记录：必须先有真实路线（跑过探索）才能生成
+  const canGenerate = !!generatedRoute && generatedRoute.waypoints.length > 0;
+
+  // 生成 Vlog 用的规范站点列表（也是上传配图的对象）：
+  // 有真实路线 → waypoints(+隐藏任务)，与回放地图站点一一对应；否则退回时间线素材。
+  const genStops = React.useMemo(
+    () =>
+      generatedRoute
+        ? [
+            ...generatedRoute.waypoints,
+            ...(generatedRoute.hiddenTask ? [generatedRoute.hiddenTask] : []),
+          ].map((wp) => ({ name: wp.name, desc: wp.description, emoji: wp.emoji }))
+        : currentItems.map((it) => ({ name: cleanName(it.title), desc: it.desc, emoji: "📍" })),
+    [generatedRoute, currentItems]
+  );
+
+  // 切日期 / 换路线时清空已上传的配图（站点变了，index 不再对应）
+  React.useEffect(() => { setUploads({}); }, [selectedDate, generatedRoute]);
+
+  // 点某一站的上传槽 → 打开文件选择
+  const pickPhoto = (idx: number) => {
+    uploadIdxRef.current = idx;
+    fileInputRef.current?.click();
+  };
+  // 读文件 → 缩放到 ≤720px 宽的 JPEG dataURL（省内存，和占位图同规格）
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    const idx = uploadIdxRef.current;
+    e.target.value = ""; // 允许重复选同一文件
+    if (!file || idx < 0) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const maxW = 720;
+        const scale = Math.min(1, maxW / img.width);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext("2d")?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+        setUploads((prev) => ({ ...prev, [idx]: dataUrl }));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // 用户选定风格 → 真实调 Vlog agent；进度条跟 Promise 走，完成后弹播放器
+  const startGeneration = async (style: VlogStyle) => {
+    setPickerOpen(false);
+    setIsGenerating(true);
+    setGenReady(false);
+    pendingVlog.current = null;
+    // 站点带上用户照片（没传的用占位 B-roll）
+    const stops: VlogStop[] = genStops.map((s, i) => ({ ...s, photo: uploads[i] }));
+    try {
+      const vlog = await generateVlog({ routeTitle, stops, style });
+      if (generatedRoute) vlog.geo = computeVlogGeo(generatedRoute);
+      pendingVlog.current = vlog;
+    } catch (e) {
+      console.error("Vlog 生成异常：", e);
+    } finally {
+      setGenReady(true); // 让 VlogGenerationOverlay 收尾到 100%
+    }
+  };
+
+  // 进度条跑到 100% 后：把成片存进历史并打开播放器
+  const finishGeneration = () => {
+    setIsGenerating(false);
+    const vlog = pendingVlog.current;
+    pendingVlog.current = null;
+    if (vlog) {
+      onVlogGenerated?.(vlog);
+      setPlayingVlog(vlog);
+    }
+  };
+
+  // 历史记录：本 session 真实生成的 Vlog（新→旧）叠在示例之上
+  const realHistory = vlogs.map((v) => ({
+    vlog: v,
+    date: new Date(v.createdAt).toLocaleDateString("zh-CN").replace(/\//g, "."),
+    duration: fmtDuration(v.scenes),
+    img: v.scenes[0]?.frame ?? "/vlog/coffee.jpg",
+  }));
+  const sampleHistory = [
+    { id: 1, date: "2024.05.23", title: "五道口雨后漫步", duration: "01:24", img: "https://images.unsplash.com/photo-1559564484-e48b3e040ff4?auto=format&fit=crop&w=400&q=80" },
+    { id: 2, date: "2024.05.20", title: "周末的艺术之旅", duration: "02:10", img: "https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&w=400&q=80" },
+    { id: 3, date: "2024.05.15", title: "重访清华西门", duration: "00:58", img: "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=400&q=80" },
   ];
 
   return (
@@ -119,35 +268,100 @@ export function StoryScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Sc
                   
                   <div className="space-y-0">
                     {currentItems.map((it, idx) => (
-                      <TimelineItem 
-                        key={`${selectedDate}-${it.time}`} 
+                      <TimelineItem
+                        key={`${selectedDate}-${it.time}`}
                         time={it.time}
                         title={it.title}
                         desc={it.desc}
                         icon={it.icon}
                         img={it.img}
                         recorded={it.recorded}
-                        index={idx} 
+                        index={idx}
                       />
                     ))}
                   </div>
 
-                  <motion.button 
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setIsGenerating(true)}
-                    className="group relative mt-4 h-14 w-full flex items-center justify-center gap-3 overflow-hidden rounded-2xl bg-[#6C5CFF]/10 border border-[#6C5CFF]/30 active:scale-95 transition-all"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#6C5CFF]/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                    <div className="relative flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-full bg-[#6C5CFF] flex items-center justify-center shadow-[0_0_15px_rgba(108,92,255,0.4)]">
-                        <Sparkles size={16} className="text-white fill-white" />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[15px] font-black text-white">生成今日 AI Vlog</span>
-                        <span className="text-[10px] text-white/30 font-bold">消耗 50 积分</span>
-                      </div>
+                  {/* 为每一站上传照片（可选，不传用示例图）—— 需先有真实路线 */}
+                  {canGenerate && (
+                  <div className="mt-5">
+                    <div className="mb-3 flex items-center justify-between text-[11px] text-white/30 uppercase tracking-widest font-black">
+                      <span className="flex items-center gap-1.5">
+                        <div className="h-1 w-3 bg-[#FFD166] rounded-full" />
+                        给每一站配张照片
+                      </span>
+                      <span className="text-white/30 normal-case tracking-normal font-bold">
+                        {Object.keys(uploads).length}/{genStops.length}
+                      </span>
                     </div>
-                  </motion.button>
+                    <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+                      {genStops.map((s, idx) => {
+                        const photo = uploads[idx];
+                        return (
+                          <button
+                            key={idx}
+                            onClick={() => pickPhoto(idx)}
+                            className="group relative h-28 w-20 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] active:scale-95 transition-transform"
+                          >
+                            {photo ? (
+                              <>
+                                <img src={photo} alt={s.name} className="absolute inset-0 h-full w-full object-cover" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                                <div className="absolute bottom-1 left-1 right-1 truncate text-[9px] font-bold text-white/90">{s.emoji} {s.name}</div>
+                                <div className="absolute right-1 top-1 rounded-full bg-black/50 p-0.5 text-white/80 opacity-0 group-hover:opacity-100">
+                                  <RotateCcw size={11} />
+                                </div>
+                              </>
+                            ) : (
+                              <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 px-1 text-center">
+                                <ImagePlus size={20} className="text-white/40" />
+                                <div className="text-base">{s.emoji}</div>
+                                <div className="truncate w-full text-[9px] font-bold text-white/45">{s.name}</div>
+                              </div>
+                            )}
+                            <div className="absolute left-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#6C5CFF] text-[9px] font-black text-white">{idx + 1}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="mt-2 text-[10px] text-white/30">不上传也行，缺的用示例素材图自动补上。</p>
+                  </div>
+                  )}
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
+
+                  {canGenerate ? (
+                    <motion.button
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setPickerOpen(true)}
+                      className="group relative mt-4 h-14 w-full flex items-center justify-center gap-3 overflow-hidden rounded-2xl bg-[#6C5CFF]/10 border border-[#6C5CFF]/30 active:scale-95 transition-all"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#6C5CFF]/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                      <div className="relative flex items-center gap-3">
+                        <div className="h-8 w-8 rounded-full bg-[#6C5CFF] flex items-center justify-center shadow-[0_0_15px_rgba(108,92,255,0.4)]">
+                          <Sparkles size={16} className="text-white fill-white" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[15px] font-black text-white">生成今日 AI Vlog</span>
+                          <span className="text-[10px] text-white/30 font-bold">选个风格 · 消耗 50 积分</span>
+                        </div>
+                      </div>
+                    </motion.button>
+                  ) : (
+                    // 还没跑探索 → 没有真实路线，引导去探索（Vlog 依赖路线做地图回放）
+                    <div className="mt-4">
+                      <motion.button
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => onNavigate("explore")}
+                        className="group relative h-14 w-full flex items-center justify-center gap-3 overflow-hidden rounded-2xl bg-[#6C5CFF] active:scale-95 transition-all shadow-[0_8px_24px_rgba(108,92,255,0.35)]"
+                      >
+                        <MapPinned size={18} className="text-white" />
+                        <span className="text-[15px] font-black text-white">先去探索生成今天的路线</span>
+                        <ChevronRight size={18} className="text-white/80" />
+                      </motion.button>
+                      <p className="mt-2 text-center text-[11px] text-white/35">
+                        Vlog 是今天这趟走法的记录，跑完探索就能为每一站配图、一键生成。
+                      </p>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ) : (
@@ -159,17 +373,50 @@ export function StoryScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Sc
                 className="space-y-4"
               >
                 <div className="grid grid-cols-1 gap-3">
-                  {historicalVlogs.map((vlog, idx) => (
-                    <motion.div
+                  {/* 本 session 真实生成的 Vlog —— 可点击重播 */}
+                  {realHistory.map(({ vlog, date, duration, img }, idx) => (
+                    <motion.button
                       key={vlog.id}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: idx * 0.05 }}
+                      onClick={() => setPlayingVlog(vlog)}
+                      className="group relative overflow-hidden rounded-2xl border border-[#6C5CFF]/30 bg-[#6C5CFF]/[0.06] p-3 flex gap-3 text-left active:bg-[#6C5CFF]/[0.12] transition-colors"
+                    >
+                      <div className="relative h-20 w-24 rounded-xl overflow-hidden shrink-0 bg-white/5">
+                        <img src={img} alt={vlog.title} className={`absolute inset-0 h-full w-full object-cover ${STYLE_META[vlog.style].filter} transition-transform duration-500 group-hover:scale-110`} />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
+                          <PlayCircle size={28} className="text-white" />
+                        </div>
+                        <div className="absolute bottom-1 right-1 rounded px-1 py-0.5 bg-black/60 text-[8px] font-bold text-white">{duration}</div>
+                      </div>
+                      <div className="flex-1 flex flex-col justify-center min-w-0">
+                        <div className="flex items-center gap-1.5 text-[10px] text-white/30 font-bold">
+                          {date}
+                          <span className="rounded-full px-1.5 py-0.5 text-[8px] font-black" style={{ background: `${STYLE_META[vlog.style].accent}22`, color: STYLE_META[vlog.style].accent }}>
+                            {STYLE_META[vlog.style].label}
+                          </span>
+                        </div>
+                        <h3 className="text-[15px] font-bold text-white/90 truncate mt-0.5">{vlog.title}</h3>
+                        <div className="mt-2 flex items-center gap-3 text-[10px] text-white/40">
+                          <span className="flex items-center gap-1 font-bold text-[#A98BFF]"><Music size={11} /> {vlog.bgm}</span>
+                        </div>
+                      </div>
+                    </motion.button>
+                  ))}
+
+                  {/* 示例历史（静态展示） */}
+                  {sampleHistory.map((vlog, idx) => (
+                    <motion.div
+                      key={vlog.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: (realHistory.length + idx) * 0.05 }}
                       className="group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.03] p-3 flex gap-3 active:bg-white/[0.06] transition-colors"
                     >
                       <div className="relative h-20 w-24 rounded-xl overflow-hidden shrink-0 bg-white/5">
-                        <img 
-                          src={vlog.img} 
+                        <img
+                          src={vlog.img}
                           alt={vlog.title}
                           className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                         />
@@ -180,7 +427,7 @@ export function StoryScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Sc
                           {vlog.duration}
                         </div>
                       </div>
-                      
+
                       <div className="flex-1 flex flex-col justify-center min-w-0">
                         <div className="text-[10px] text-white/30 font-bold">{vlog.date}</div>
                         <h3 className="text-[15px] font-bold text-white/90 truncate mt-0.5">{vlog.title}</h3>
@@ -199,21 +446,88 @@ export function StoryScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Sc
       <BottomNav active="story" onNavigate={onNavigate} />
 
       <AnimatePresence>
+        {pickerOpen && (
+          <StylePickerOverlay
+            onPick={startGeneration}
+            onCancel={() => setPickerOpen(false)}
+          />
+        )}
         {isGenerating && (
-          <VlogGenerationOverlay onFinish={() => {
-            setIsGenerating(false);
-            setActiveTab(1); // Switch to history tab
-          }} onCancel={() => setIsGenerating(false)} />
+          <VlogGenerationOverlay ready={genReady} onFinish={finishGeneration} />
+        )}
+        {playingVlog && (
+          <VlogPlayerOverlay
+            vlog={playingVlog}
+            onClose={() => {
+              setPlayingVlog(null);
+              setActiveTab(1); // 关掉播放器回到历史 tab
+            }}
+          />
         )}
       </AnimatePresence>
     </AppLayout>
   );
 }
 
-function VlogGenerationOverlay({ onFinish, onCancel }: { onFinish: () => void, onCancel: () => void }) {
+// ── 风格选择浮层 ──────────────────────────────────────────
+function StylePickerOverlay({ onPick, onCancel }: { onPick: (s: VlogStyle) => void; onCancel: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="absolute inset-0 z-[105] flex flex-col items-center justify-end bg-black/60 backdrop-blur-md"
+      onClick={onCancel}
+    >
+      <motion.div
+        initial={{ y: 320 }}
+        animate={{ y: 0 }}
+        exit={{ y: 320 }}
+        transition={{ type: "spring", damping: 28, stiffness: 280 }}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full rounded-t-3xl border-t border-white/10 bg-[#0A0A1A] p-6 pb-10"
+      >
+        <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/15" />
+        <h2 className="text-[18px] font-black text-white">选择 Vlog 风格</h2>
+        <p className="mt-1 text-[12px] text-white/40">AI 会用对应的画面滤镜、旁白语气和 BGM 剪辑</p>
+
+        <div className="mt-5 space-y-3">
+          {STYLE_ORDER.map((s, i) => {
+            const m = STYLE_META[s];
+            return (
+              <motion.button
+                key={s}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 * i }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => onPick(s)}
+                className="group relative flex w-full items-center gap-4 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-left active:bg-white/[0.07]"
+              >
+                <div className={`h-14 w-14 shrink-0 rounded-xl ${m.preview} shadow-lg`} />
+                <div className="min-w-0 flex-1">
+                  <div className="text-[15px] font-black text-white">{m.label}</div>
+                  <div className="text-[12px] text-white/45">{m.desc}</div>
+                </div>
+                <div className="rounded-full p-2 transition-colors" style={{ color: m.accent }}>
+                  <Play size={18} className="fill-current" />
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// 进度条跟真实生成走：未完成时爬到 ~90% 等待，ready 后冲到 100% 再 onFinish
+function VlogGenerationOverlay({ ready, onFinish }: { ready: boolean; onFinish: () => void }) {
   const [progress, setProgress] = React.useState(0);
   const [status, setStatus] = React.useState("分析素材集...");
-  
+  const readyRef = React.useRef(ready);
+  readyRef.current = ready;
+
   const steps = [
     { threshold: 0, text: "正在分析今日深度足迹...", icon: <Wand2 size={20} /> },
     { threshold: 25, text: "提取画面精彩瞬间...", icon: <Film size={20} /> },
@@ -227,13 +541,16 @@ function VlogGenerationOverlay({ onFinish, onCancel }: { onFinish: () => void, o
       setProgress(prev => {
         if (prev >= 100) {
           clearInterval(timer);
-          setTimeout(onFinish, 1000);
+          setTimeout(onFinish, 800);
           return 100;
         }
-        const next = prev + Math.random() * 5;
+        // AI 还没返回时最多爬到 90%，返回后一路冲到 100%
+        const cap = readyRef.current ? 100 : 90;
+        if (prev >= cap) return prev;
+        const next = Math.min(prev + Math.random() * 5, cap);
         const currentStep = steps.findLast(s => next >= s.threshold);
         if (currentStep) setStatus(currentStep.text);
-        return next > 100 ? 100 : next;
+        return next;
       });
     }, 150);
     return () => clearInterval(timer);
@@ -249,13 +566,6 @@ function VlogGenerationOverlay({ onFinish, onCancel }: { onFinish: () => void, o
       <div className="absolute inset-0 overflow-hidden opacity-20 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] bg-[#6C5CFF]/30 blur-[120px] rounded-full animate-pulse" />
       </div>
-
-      <button 
-        onClick={onCancel}
-        className="absolute top-12 right-6 p-2 rounded-full bg-white/5 text-white/40 active:scale-90"
-      >
-        <X size={20} />
-      </button>
 
       <div className="relative flex flex-col items-center px-10 text-center">
         <div className="relative mb-12">
@@ -311,6 +621,174 @@ function VlogGenerationOverlay({ onFinish, onCancel }: { onFinish: () => void, o
         </div>
       </div>
     </motion.div>
+  );
+}
+
+// ── Vlog 播放器：分镜自动推进的竖屏成片 ──────────────────────
+function VlogPlayerOverlay({ vlog, onClose }: { vlog: GeneratedVlog; onClose: () => void }) {
+  const theme = STYLE_META[vlog.style];
+  const hasGeo = !!vlog.geo && vlog.geo.legs.length > 0;
+  // 有真实路线 → 先放路线回放；否则直接进战报卡
+  const [phase, setPhase] = React.useState<"replay" | "card">(hasGeo ? "replay" : "card");
+  const [replayKey, setReplayKey] = React.useState(0); // 重播时强制 RouteReplay 重挂
+  const [photoStop, setPhotoStop] = React.useState<number | null>(null); // 到站时显示该站照片特写
+  const [copied, setCopied] = React.useState(false);
+
+  const share = async () => {
+    try {
+      await navigator.clipboard.writeText(`${vlog.title}｜${vlog.verdict}\n${vlog.shareCaption}`);
+    } catch { /* 忽略：仍提示已复制 */ }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
+  };
+  const replay = () => {
+    setPhotoStop(null);
+    setReplayKey((k) => k + 1);
+    setPhase("replay");
+  };
+
+  const photoScene = photoStop != null ? vlog.scenes[photoStop] : null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="absolute inset-0 z-[120] bg-black overflow-hidden"
+    >
+      {/* ── 路线回放 ── */}
+      {phase === "replay" && hasGeo && (
+        <div className="absolute inset-0">
+          <div key={replayKey} className="absolute inset-0">
+            <RouteReplay
+              geo={vlog.geo!}
+              accent={theme.accent}
+              onStopChange={setPhotoStop}
+              onDone={() => setPhase("card")}
+            />
+          </div>
+
+          {/* 到站 → 切到该站照片的 Live2D 特写（盖在地图上） */}
+          <AnimatePresence>
+            {photoScene && (
+              <motion.div
+                key={photoStop}
+                initial={{ opacity: 0, scale: 1.04 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.45 }}
+                className="absolute inset-0 z-[5]"
+              >
+                <LivePhoto
+                  frame={photoScene.frame}
+                  style={vlog.style}
+                  filter={theme.filter}
+                  overlay={theme.overlay}
+                  accent={theme.accent}
+                  emoji={photoScene.emoji}
+                  caption={photoScene.caption}
+                  narration={photoScene.narration}
+                  label={`第 ${photoStop! + 1} 站 / ${vlog.geo!.stops.length}`}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* 顶部标题条 + 关闭 + 跳过 */}
+          <div className="absolute inset-x-0 top-8 z-10 flex items-center justify-between px-4">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full px-2 py-0.5 text-[10px] font-black" style={{ background: `${theme.accent}33`, color: theme.accent }}>
+                {theme.label}
+              </span>
+              <span className="text-[13px] font-black italic text-white drop-shadow">{vlog.title}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setPhase("card")} className="rounded-full bg-black/40 px-3 py-1.5 text-[11px] font-bold text-white/80 active:scale-90">跳过</button>
+              <button onClick={onClose} className="rounded-full bg-black/40 p-2 text-white/80 active:scale-90"><X size={18} /></button>
+            </div>
+          </div>
+          {/* BGM chip */}
+          <div className="pointer-events-none absolute bottom-3 right-4 z-10 flex items-center gap-1.5 rounded-full bg-black/40 px-2.5 py-1 text-[10px] font-bold text-white/70">
+            <Music size={11} style={{ color: theme.accent }} /> {vlog.bgm}
+          </div>
+        </div>
+      )}
+
+      {/* ── City Walk 战报卡 ── */}
+      {phase === "card" && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 flex flex-col overflow-y-auto no-scrollbar">
+          <div className={`absolute inset-0 ${theme.preview} opacity-[0.18]`} />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/80 to-black" />
+          <button onClick={onClose} className="absolute right-5 top-12 z-20 rounded-full bg-white/10 p-2 text-white/70 active:scale-90"><X size={20} /></button>
+
+          <div className="relative z-10 mx-auto w-full max-w-sm px-6 pb-10 pt-16">
+            <div className="text-[11px] font-black uppercase tracking-[0.2em]" style={{ color: theme.accent }}>
+              {theme.label} · City Walk 战报
+            </div>
+            <h2 className="mt-1.5 text-[26px] font-black italic leading-tight text-white">{vlog.title}</h2>
+            {/* 人格金句 */}
+            <div className="mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5" style={{ borderColor: `${theme.accent}55`, background: `${theme.accent}1A` }}>
+              <Sparkles size={14} style={{ color: theme.accent }} />
+              <span className="text-[13px] font-bold text-white">{vlog.verdict}</span>
+            </div>
+
+            {/* 路线缩略图（静态全貌） */}
+            {hasGeo && (
+              <div className="mt-5 h-44 w-full overflow-hidden rounded-2xl border border-white/10 bg-[#05060F]">
+                <RouteReplay geo={vlog.geo!} accent={theme.accent} frozen />
+              </div>
+            )}
+
+            {/* 数据 */}
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              {hasGeo ? (
+                <>
+                  <StatCell icon={<Footprints size={16} />} value={`${vlog.geo!.distanceKm}`} unit="km" accent={theme.accent} />
+                  <StatCell icon={<MapPinned size={16} />} value={`${vlog.geo!.stops.length}`} unit="个打卡点" accent={theme.accent} />
+                  <StatCell icon={<Ticket size={16} />} value={`${vlog.geo!.stops.length}`} unit="张奖励" accent={theme.accent} />
+                </>
+              ) : (
+                <>
+                  <StatCell icon={<Film size={16} />} value={`${vlog.scenes.length}`} unit="个分镜" accent={theme.accent} />
+                  <StatCell icon={<Footprints size={16} />} value={fmtDuration(vlog.scenes)} unit="时长" accent={theme.accent} />
+                  <StatCell icon={<Music size={16} />} value="BGM" unit={vlog.bgm.split(" ")[0]} accent={theme.accent} />
+                </>
+              )}
+            </div>
+
+            {/* 分享文案 */}
+            <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-white/30">
+                <Music size={11} /> {vlog.bgm}
+              </div>
+              <p className="text-[13px] leading-relaxed text-white/85">{vlog.shareCaption}</p>
+            </div>
+
+            {/* 操作 */}
+            <div className="mt-6 flex gap-3">
+              {hasGeo && (
+                <button onClick={replay} className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 py-3.5 text-[14px] font-bold text-white active:scale-95">
+                  <RotateCcw size={16} /> 重看回放
+                </button>
+              )}
+              <button onClick={share} className="flex flex-[1.4] items-center justify-center gap-2 rounded-2xl py-3.5 text-[14px] font-black text-black active:scale-95" style={{ background: theme.accent }}>
+                {copied ? <><Check size={16} /> 已复制</> : <><Share2 size={16} /> 分享战报</>}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </motion.div>
+  );
+}
+
+function StatCell({ icon, value, unit, accent }: { icon: React.ReactNode; value: string; unit: string; accent: string }) {
+  return (
+    <div className="flex flex-col items-center rounded-2xl border border-white/10 bg-white/[0.04] py-3">
+      <div style={{ color: accent }}>{icon}</div>
+      <div className="mt-1 text-[18px] font-black leading-none text-white">{value}</div>
+      <div className="mt-0.5 text-[10px] font-bold text-white/40">{unit}</div>
+    </div>
   );
 }
 
