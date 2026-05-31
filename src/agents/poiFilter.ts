@@ -46,6 +46,10 @@ const WAIT_THRESHOLD_MIN = 15;
 const MAX_CANDIDATES = 10;
 const MIN_ACCEPTABLE = 5;
 
+const DURATION_MINUTES: Record<string, number> = {
+  "30min": 30, "1h": 60, "2h": 120, half_day: 240,
+};
+
 // 评分：rating + 心情匹配加成 - 距离惩罚（每公里 -0.1）
 export function scorePOI(poi: POI, prefs: UserPreferences): number {
   let score = poi.rating;
@@ -63,9 +67,12 @@ function applyFilters(
   stage: FilterStage,
   pool: POI[]
 ): POI[] {
+  const totalMin = DURATION_MINUTES[prefs.duration] ?? 60;
+  const maxStayMin = totalMin / 2;
   return pool.filter((poi) => {
     if (stage !== "all" && !isOpenAt(poi.open_hours, now)) return false;
     if (stage === "strict" && poi.avg_wait_minutes > WAIT_THRESHOLD_MIN) return false;
+    if (stage === "strict" && poi.avg_stay_minutes > maxStayMin) return false;
     if ((stage === "strict" || stage === "no_wait") && prefs.special.length > 0) {
       const overlap = poi.tags.some((t) => prefs.special.includes(t));
       if (!overlap) return false;

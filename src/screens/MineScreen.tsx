@@ -9,6 +9,8 @@ interface SysMessage { icon: React.ReactNode; title: string; desc: string; time:
 
 export function MineScreen({ onNavigate, profile, generatedRoute }: { onNavigate: (s: ScreenType) => void; profile?: UserProfile | null; generatedRoute?: GeneratedRoute | null }) {
   const [panel, setPanel] = useState<null | "notif" | "sys">(null);
+  const [notifRead, setNotifRead] = useState(false);
+  const [sysRead, setSysRead] = useState(false);
 
   // 铃铛 = 动态通知：本次探索的活动事件（路线/隐藏坐标/奖励/MBTI 定制）
   const notifications: SysMessage[] = [];
@@ -40,9 +42,9 @@ export function MineScreen({ onNavigate, profile, generatedRoute }: { onNavigate
         title="我的" 
         right={
           <div className="flex gap-4">
-            <button className="relative" onClick={() => setPanel("notif")}>
+            <button className="relative" onClick={() => { setPanel("notif"); setNotifRead(true); }}>
               <Bell size={20} />
-              {notifications.length > 0 && (
+              {notifications.length > 0 && !notifRead && (
                 <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-[#FF4D64] rounded-full border border-[#0A0A1A]" />
               )}
             </button>
@@ -86,7 +88,7 @@ export function MineScreen({ onNavigate, profile, generatedRoute }: { onNavigate
         </Glass>
         
         <div className="mt-6 space-y-3">
-          <MenuRow icon={<Mail size={20} />} label="系统消息" count={systemMessages.length} onClick={() => setPanel("sys")} />
+          <MenuRow icon={<Mail size={20} />} label="系统消息" count={sysRead ? undefined : systemMessages.length} onClick={() => { setPanel("sys"); setSysRead(true); }} />
           <MenuRow icon={<Share2 size={20} />} label="邀请好友" />
           <MenuRow icon={<HelpCircle size={20} />} label="帮助反馈" />
         </div>

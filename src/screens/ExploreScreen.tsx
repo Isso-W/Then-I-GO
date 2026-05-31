@@ -126,17 +126,25 @@ export function ExploreScreen({
       
       <AnimatePresence>
         {isCapturing && (
-          <CameraInterface 
+          <CameraInterface
             onCapture={() => {
-              if (step === "checkin_initial") handleInitialCheckin();
-              if (step === "checkin_hidden") handleHiddenCheckin();
-              if (step === "checkin_next") setStep("achievement_unlock");
-            }} 
+              if (inRange) {
+                // 到达范围内 = 打卡：推进任务流程
+                if (step === "checkin_initial") handleInitialCheckin();
+                if (step === "checkin_hidden") handleHiddenCheckin();
+                if (step === "checkin_next") setStep("achievement_unlock");
+              } else {
+                // 半路 = 仅记录：关相机回原步骤，素材保留但不推进
+                if (step === "checkin_initial") setStep("initial");
+                if (step === "checkin_hidden") setStep("hidden_active");
+                if (step === "checkin_next") setStep("next_objective");
+              }
+            }}
             onClose={() => {
               if (step === "checkin_initial") setStep("initial");
               if (step === "checkin_hidden") setStep("hidden_active");
               if (step === "checkin_next") setStep("next_objective");
-            }} 
+            }}
           />
         )}
       </AnimatePresence>

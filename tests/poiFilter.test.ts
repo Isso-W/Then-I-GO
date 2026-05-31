@@ -155,6 +155,20 @@ describe("scorePOI", () => {
 });
 
 describe("filterCandidates 渐进降级", () => {
+  it("strict 阶段过滤 avg_stay 超过用户时长一半的 POI", () => {
+    // 选 1h (60min)，single POI avg_stay 超 30min → strict 阶段被过滤
+    const pool = [
+      ...Array.from({ length: 5 }, (_, i) =>
+        makePOI({ id: `short${i}`, tags: ["art"], avg_stay_minutes: 20 })
+      ),
+      makePOI({ id: "long", tags: ["art"], avg_stay_minutes: 55 }),
+    ];
+    const prefs = makePrefs({ special: ["art"], duration: "1h" });
+    const result = filterCandidates(prefs, NOON, pool);
+    expect(result.length).toBe(5);
+    expect(result.every((p) => p.id.startsWith("short"))).toBe(true);
+  });
+
   it("strict 阶段命中 ≥5 时停在 strict，不再放宽", () => {
     const pool = Array.from({ length: 6 }, (_, i) =>
       makePOI({ id: `s${i}`, tags: ["art"], avg_wait_minutes: 0, rating: 4.0 + i * 0.1 })
