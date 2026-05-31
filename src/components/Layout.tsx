@@ -50,8 +50,8 @@ export function Glass({ children, className = "", onClick, style }: { children: 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       onClick={onClick}
-      style={style}
-      className={`rounded-2xl border border-white/10 bg-[#14142B]/80 backdrop-blur-xl shadow-[0_18px_50px_rgba(0,0,0,.35)] ${className}`}
+      style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)", ...style }}
+      className={`rounded-2xl border backdrop-blur-xl shadow-[0_18px_50px_rgba(0,0,0,.35)] ${className}`}
     >
       {children}
     </motion.div>

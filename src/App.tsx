@@ -15,6 +15,7 @@ import type { LatLng } from "./components/mapProjection";
 import { motion, AnimatePresence } from "motion/react";
 
 const PROFILE_KEY = "userProfile";
+const THEME_KEY = "appTheme";
 
 function loadProfile(): UserProfile | null {
   try {
@@ -29,6 +30,16 @@ function loadProfile(): UserProfile | null {
 }
 
 export default function App() {
+  // 主题：暗色(dark) / 浅色(light)，持久化到 localStorage
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    try { return (localStorage.getItem(THEME_KEY) as "dark" | "light") ?? "dark"; } catch { return "dark"; }
+  });
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    try { localStorage.setItem(THEME_KEY, next); } catch {}
+  };
+
   // 首启时从 localStorage 读取 profile，缺失则进 onboarding；否则直接 explore
   const [profile, setProfile] = useState<UserProfile | null>(() => loadProfile());
   const [screen, setScreen] = useState<ScreenType>(() => (loadProfile() ? "explore" : "onboarding"));
@@ -119,7 +130,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-full w-full bg-[#05060F] font-[PingFang_SC,Inter,system-ui,sans-serif] text-white">
+    <div data-theme={theme} className="h-full w-full font-[PingFang_SC,Inter,system-ui,sans-serif]" style={{ backgroundColor: "var(--bg-base)", color: "var(--text-primary)" }}>
       {/* 加载中的全屏遮罩 */}
       <AnimatePresence>
         {isGenerating && (
@@ -127,7 +138,8 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex flex-col items-center justify-center bg-[#05060F]/95 backdrop-blur-md"
+            className="fixed inset-0 z-[200] flex flex-col items-center justify-center backdrop-blur-md"
+            style={{ backgroundColor: theme === "dark" ? "rgba(5,6,15,0.95)" : "rgba(245,245,250,0.95)" }}
           >
             <motion.div
               animate={{ rotate: 360 }}
@@ -176,7 +188,7 @@ export default function App() {
           {screen === "bag" && <BagScreen onNavigate={navigate} generatedRoute={generatedRoute} />}
           {screen === "mine" && <MineScreen onNavigate={navigate} profile={profile} generatedRoute={generatedRoute} />}
           {screen === "event" && <EventDetailScreen onBack={() => navigate("explore")} />}
-          {screen === "settings" && <SettingsScreen onBack={() => navigate("mine")} />}
+          {screen === "settings" && <SettingsScreen onBack={() => navigate("mine")} theme={theme} onToggleTheme={toggleTheme} />}
         </motion.div>
       </AnimatePresence>
     </div>

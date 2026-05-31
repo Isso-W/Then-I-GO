@@ -12,14 +12,14 @@ export function BottomNav({ active, onNavigate }: { active: ScreenType; onNaviga
   ];
 
   return (
-    <nav className="absolute bottom-5 left-5 right-5 z-40 flex h-[76px] items-center justify-around rounded-3xl border border-white/10 bg-[#11132B]/90 text-white backdrop-blur-2xl">
+    <nav className="absolute bottom-5 left-5 right-5 z-40 flex h-[76px] items-center justify-around rounded-3xl border backdrop-blur-2xl" style={{ backgroundColor: "var(--bg-nav)", borderColor: "var(--border-subtle)", color: "var(--text-primary)" }}>
       {items.map((it, i) => (
         <button 
           key={it.key} 
           onClick={() => onNavigate?.(it.key as ScreenType)} 
           className="relative flex h-full flex-1 flex-col items-center justify-center gap-1"
         >
-          {i > 0 && <span className="absolute left-0 h-9 w-px bg-white/10" />}
+          {i > 0 && <span className="absolute left-0 h-9 w-px" style={{ backgroundColor: "var(--border-subtle)" }} />}
           {it.dot && <span className="absolute right-8 top-3 h-2.5 w-2.5 rounded-full bg-[#FF4D64]" />}
           <motion.div 
             whileTap={{ scale: 0.9 }}
@@ -42,7 +42,7 @@ export function BottomNav({ active, onNavigate }: { active: ScreenType; onNaviga
 
 export function PageTitle({ title, right }: { title: string; right?: React.ReactNode }) {
   return (
-    <header className="absolute left-6 right-6 top-[58px] z-30 flex items-center justify-between text-white">
+    <header className="absolute left-6 right-6 top-[58px] z-30 flex items-center justify-between" style={{ color: "var(--text-primary)" }}>
       <h1 className="text-[25px] font-bold">{title}</h1>
       <div className="flex items-center gap-3">{right}</div>
     </header>
@@ -51,12 +51,13 @@ export function PageTitle({ title, right }: { title: string; right?: React.React
 
 export function TabBar({ tabs, active = 0, onChange }: { tabs: string[]; active?: number; onChange?: (i: number) => void }) {
   return (
-    <div className="flex h-10 items-center rounded-xl border border-white/5 bg-[#11182F]/80 p-1 text-[13px] text-[#B8B8D0]">
+    <div className="flex h-10 items-center rounded-xl border p-1 text-[13px]" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-subtle)", color: "var(--text-muted)" }}>
       {tabs.map((t, i) => (
         <button 
           key={t} 
           onClick={() => onChange?.(i)}
-          className={`relative flex-1 rounded-lg py-1.5 text-center transition-colors ${i === active ? "text-white" : ""}`}
+          className={`relative flex-1 rounded-lg py-1.5 text-center transition-colors`}
+          style={i === active ? { color: "var(--text-primary)" } : undefined}
         >
           {t}
           {i === active && (

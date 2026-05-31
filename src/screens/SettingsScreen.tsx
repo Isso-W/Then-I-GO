@@ -3,24 +3,25 @@ import { ArrowLeft, User, Bell, Shield, Smartphone, HelpCircle, LogOut, ChevronR
 import { motion } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
 
-export function SettingsScreen({ onBack }: { onBack: () => void }) {
+export function SettingsScreen({ onBack, theme, onToggleTheme }: { onBack: () => void; theme?: "dark" | "light"; onToggleTheme?: () => void }) {
   return (
     <AppLayout>
-      <div className="absolute inset-0 bg-[#0A0A1A]" />
+      <div className="absolute inset-0" style={{ backgroundColor: "var(--bg-base)" }} />
       
       <header className="absolute left-0 right-0 top-[60px] z-30 flex items-center px-6">
         <button 
           onClick={onBack}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white active:scale-90"
+          className="flex h-10 w-10 items-center justify-center rounded-full active:scale-90"
+          style={{ border: "1px solid var(--border-subtle)", backgroundColor: "var(--bg-input)", color: "var(--text-primary)" }}
         >
           <ArrowLeft size={20} />
         </button>
-        <h1 className="ml-4 text-[20px] font-bold text-white">设置</h1>
+        <h1 className="ml-4 text-[20px] font-bold" style={{ color: "var(--text-primary)" }}>设置</h1>
       </header>
 
       <main className="absolute inset-0 pt-[120px] px-6 overflow-y-auto no-scrollbar pb-10">
         <section className="mb-6">
-          <h2 className="mb-3 px-1 text-[12px] font-bold uppercase tracking-widest text-white/30">个人信息</h2>
+          <h2 className="mb-3 px-1 text-[12px] font-bold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>个人信息</h2>
           <Glass className="overflow-hidden">
             <SettingItem icon={<User size={18} />} label="个人资料" detail="那我走" />
             <div className="mx-4 h-px bg-white/5" />
@@ -29,16 +30,16 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
         </section>
 
         <section className="mb-6">
-          <h2 className="mb-3 px-1 text-[12px] font-bold uppercase tracking-widest text-white/30">应用设置</h2>
+          <h2 className="mb-3 px-1 text-[12px] font-bold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>应用设置</h2>
           <Glass className="overflow-hidden">
             <SettingItemWithToggle icon={<Bell size={18} />} label="消息推送" defaultChecked />
             <div className="mx-4 h-px bg-white/5" />
-            <SettingItemWithToggle icon={<Moon size={18} />} label="夜间模式" defaultChecked />
+            <SettingItemWithToggle icon={<Moon size={18} />} label="夜间模式" checked={theme !== "light"} onChange={onToggleTheme} />
           </Glass>
         </section>
 
         <section className="mb-6">
-          <h2 className="mb-3 px-1 text-[12px] font-bold uppercase tracking-widest text-white/30">其他</h2>
+          <h2 className="mb-3 px-1 text-[12px] font-bold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>其他</h2>
           <Glass className="overflow-hidden">
             <SettingItem icon={<Shield size={18} />} label="隐私中心" />
             <div className="mx-4 h-px bg-white/5" />
@@ -59,34 +60,37 @@ export function SettingsScreen({ onBack }: { onBack: () => void }) {
 
 function SettingItem({ icon, label, detail }: { icon: React.ReactNode; label: string; detail?: string }) {
   return (
-    <button className="flex w-full items-center justify-between p-5 hover:bg-white/5 transition-colors group">
+    <button className="flex w-full items-center justify-between p-5 transition-colors group" style={{ color: "var(--text-primary)" }}>
       <div className="flex items-center gap-4">
-        <div className="text-white/40 group-hover:text-[#A98BFF] transition-colors">{icon}</div>
-        <span className="text-[17px] text-white/90 font-medium">{label}</span>
+        <div className="group-hover:text-[#A98BFF] transition-colors" style={{ color: "var(--text-muted)" }}>{icon}</div>
+        <span className="text-[17px] font-medium" style={{ color: "var(--text-secondary)" }}>{label}</span>
       </div>
       <div className="flex items-center gap-2">
-        {detail && <span className="text-[15px] text-white/40">{detail}</span>}
-        <ChevronRight size={18} className="text-white/20 group-hover:text-white/40 transition-colors" />
+        {detail && <span className="text-[15px]" style={{ color: "var(--text-muted)" }}>{detail}</span>}
+        <ChevronRight size={18} style={{ color: "var(--text-faint)" }} />
       </div>
     </button>
   );
 }
 
-function SettingItemWithToggle({ icon, label, defaultChecked = false }: { icon: React.ReactNode; label: string; defaultChecked?: boolean }) {
-  const [checked, setChecked] = React.useState(defaultChecked);
+function SettingItemWithToggle({ icon, label, defaultChecked = false, checked: controlledChecked, onChange }: { icon: React.ReactNode; label: string; defaultChecked?: boolean; checked?: boolean; onChange?: () => void }) {
+  const [internal, setInternal] = React.useState(defaultChecked);
+  const isChecked = controlledChecked ?? internal;
+  const toggle = onChange ?? (() => setInternal(!internal));
   return (
     <div className="flex w-full items-center justify-between p-5">
       <div className="flex items-center gap-4">
-        <div className="text-white/40">{icon}</div>
-        <span className="text-[17px] text-white/90 font-medium">{label}</span>
+        <div style={{ color: "var(--text-muted)" }}>{icon}</div>
+        <span className="text-[17px] font-medium" style={{ color: "var(--text-secondary)" }}>{label}</span>
       </div>
-      <button 
-        onClick={() => setChecked(!checked)}
-        className={`relative h-7 w-12 rounded-full p-1 transition-colors ${checked ? 'bg-[#6C5CFF]' : 'bg-white/10 ring-1 ring-white/10'}`}
+      <button
+        onClick={toggle}
+        className={`relative h-7 w-12 rounded-full p-1 transition-colors ${isChecked ? 'bg-[#6C5CFF]' : ''}`}
+        style={isChecked ? undefined : { backgroundColor: "var(--bg-input)", boxShadow: `inset 0 0 0 1px var(--border-subtle)` }}
       >
-        <motion.div 
-          animate={{ x: checked ? 20 : 0 }}
-          className="h-5 w-5 rounded-full bg-white shadow-lg" 
+        <motion.div
+          animate={{ x: isChecked ? 20 : 0 }}
+          className="h-5 w-5 rounded-full bg-white shadow-lg"
         />
       </button>
     </div>
