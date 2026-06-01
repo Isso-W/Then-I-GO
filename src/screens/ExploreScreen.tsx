@@ -7,6 +7,7 @@ import { Map } from "../components/Map";
 import { distanceMeters } from "../agents/poiFilter";
 import type { LatLng } from "../components/mapProjection";
 import { ChatBubble, ChatPanel, type ChatMessage } from "../components/ChatPanel";
+import { TripFeedbackOverlay } from "../components/TripFeedbackOverlay";
 import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute, Waypoint, RouteBranch } from "../types";
 
 export function ExploreScreen({
@@ -23,6 +24,12 @@ export function ExploreScreen({
   chatMessages,
   chatLoading,
   onChatSend,
+  showFeedback,
+  onAchievementContinue,
+  onFeedbackReact,
+  onFeedbackDismiss,
+  waypointIndex = 0,
+  onAdvanceWaypoint,
 }: {
   onNavigate: (s: ScreenType) => void;
   step: ExploreStep;
@@ -37,6 +44,12 @@ export function ExploreScreen({
   chatMessages?: ChatMessage[];
   chatLoading?: boolean;
   onChatSend?: (text: string) => void;
+  showFeedback?: boolean;
+  onAchievementContinue?: () => void;
+  onFeedbackReact?: (emoji: string) => void;
+  onFeedbackDismiss?: () => void;
+  waypointIndex?: number;
+  onAdvanceWaypoint?: () => void;
 }) {
   const [chatOpen, setChatOpen] = useState(false);
 
@@ -64,11 +77,11 @@ export function ExploreScreen({
   const CHECKIN_RADIUS_M = 30;
   const activeTarget =
     step === "initial" || step === "checkin_initial"
-      ? generatedRoute?.waypoints[0]
+      ? generatedRoute?.waypoints[waypointIndex]
       : step === "hidden_active" || step === "checkin_hidden"
       ? generatedRoute?.hiddenTask
       : step === "next_objective" || step === "checkin_next"
-      ? generatedRoute?.waypoints[1]
+      ? generatedRoute?.waypoints[waypointIndex]
       : undefined;
   const distToTarget = activeTarget
     ? distanceMeters(currentPosition, { lat: activeTarget.lat, lng: activeTarget.lng })
@@ -123,6 +136,7 @@ export function ExploreScreen({
                 if (step === "next_objective") setStep("checkin_next");
               }}
               generatedRoute={generatedRoute}
+              waypointIndex={waypointIndex}
               inRange={inRange}
               hasTarget={!!activeTarget}
               rangeLabel={rangeLabel}
@@ -137,12 +151,10 @@ export function ExploreScreen({
           <CameraInterface
             onCapture={() => {
               if (inRange) {
-                // 到达范围内 = 打卡：推进任务流程
                 if (step === "checkin_initial") handleInitialCheckin();
                 if (step === "checkin_hidden") handleHiddenCheckin();
-                if (step === "checkin_next") setStep("achievement_unlock");
+                if (step === "checkin_next") onAdvanceWaypoint?.();
               } else {
-                // 半路 = 仅记录：关相机回原步骤，素材保留但不推进
                 if (step === "checkin_initial") setStep("initial");
                 if (step === "checkin_hidden") setStep("hidden_active");
                 if (step === "checkin_next") setStep("next_objective");
@@ -159,8 +171,14 @@ export function ExploreScreen({
 
       <AnimatePresence>
         {step === "reward_hidden" && (
-          <RewardOverlay 
-            onContinue={() => setStep(generatedRoute?.branch ? "branch_choice" : "next_objective")}
+          <RewardOverlay
+            onContinue={() => {
+              if (generatedRoute?.branch) {
+                setStep("branch_choice");
+              } else {
+                onAdvanceWaypoint?.();
+              }
+            }}
           />
         )}
       </AnimatePresence>
@@ -172,8 +190,17 @@ export function ExploreScreen({
       </AnimatePresence>
 
       <AnimatePresence>
-        {step === "achievement_unlock" && (
-          <AchievementOverlay onContinue={() => setStep("intro")} />
+        {step === "achievement_unlock" && !showFeedback && (
+          <AchievementOverlay onContinue={onAchievementContinue ?? (() => setStep("intro"))} />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showFeedback && (
+          <TripFeedbackOverlay
+            onReact={onFeedbackReact ?? (() => {})}
+            onDismiss={onFeedbackDismiss ?? (() => {})}
+          />
         )}
       </AnimatePresence>
 
@@ -282,11 +309,12 @@ function Legend({ step }: { step?: ExploreStep }) {
   );
 }
 
-function TaskCard({ step, onComplete, onCheckIn, generatedRoute, inRange, hasTarget, rangeLabel, mystery }: {
+function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex = 0, inRange, hasTarget, rangeLabel, mystery }: {
   step: ExploreStep;
   onComplete: () => void;
   onCheckIn: () => void;
   generatedRoute: GeneratedRoute | null;
+  waypointIndex?: number;
   inRange: boolean;
   hasTarget: boolean;
   rangeLabel: string | null;
@@ -298,16 +326,17 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, inRange, hasTar
   const isInitial = step === "initial" || step === "checkin_initial";
   const isNext = step === "next_objective" || step === "checkin_next";
 
-  const wp0 = generatedRoute?.waypoints[0];
-  const wp1 = generatedRoute?.waypoints[1];
+  const currentWp = generatedRoute?.waypoints[waypointIndex];
   const hidden = generatedRoute?.hiddenTask;
+  const totalStops = generatedRoute?.waypoints.length ?? 0;
+  const stationLabel = isInitial ? "首站探索" : isNext ? `第${waypointIndex + 1}/${totalStops}站` : isHiddenActive ? "触发：隐藏任务" : "探索中";
 
   const getTaskContent = () => {
     if (isInitial) return {
-      title: wp0?.name ?? "前往第一站",
-      desc: wp0?.task ?? "前方直走100m|预计6min到达",
-      detail: wp0?.description ?? "目的地在地下，那里夏凉冬不凉",
-      reward: wp0?.reward ?? "+10 XP",
+      title: currentWp?.name ?? "前往第一站",
+      desc: currentWp?.task ?? "前方直走100m|预计6min到达",
+      detail: currentWp?.description ?? "目的地在地下，那里夏凉冬不凉",
+      reward: currentWp?.reward ?? "+10 XP",
       color: "#6C5CFF",
     };
     if (isHiddenActive) return {
@@ -318,10 +347,10 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, inRange, hasTar
       color: "#F59E0B",
     };
     if (isNext) return {
-      title: wp1?.name ?? "前往下一站",
-      desc: wp1?.task ?? "左转直走1km|预计12min到达",
-      detail: wp1?.description ?? "那里是个即便你发呆四个小时，也会被认为'思考人生'的合法场所",
-      reward: wp1?.reward ?? "+20 XP",
+      title: currentWp?.name ?? "前往下一站",
+      desc: currentWp?.task ?? "继续前进",
+      detail: currentWp?.description ?? "新的目的地在等着你",
+      reward: currentWp?.reward ?? "+20 XP",
       color: "#0066FF",
     };
     return { title: "任务完成", desc: "点击查看后续", detail: "", reward: "+0", color: "#10B981" };
@@ -347,7 +376,7 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, inRange, hasTar
         <div className="flex items-center gap-1.5">
           <Sparkles size={14} className="text-[#FFD166]" />
           <h2 className="text-[16px] font-bold uppercase tracking-tight">
-            {isInitial ? "首站探索" : isHiddenActive ? "触发：隐藏任务" : isNext ? "今日终点" : "探索中"}
+            {stationLabel}
           </h2>
           {hasTarget && (
             <span

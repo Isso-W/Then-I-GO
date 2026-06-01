@@ -1,13 +1,27 @@
 import React, { useState } from "react";
-import { Bell, Settings, Trophy, HelpCircle, Star, ChevronRight, Medal, TreePine, Moon, Briefcase, Coffee, Share2, Mail, MapPin, Sparkles, Gift, X } from "lucide-react";
+import { Bell, Settings, HelpCircle, Star, ChevronRight, Share2, Mail, MapPin, Sparkles, Gift, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
 import { BottomNav, PageTitle } from "../components/CommonUI";
-import { ScreenType, UserProfile, GeneratedRoute } from "../types";
+import { ScreenType, UserProfile, GeneratedRoute, TripRecord } from "../types";
+import { projectLatLng, NETWORK_BBOX, ORIGIN, type BBox } from "../components/mapProjection";
+import streetNetwork from "../../scripts/data/street-network.json";
+import terrainRaw from "../../scripts/data/terrain.json";
+
+interface _Street { name: string; highway: string; points: { lat: number; lng: number }[] }
+const streets = (streetNetwork as { streets: _Street[] }).streets;
+const terrainPolygons = (terrainRaw as { polygons: { name: string; type: string; points: { lat: number; lng: number }[] }[] }).polygons;
+
+const TERRAIN_FILL_DARK: Record<string, string> = {
+  campus: "#1F1B47", park: "#0F3A24", water: "#0E3B47", commercial: "#3D3013",
+};
+const TERRAIN_FILL_LIGHT: Record<string, string> = {
+  campus: "#E8E4F8", park: "#D6EFE0", water: "#D4EEF4", commercial: "#F5EDDA",
+};
 
 interface SysMessage { icon: React.ReactNode; title: string; desc: string; time: string }
 
-export function MineScreen({ onNavigate, profile, generatedRoute }: { onNavigate: (s: ScreenType) => void; profile?: UserProfile | null; generatedRoute?: GeneratedRoute | null }) {
+export function MineScreen({ onNavigate, profile, generatedRoute, tripHistory = [] }: { onNavigate: (s: ScreenType) => void; profile?: UserProfile | null; generatedRoute?: GeneratedRoute | null; tripHistory?: TripRecord[] }) {
   const [panel, setPanel] = useState<null | "notif" | "sys">(null);
   const [notifRead, setNotifRead] = useState(false);
   const [sysRead, setSysRead] = useState(false);
@@ -77,14 +91,14 @@ export function MineScreen({ onNavigate, profile, generatedRoute }: { onNavigate
         </div>
         
         <div className="mt-6">
-          <FootprintMap />
+          <FootprintMap tripHistory={tripHistory} />
         </div>
         
         <Glass className="mt-5 p-4 grid grid-cols-4 gap-2">
-          <StatCard num="28" label="天数" />
-          <StatCard num="86.3" label="公里" />
-          <StatCard num="56" label="任务" />
-          <StatCard num="26" label="礼券" />
+          <StatCard num={String(tripHistory.length || 28)} label="天数" />
+          <StatCard num={String(tripHistory.length > 0 ? Math.round(tripHistory.reduce((s, t) => s + t.distanceKm, 0) * 10) / 10 : 86.3)} label="公里" />
+          <StatCard num={String(tripHistory.length > 0 ? tripHistory.reduce((s, t) => s + t.waypoints.filter((w) => w.visited).length, 0) : 56)} label="任务" />
+          <StatCard num={String(tripHistory.length > 0 ? tripHistory.reduce((s, t) => s + t.rewards.length, 0) : 26)} label="礼券" />
         </Glass>
         
         <div className="mt-6 space-y-3">
@@ -158,58 +172,195 @@ function NotificationsOverlay({ title, messages, onClose }: { title: string; mes
   );
 }
 
-function FootprintMap() {
+function FootprintMapContent({ mapW, mapH, uniquePoints, toPixel, showFog }: {
+  mapW: number; mapH: number;
+  uniquePoints: { name: string; emoji: string; lat: number; lng: number }[];
+  toPixel: (lat: number, lng: number) => { x: number; y: number };
+  showFog?: boolean;
+}) {
+  const home = toPixel(ORIGIN.lat, ORIGIN.lng);
+  const FOG_RADIUS = Math.min(mapW, mapH) * 0.08;
+  const fogId = `fog-${mapW}x${mapH}`;
+
+  const clearSpots = [
+    home,
+    ...uniquePoints.map((w) => toPixel(w.lat, w.lng)),
+  ];
+
   return (
-    <Glass className="relative h-[300px] overflow-hidden p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div className="text-[19px] font-bold">我的足迹地图</div>
-        <div className="text-[13px] font-medium px-2 py-0.5 rounded bg-[#6C5CFF]/20 text-[#A98BFF]">已解锁 36% 城区</div>
+    <div className="relative overflow-hidden rounded-2xl border shadow-inner" style={{ height: mapH, backgroundColor: "var(--bg-base)", borderColor: "var(--border-subtle)" }}>
+      {/* 路网 + 地表底图 */}
+      <svg className="absolute inset-0 z-[1]" width={mapW} height={mapH}>
+        <g opacity={0.35}>
+          {terrainPolygons.map((poly, i) => {
+            const pts = poly.points.map((p) => { const px = toPixel(p.lat, p.lng); return `${px.x},${px.y}`; }).join(" ");
+            const isLight = typeof document !== "undefined" && document.querySelector("[data-theme=light]");
+            const fill = isLight ? (TERRAIN_FILL_LIGHT[poly.type] ?? "#E8E8F0") : (TERRAIN_FILL_DARK[poly.type] ?? "#1A1A2E");
+            return <polygon key={i} points={pts} fill={fill} opacity={0.5} />;
+          })}
+        </g>
+        <g opacity={0.4}>
+          {streets.map((s, i) => {
+            const d = s.points.map((p, j) => { const px = toPixel(p.lat, p.lng); return `${j === 0 ? "M" : "L"}${px.x} ${px.y}`; }).join(" ");
+            const w = s.highway === "primary" ? 1.5 : s.highway === "secondary" ? 1 : 0.6;
+            return <path key={i} d={d} fill="none" stroke="rgba(169,139,255,0.5)" strokeWidth={w} strokeLinecap="round" />;
+          })}
+        </g>
+      </svg>
+
+      <div className="absolute z-10" style={{ left: home.x - 14, top: home.y - 14, width: 28, height: 28 }}>
+        <motion.div
+          animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0, 0.4] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="absolute inset-0 rounded-full bg-[#6C5CFF]/40 blur-sm"
+        />
+        <div className="relative flex h-7 w-7 items-center justify-center rounded-full bg-[#6C5CFF] ring-3 ring-[#6C5CFF]/30 shadow-[0_0_12px_#6C5CFF] text-[13px]">🏠</div>
       </div>
-      <div className="relative h-[210px] overflow-hidden rounded-2xl bg-[#07101D] border border-white/5 shadow-inner">
-        {/* Map Background Grid */}
-        <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(34deg,rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(124deg,rgba(255,255,255,.03)_1px,transparent_1px)] [background-size:40px_40px,56px_56px]" />
-        
-        {/* User Current Position */}
-        <div className="absolute left-[138px] top-[148px] z-10">
-          <motion.div 
-            animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0, 0.3] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="absolute -inset-4 rounded-full bg-[#0B7DFF]/50 blur-md"
-          />
-          <div className="relative h-6 w-6 rounded-full bg-[#0B7DFF] ring-4 ring-[#0B7DFF]/30 shadow-[0_0_20px_#0B7DFF]" />
-        </div>
-        
-        {/* History Markers */}
-        {[[122,105],[160,86],[194,56],[230,32]].map(([x,y],i)=>(
-          <motion.div 
-            key={i} 
+
+      {uniquePoints.map((w, i) => {
+        const pos = toPixel(w.lat, w.lng);
+        return (
+          <motion.div
+            key={`${w.name}-${i}`}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ delay: 1 + i * 0.1 }}
-            className="absolute flex h-8 w-8 items-center justify-center rounded-full bg-[#FFD166] text-[#442A00] shadow-[0_0_16px_rgba(255,209,102,.8)] border border-white/20" 
-            style={{left:x,top:y}}
+            transition={{ delay: 0.3 + i * 0.05 }}
+            className="absolute flex items-center justify-center"
+            style={{ left: pos.x - 12, top: pos.y - 12, width: 24, height: 24 }}
           >
-            <Star size={16} fill="#442A00" />
+            <span className="text-[16px] drop-shadow-[0_0_4px_rgba(255,209,102,0.8)]">{w.emoji}</span>
           </motion.div>
-        ))}
-        
-        {/* Path Dots */}
-        {[[135,124],[148,110],[174,75],[207,46]].map(([x,y],i)=>(
-          <span key={i} className="absolute h-1.5 w-1.5 rounded-full bg-[#A98BFF]/60" style={{left:x,top:y}} />
-        ))}
-        
-        {/* Unknown Areas */}
-        {[[42,58],[270,128],[306,42]].map(([x,y],i)=>(
-          <div key={i} className="absolute flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/20 font-bold text-xl" style={{left:x,top:y}}>?</div>
-        ))}
-        
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_45%_60%,transparent_0,rgba(10,10,26,.3)_45%,rgba(10,10,26,.8)_100%)]" />
-        
-        <button className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-md px-4 py-2 text-[12px] font-bold text-[#DCCFFF] border border-white/10 active:scale-95 transition-transform shadow-lg">
-          查看全貌 <ChevronRight size={14} />
-        </button>
-      </div>
-    </Glass>
+        );
+      })}
+
+      {uniquePoints.length === 0 && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center">
+          <p className="text-[12px]" style={{ color: "var(--text-faint)" }}>完成探索后足迹会出现在这里</p>
+        </div>
+      )}
+
+      {/* 迷雾层：整体覆盖迷雾，去过的位置挖透明洞 */}
+      {showFog && (
+        <svg className="absolute inset-0 z-[15] pointer-events-none" width={mapW} height={mapH}>
+          <defs>
+            <radialGradient id={`${fogId}-hole`}>
+              <stop offset="0%" stopColor="black" stopOpacity="1" />
+              <stop offset="60%" stopColor="black" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="black" stopOpacity="0" />
+            </radialGradient>
+            <mask id={fogId}>
+              {/* 白底 = 全部显示迷雾 */}
+              <rect width={mapW} height={mapH} fill="white" />
+              {/* 黑色圆 = 挖洞，去过的地方不显示迷雾 */}
+              {clearSpots.map((pos, i) => (
+                <circle key={i} cx={pos.x} cy={pos.y} r={FOG_RADIUS} fill={`url(#${fogId}-hole)`} />
+              ))}
+            </mask>
+          </defs>
+          <rect
+            width={mapW}
+            height={mapH}
+            fill="var(--fog-color, rgba(5,6,15,0.92))"
+            mask={`url(#${fogId})`}
+          />
+        </svg>
+      )}
+    </div>
+  );
+}
+
+function FootprintMap({ tripHistory }: { tripHistory: TripRecord[] }) {
+  const [expanded, setExpanded] = React.useState(false);
+  const allWaypoints = tripHistory.flatMap((t) => t.waypoints.filter((w) => w.visited));
+  const uniquePoints = allWaypoints.reduce<{ name: string; emoji: string; lat: number; lng: number }[]>((acc, w) => {
+    if (!acc.some((p) => p.name === w.name)) acc.push(w);
+    return acc;
+  }, []);
+
+  const bbox = NETWORK_BBOX;
+  const fullW = projectLatLng({ lat: bbox.south, lng: bbox.east }, bbox).x;
+  const fullH = projectLatLng({ lat: bbox.south, lng: bbox.east }, bbox).y;
+
+  const makeProjection = (mapW: number, mapH: number) => {
+    const sx = mapW / fullW;
+    const sy = mapH / fullH;
+    const s = Math.min(sx, sy) * 0.85;
+    const ox = (mapW - fullW * s) / 2;
+    const oy = (mapH - fullH * s) / 2;
+    return (lat: number, lng: number) => {
+      const p = projectLatLng({ lat, lng }, bbox);
+      return { x: p.x * s + ox, y: p.y * s + oy };
+    };
+  };
+
+  const MINI_W = 340;
+  const MINI_H = 210;
+  const unlockPct = Math.min(99, Math.round((uniquePoints.length / 105) * 100));
+
+  return (
+    <>
+      <Glass className="relative overflow-hidden p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="text-[19px] font-bold" style={{ color: "var(--text-primary)" }}>我的足迹地图</div>
+          <div className="text-[13px] font-medium px-2 py-0.5 rounded bg-[#6C5CFF]/20 text-[#A98BFF]">已解锁 {unlockPct}% 地点</div>
+        </div>
+        <div className="relative">
+          <FootprintMapContent mapW={MINI_W} mapH={MINI_H} uniquePoints={uniquePoints} toPixel={makeProjection(MINI_W, MINI_H)} />
+          <button
+            onClick={() => setExpanded(true)}
+            className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-md px-4 py-2 text-[12px] font-bold border active:scale-95 transition-transform shadow-lg"
+            style={{ color: "var(--text-secondary)", borderColor: "var(--border-subtle)" }}
+          >
+            查看全貌 <ChevronRight size={14} />
+          </button>
+        </div>
+      </Glass>
+
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setExpanded(false)}
+            className="fixed inset-0 z-[150] flex flex-col items-center justify-center bg-black/70 backdrop-blur-md p-5"
+          >
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+              transition={{ type: "spring", damping: 22, stiffness: 260 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-[460px] rounded-3xl border p-5 shadow-2xl"
+              style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)" }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-[17px] font-bold" style={{ color: "var(--text-primary)" }}>足迹全貌</div>
+                <div className="flex items-center gap-3">
+                  <span className="text-[12px] font-bold text-[#A98BFF]">{uniquePoints.length} 个地点</span>
+                  <button onClick={() => setExpanded(false)} className="rounded-full p-1.5 active:scale-90" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-muted)" }}>
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+              <FootprintMapContent mapW={420} mapH={380} uniquePoints={uniquePoints} toPixel={makeProjection(420, 380)} showFog />
+              {uniquePoints.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {uniquePoints.slice(0, 12).map((w, i) => (
+                    <span key={i} className="flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-secondary)" }}>
+                      {w.emoji} {w.name}
+                    </span>
+                  ))}
+                  {uniquePoints.length > 12 && (
+                    <span className="text-[11px] font-bold self-center" style={{ color: "var(--text-faint)" }}>+{uniquePoints.length - 12}</span>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 

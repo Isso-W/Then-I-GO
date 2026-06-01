@@ -3,7 +3,7 @@ import { MapPin, Gift, Coffee, Star, PlayCircle, ChevronDown, ChevronRight, Spar
 import { motion, AnimatePresence } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
 import { BottomNav, PageTitle, TabBar } from "../components/CommonUI";
-import { ScreenType, TimelineItemData, GeneratedRoute, GeneratedVlog, VlogStyle } from "../types";
+import { ScreenType, TimelineItemData, GeneratedRoute, GeneratedVlog, VlogStyle, TripRecord } from "../types";
 import { generateVlog, VlogStop } from "../agents/vlogAgent";
 import { computeVlogGeo } from "../lib/routeGeometry";
 import { RouteReplay } from "../components/RouteReplay";
@@ -51,11 +51,16 @@ function fmtDuration(scenes: { durationSec: number }[]): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGenerated }: {
+const REACTION_OPTIONS = ["🤩", "😎", "😐", "😩", "💀", "💸"];
+
+export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGenerated, tripHistory = [], onTripReaction, onWaypointReaction }: {
   onNavigate: (s: ScreenType) => void;
   generatedRoute?: GeneratedRoute | null;
   vlogs?: GeneratedVlog[];
   onVlogGenerated?: (v: GeneratedVlog) => void;
+  tripHistory?: TripRecord[];
+  onTripReaction?: (tripId: string, emoji: string) => void;
+  onWaypointReaction?: (tripId: string, waypointIdx: number, emoji: string) => void;
 }) {
   const [activeTab, setActiveTab] = React.useState(0);
   const [selectedDate, setSelectedDate] = React.useState("今日");
@@ -130,14 +135,20 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
 
   // 生成 Vlog 用的规范站点列表（也是上传配图的对象）：
   // 有真实路线 → waypoints(+隐藏任务)，与回放地图站点一一对应；否则退回时间线素材。
+  // 按实际探索顺序：wp[0] → hiddenTask → wp[1] → wp[2] → ...
   const genStops = React.useMemo(
-    () =>
-      generatedRoute
-        ? [
-            ...generatedRoute.waypoints,
-            ...(generatedRoute.hiddenTask ? [generatedRoute.hiddenTask] : []),
-          ].map((wp) => ({ name: wp.name, desc: wp.description, emoji: wp.emoji }))
-        : currentItems.map((it) => ({ name: cleanName(it.title), desc: it.desc, emoji: "📍" })),
+    () => {
+      if (!generatedRoute) return currentItems.map((it) => ({ name: cleanName(it.title), desc: it.desc, emoji: "📍" }));
+      const ordered: { name: string; desc: string; emoji: string }[] = [];
+      for (let i = 0; i < generatedRoute.waypoints.length; i++) {
+        const wp = generatedRoute.waypoints[i];
+        ordered.push({ name: wp.name, desc: wp.description, emoji: wp.emoji });
+        if (i === 0 && generatedRoute.hiddenTask) {
+          ordered.push({ name: generatedRoute.hiddenTask.name, desc: generatedRoute.hiddenTask.description, emoji: generatedRoute.hiddenTask.emoji });
+        }
+      }
+      return ordered;
+    },
     [generatedRoute, currentItems]
   );
 
@@ -203,18 +214,13 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
     }
   };
 
-  // 历史记录：本 session 真实生成的 Vlog（新→旧）叠在示例之上
+  // 历史记录：本 session 真实生成的 Vlog（新→旧）叠在探索卡片之上
   const realHistory = vlogs.map((v) => ({
     vlog: v,
     date: new Date(v.createdAt).toLocaleDateString("zh-CN").replace(/\//g, "."),
     duration: fmtDuration(v.scenes),
     img: v.scenes[0]?.frame ?? "/vlog/coffee.jpg",
   }));
-  const sampleHistory = [
-    { id: 1, date: "2024.05.23", title: "五道口雨后漫步", duration: "01:24", img: "https://images.unsplash.com/photo-1559564484-e48b3e040ff4?auto=format&fit=crop&w=400&q=80" },
-    { id: 2, date: "2024.05.20", title: "周末的艺术之旅", duration: "02:10", img: "https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&w=400&q=80" },
-    { id: 3, date: "2024.05.15", title: "重访清华西门", duration: "00:58", img: "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=400&q=80" },
-  ];
 
   return (
     <AppLayout>
@@ -405,37 +411,16 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
                     </motion.button>
                   ))}
 
-                  {/* 示例历史（静态展示） */}
-                  {sampleHistory.map((vlog, idx) => (
-                    <motion.div
-                      key={vlog.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: (realHistory.length + idx) * 0.05 }}
-                      className="group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.03] p-3 flex gap-3 active:bg-white/[0.06] transition-colors"
-                    >
-                      <div className="relative h-20 w-24 rounded-xl overflow-hidden shrink-0 bg-white/5">
-                        <img
-                          src={vlog.img}
-                          alt={vlog.title}
-                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
-                          <PlayCircle size={28} className="text-white/80" />
-                        </div>
-                        <div className="absolute bottom-1 right-1 rounded px-1 py-0.5 bg-black/60 text-[8px] font-bold text-white">
-                          {vlog.duration}
-                        </div>
-                      </div>
-
-                      <div className="flex-1 flex flex-col justify-center min-w-0">
-                        <div className="text-[10px] text-white/30 font-bold">{vlog.date}</div>
-                        <h3 className="text-[15px] font-bold text-white/90 truncate mt-0.5">{vlog.title}</h3>
-                        <div className="mt-2 flex items-center gap-3 text-[10px] text-white/40">
-                          <span className="flex items-center gap-1 font-bold text-[#6C5CFF]">分享</span>
-                        </div>
-                      </div>
-                    </motion.div>
+                  {/* 探索旅程卡片 */}
+                  {tripHistory.map((trip, idx) => (
+                    <TripCard
+                      key={trip.id}
+                      trip={trip}
+                      idx={idx}
+                      delayOffset={realHistory.length}
+                      onReact={onTripReaction}
+                      onWaypointReact={onWaypointReaction}
+                    />
                   ))}
                 </div>
               </motion.div>
@@ -470,6 +455,132 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
 }
 
 // ── 风格选择浮层 ──────────────────────────────────────────
+function TripCard({ trip, idx, delayOffset, onReact, onWaypointReact }: {
+  key?: string;
+  trip: TripRecord;
+  idx: number;
+  delayOffset: number;
+  onReact?: (tripId: string, emoji: string) => void;
+  onWaypointReact?: (tripId: string, waypointIdx: number, emoji: string) => void;
+}) {
+  const [showPicker, setShowPicker] = React.useState(false);
+  const [activeWp, setActiveWp] = React.useState<number | null>(null);
+  const today = new Date().toISOString().slice(0, 10);
+  const dayLabel = trip.date === today ? "今天" : trip.date.slice(5).replace("-", ".");
+  const visitedCount = trip.waypoints.filter((w) => w.visited).length;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: (delayOffset + idx) * 0.05 }}
+      className="overflow-hidden rounded-2xl border p-4"
+      style={{ backgroundColor: "var(--bg-card)", borderColor: trip.date === today ? "rgba(108,92,255,0.3)" : "var(--border-subtle)" }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>{dayLabel}</span>
+        <button
+          onClick={() => { setShowPicker(!showPicker); setActiveWp(null); }}
+          className="flex items-center gap-1 rounded-full px-2 py-0.5 active:scale-90 transition-transform"
+          style={{ backgroundColor: trip.reaction ? undefined : "var(--bg-input)" }}
+        >
+          {trip.reaction
+            ? <span className="text-[18px]">{trip.reaction}</span>
+            : <span className="text-[11px] font-bold" style={{ color: "var(--text-faint)" }}>+ 评价</span>
+          }
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {showPicker && activeWp === null && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="flex justify-center gap-2 pt-2 pb-1">
+              {REACTION_OPTIONS.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => { onReact?.(trip.id, emoji); setShowPicker(false); }}
+                  className={`text-[24px] active:scale-125 transition-transform ${trip.reaction === emoji ? "scale-125" : ""}`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="mt-3 flex flex-col gap-1.5">
+        {trip.waypoints.map((w, wi) => (
+          <div key={wi} className="flex items-center gap-2">
+            <span className={`text-[18px] ${w.visited ? "" : "opacity-30 grayscale"}`}>{w.emoji}</span>
+            <span className="flex-1 text-[13px] font-medium truncate" style={{ color: w.visited ? "var(--text-secondary)" : "var(--text-faint)" }}>
+              {w.name}
+              {w.isHidden && <span className="ml-1 text-[9px] font-bold text-amber-400">隐藏</span>}
+            </span>
+            <button
+              onClick={() => setActiveWp(activeWp === wi ? null : wi)}
+              className="shrink-0 rounded-full px-1.5 py-0.5 active:scale-90 transition-transform"
+              style={{ backgroundColor: w.reaction ? undefined : "var(--bg-input)" }}
+            >
+              {w.reaction
+                ? <span className="text-[14px]">{w.reaction}</span>
+                : <span className="text-[10px]" style={{ color: "var(--text-faint)" }}>+</span>
+              }
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <AnimatePresence>
+        {activeWp !== null && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="flex items-center justify-center gap-2 pt-2 pb-1">
+              <span className="text-[10px] font-bold mr-1" style={{ color: "var(--text-faint)" }}>{trip.waypoints[activeWp]?.name}：</span>
+              {REACTION_OPTIONS.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => { onWaypointReact?.(trip.id, activeWp, emoji); setActiveWp(null); }}
+                  className={`text-[20px] active:scale-125 transition-transform ${trip.waypoints[activeWp]?.reaction === emoji ? "scale-125" : ""}`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="mt-2 flex items-center gap-2 text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>
+        <span>{visitedCount}站</span>
+        <span>·</span>
+        <span>{trip.distanceKm}km</span>
+        <span>·</span>
+        <span>{trip.durationMin}min</span>
+      </div>
+      {trip.rewards.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          {trip.rewards.slice(0, 3).map((r, ri) => (
+            <span key={ri} className="rounded-full px-2 py-0.5 text-[9px] font-bold bg-[#6C5CFF]/10 text-[#A98BFF]">{r}</span>
+          ))}
+          {trip.rewards.length > 3 && (
+            <span className="text-[9px] font-bold" style={{ color: "var(--text-faint)" }}>+{trip.rewards.length - 3}</span>
+          )}
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
 function StylePickerOverlay({ onPick, onCancel }: { onPick: (s: VlogStyle) => void; onCancel: () => void }) {
   return (
     <motion.div

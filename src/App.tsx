@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute, UserProfile, GeneratedVlog } from "./types";
+import React, { useMemo, useState, useRef, useEffect, useCallback } from "react";
+import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute, UserProfile, GeneratedVlog, TripRecord } from "./types";
 import { ExploreScreen } from "./screens/ExploreScreen";
 import { OnboardingScreen } from "./screens/OnboardingScreen";
 import { StoryScreen } from "./screens/StoryScreen";
@@ -14,10 +14,33 @@ import { commitBranchChoice } from "./lib/branch";
 import { chatWithRoute, type ChatAction } from "./agents/chatAgent";
 import type { ChatMessage } from "./components/ChatPanel";
 import type { LatLng } from "./components/mapProjection";
+import { SAMPLE_TRIPS } from "./data/sampleTrips";
 import { motion, AnimatePresence } from "motion/react";
 
 const PROFILE_KEY = "userProfile";
 const THEME_KEY = "appTheme";
+const TRIP_HISTORY_KEY = "tripHistory";
+const VLOG_HISTORY_KEY = "vlogHistory";
+
+function loadTripHistory(): TripRecord[] {
+  try {
+    const raw = localStorage.getItem(TRIP_HISTORY_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as TripRecord[];
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {}
+  try { localStorage.setItem(TRIP_HISTORY_KEY, JSON.stringify(SAMPLE_TRIPS)); } catch {}
+  return SAMPLE_TRIPS;
+}
+
+function loadVlogHistory(): GeneratedVlog[] {
+  try {
+    const raw = localStorage.getItem(VLOG_HISTORY_KEY);
+    if (raw) return JSON.parse(raw) as GeneratedVlog[];
+  } catch {}
+  return [];
+}
 
 function loadProfile(): UserProfile | null {
   try {
@@ -32,9 +55,14 @@ function loadProfile(): UserProfile | null {
 }
 
 export default function App() {
-  // 主题：暗色(dark) / 浅色(light)，持久化到 localStorage
+  // 主题：暗色(dark) / 浅色(light)。优先读 localStorage，无则按时间（6:00-18:00 日间）
   const [theme, setTheme] = useState<"dark" | "light">(() => {
-    try { return (localStorage.getItem(THEME_KEY) as "dark" | "light") ?? "dark"; } catch { return "dark"; }
+    try {
+      const saved = localStorage.getItem(THEME_KEY) as "dark" | "light" | null;
+      if (saved) return saved;
+    } catch {}
+    const hour = new Date().getHours();
+    return hour >= 6 && hour < 18 ? "light" : "dark";
   });
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
@@ -46,17 +74,29 @@ export default function App() {
   const [profile, setProfile] = useState<UserProfile | null>(() => loadProfile());
   const [screen, setScreen] = useState<ScreenType>(() => (loadProfile() ? "explore" : "onboarding"));
   const [exploreStep, setExploreStep] = useState<ExploreStep>("intro");
+  const [waypointIndex, setWaypointIndex] = useState(0);
 
   // 存储用户填写的偏好
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
   // 存储 AI 生成的路线
   const [generatedRoute, setGeneratedRoute] = useState<GeneratedRoute | null>(null);
-  // 本 session 生成过的 Vlog（最新在前），跨 tab 存活
-  const [generatedVlogs, setGeneratedVlogs] = useState<GeneratedVlog[]>([]);
+  // Vlog（从 localStorage 恢复 + session 内新增）
+  const [generatedVlogs, setGeneratedVlogs] = useState<GeneratedVlog[]>(() => loadVlogHistory());
   // 是否正在加载
   const [isGenerating, setIsGenerating] = useState(false);
   // 如果出错，存储错误信息
   const [generateError, setGenerateError] = useState<string | null>(null);
+
+  // 历史记录（持久化到 localStorage）
+  const [tripHistory, setTripHistory] = useState<TripRecord[]>(() => loadTripHistory());
+  const [showFeedback, setShowFeedback] = useState(false);
+
+  // 行为信号追踪（不驱动渲染，用 useRef）
+  const tripStartTime = useRef<number | null>(null);
+  const branchChosenRef = useRef<number | undefined>(undefined);
+  const chatActionLog = useRef<string[]>([]);
+  const hiddenTriggered = useRef(false);
+  const pendingRecord = useRef<TripRecord | null>(null);
 
   // Chatbot 状态
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -77,7 +117,8 @@ export default function App() {
   };
 
   const applyAction = (action: ChatAction) => {
-    if (!action || action.type === "none" || !generatedRoute) return;
+    if (!action || action.type === "none" || !generatedRoute || showFeedback) return;
+    chatActionLog.current.push(action.type);
     const wp = action.waypoint;
     if (action.type === "replace_next" && wp) {
       setGeneratedRoute((r) => {
@@ -110,8 +151,8 @@ export default function App() {
 
   // 根据当前 ExploreStep + 路线推导用户在地图上的位置
   const stepPosition = useMemo(
-    () => positionFromStep(exploreStep, generatedRoute, ORIGIN),
-    [exploreStep, generatedRoute]
+    () => positionFromStep(exploreStep, generatedRoute, ORIGIN, waypointIndex),
+    [exploreStep, generatedRoute, waypointIndex]
   );
   const currentPosition = overridePosition ?? stepPosition;
 
@@ -134,10 +175,16 @@ export default function App() {
     setPreferences(prefs);
     setIsGenerating(true);
     setGenerateError(null);
+    // 重置行为信号
+    tripStartTime.current = Date.now();
+    branchChosenRef.current = undefined;
+    chatActionLog.current = [];
+    hiddenTriggered.current = false;
     try {
       const route = await generateRoute(prefs, profile);
       setGeneratedRoute(route);
-      setOverridePosition(null); // 新路线 = 清掉拖动位置
+      setOverridePosition(null);
+      setWaypointIndex(0);
       console.log("AI 生成的路线：", route);
       setExploreStep("initial");
     } catch (err) {
@@ -172,10 +219,115 @@ export default function App() {
 
   // 二叉树 A/B：用户选定第二站 → 写回 waypoints[1] → 进 next_objective
   const handleBranchChoice = (index: number) => {
+    branchChosenRef.current = index;
     setGeneratedRoute((r) => (r ? commitBranchChoice(r, index) : r));
-    setOverridePosition(null); // 清掉拖动位置，让小人/镜头走向所选的第二站
+    setOverridePosition(null);
+    setWaypointIndex((prev) => prev + 1);
     setExploreStep("next_objective");
   };
+
+  // 追踪 hidden_active 触发 + achievement_unlock 组装 TripRecord
+  useEffect(() => {
+    if (exploreStep === "hidden_active") {
+      hiddenTriggered.current = true;
+    }
+  }, [exploreStep]);
+
+  const handleAchievementContinue = useCallback(() => {
+    if (!generatedRoute || !preferences) {
+      setExploreStep("intro");
+      return;
+    }
+    const wps = generatedRoute.waypoints.map((w, i) => ({
+      name: w.name, emoji: w.emoji, lat: w.lat, lng: w.lng, visited: i <= waypointIndex,
+    }));
+    if (generatedRoute.hiddenTask) {
+      wps.push({
+        name: generatedRoute.hiddenTask.name,
+        emoji: generatedRoute.hiddenTask.emoji,
+        lat: generatedRoute.hiddenTask.lat,
+        lng: generatedRoute.hiddenTask.lng,
+        visited: hiddenTriggered.current,
+        isHidden: true,
+      });
+    }
+    const elapsed = tripStartTime.current ? Math.round((Date.now() - tripStartTime.current) / 60000) : 30;
+    const allRewards = generatedRoute.waypoints.map((w) => w.reward);
+    if (generatedRoute.hiddenTask && hiddenTriggered.current) {
+      allRewards.push(generatedRoute.hiddenTask.reward);
+    }
+
+    pendingRecord.current = {
+      id: crypto.randomUUID(),
+      date: new Date().toISOString().slice(0, 10),
+      waypoints: wps,
+      branchChosen: branchChosenRef.current,
+      chatActions: [...chatActionLog.current],
+      distanceKm: 0,
+      durationMin: elapsed,
+      rewards: allRewards,
+      intensity: preferences.intensity,
+      preferences,
+    };
+
+    // 异步算距离（动态导入避免首屏加载路网）
+    import("./lib/routeGeometry").then(({ computeVlogGeo }) => {
+      try {
+        const geo = computeVlogGeo(generatedRoute);
+        if (pendingRecord.current) pendingRecord.current.distanceKm = Math.round(geo.distanceKm * 10) / 10;
+      } catch {}
+    }).catch(() => {});
+
+    setShowFeedback(true);
+  }, [generatedRoute, preferences]);
+
+  const saveTripRecord = useCallback((reaction?: string) => {
+    const record = pendingRecord.current;
+    if (!record) {
+      setShowFeedback(false);
+      setExploreStep("intro");
+      return;
+    }
+    if (reaction) record.reaction = reaction;
+    const updated = [record, ...tripHistory];
+    setTripHistory(updated);
+    try { localStorage.setItem(TRIP_HISTORY_KEY, JSON.stringify(updated)); } catch {}
+    pendingRecord.current = null;
+    setShowFeedback(false);
+    setChatMessages([]);
+    setExploreStep("intro");
+  }, [tripHistory]);
+
+  // 历史记录补反馈（整条路线）
+  const handleTripReaction = useCallback((tripId: string, emoji: string) => {
+    setTripHistory((prev) => {
+      const updated = prev.map((t) => t.id === tripId ? { ...t, reaction: emoji } : t);
+      try { localStorage.setItem(TRIP_HISTORY_KEY, JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+  }, []);
+
+  // 历史记录补反馈（单个站点）
+  const handleWaypointReaction = useCallback((tripId: string, waypointIdx: number, emoji: string) => {
+    setTripHistory((prev) => {
+      const updated = prev.map((t) => {
+        if (t.id !== tripId) return t;
+        const wps = t.waypoints.map((w, i) => i === waypointIdx ? { ...w, reaction: emoji } : w);
+        return { ...t, waypoints: wps };
+      });
+      try { localStorage.setItem(TRIP_HISTORY_KEY, JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+  }, []);
+
+  // Vlog 生成后持久化
+  const handleVlogGenerated = useCallback((v: GeneratedVlog) => {
+    setGeneratedVlogs((prev) => {
+      const updated = [v, ...prev];
+      try { localStorage.setItem(VLOG_HISTORY_KEY, JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+  }, []);
 
   return (
     <div data-theme={theme} className="h-full w-full font-[PingFang_SC,Inter,system-ui,sans-serif]" style={{ backgroundColor: "var(--bg-base)", color: "var(--text-primary)" }}>
@@ -223,9 +375,24 @@ export default function App() {
               onUserDrag={setOverridePosition}
               onBranchChoice={handleBranchChoice}
               mystery={preferences?.intensity === "relaxed"}
+              waypointIndex={waypointIndex}
+              onAdvanceWaypoint={() => {
+                const next = waypointIndex + 1;
+                if (next < (generatedRoute?.waypoints.length ?? 0)) {
+                  setWaypointIndex(next);
+                  setOverridePosition(null);
+                  setExploreStep("next_objective");
+                } else {
+                  setExploreStep("achievement_unlock");
+                }
+              }}
               chatMessages={chatMessages}
               chatLoading={chatLoading}
               onChatSend={handleChatSend}
+              showFeedback={showFeedback}
+              onAchievementContinue={handleAchievementContinue}
+              onFeedbackReact={(emoji) => saveTripRecord(emoji)}
+              onFeedbackDismiss={() => saveTripRecord()}
             />
           )}
           {screen === "story" && (
@@ -233,11 +400,14 @@ export default function App() {
               onNavigate={navigate}
               generatedRoute={generatedRoute}
               vlogs={generatedVlogs}
-              onVlogGenerated={(v) => setGeneratedVlogs((prev) => [v, ...prev])}
+              onVlogGenerated={handleVlogGenerated}
+              tripHistory={tripHistory}
+              onTripReaction={handleTripReaction}
+              onWaypointReaction={handleWaypointReaction}
             />
           )}
           {screen === "bag" && <BagScreen onNavigate={navigate} generatedRoute={generatedRoute} />}
-          {screen === "mine" && <MineScreen onNavigate={navigate} profile={profile} generatedRoute={generatedRoute} />}
+          {screen === "mine" && <MineScreen onNavigate={navigate} profile={profile} generatedRoute={generatedRoute} tripHistory={tripHistory} />}
           {screen === "event" && <EventDetailScreen onBack={() => navigate("explore")} />}
           {screen === "settings" && <SettingsScreen onBack={() => navigate("mine")} theme={theme} onToggleTheme={toggleTheme} />}
         </motion.div>

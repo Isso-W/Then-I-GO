@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import type { UserPreferences, UserProfile, GeneratedRoute, POI, Waypoint, RouteBranch } from "../types";
+import type { UserPreferences, UserProfile, GeneratedRoute, POI, Waypoint, RouteBranch, TripRecord } from "../types";
 import {
   filterCandidates,
   distanceMeters,
@@ -7,6 +7,7 @@ import {
   ORIGIN,
 } from "./poiFilter";
 import { wantsBranch, pickContrastingPair } from "../lib/branch";
+import { reviewRoute, type ReviewResult } from "./routeReviewer";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
@@ -57,6 +58,33 @@ interface GeminiResponse {
   branch?: GeminiBranch;
 }
 
+function buildHistorySummary(history: TripRecord[]): string {
+  const recent = history.slice(0, 5);
+  if (recent.length === 0) return "";
+
+  const lines: string[] = [];
+
+  const visited = recent.flatMap((t) => t.waypoints.filter((w) => w.visited).map((w) => w.name));
+  const skipped = recent.flatMap((t) => t.waypoints.filter((w) => !w.visited).map((w) => w.name));
+  if (visited.length > 0) lines.push(`- 最近去过：${[...new Set(visited)].slice(0, 6).join("、")}`);
+  if (skipped.length > 0) lines.push(`- 跳过/不感兴趣：${[...new Set(skipped)].slice(0, 4).join("、")}`);
+
+  const reactions = recent.filter((t) => t.reaction).map((t) => t.reaction);
+  if (reactions.length > 0) lines.push(`- 反馈倾向：${reactions.join(" ")}`);
+
+  const branches = recent.filter((t) => t.branchChosen !== undefined);
+  if (branches.length >= 2) {
+    const quiet = branches.filter((t) => t.branchChosen === 0).length;
+    lines.push(`- 岔路偏好：${quiet > branches.length / 2 ? "偏安静" : "偏热闹"}`);
+  }
+
+  const chatCount = recent.reduce((n, t) => n + t.chatActions.length, 0);
+  if (chatCount > 0) lines.push(`- 曾 ${chatCount} 次通过聊天调整路线`);
+
+  if (lines.length === 0) return "";
+  return `\n用户历史探索记录（避免重复推荐不满意的地点）：\n${lines.join("\n")}\n`;
+}
+
 function buildCandidateBlock(candidates: POI[]): string {
   return candidates
     .map((p) => {
@@ -83,37 +111,31 @@ function hydrate(sel: GeminiSelection, poi: POI): Waypoint {
   };
 }
 
-export async function generateRoute(
-  prefs: UserPreferences,
-  profile: UserProfile | null = null
-): Promise<GeneratedRoute> {
-  const candidates = filterCandidates(prefs);
-  if (candidates.length === 0) {
-    throw new Error("没有可用的 POI 候选");
-  }
+interface GenerateContext {
+  candidates: POI[];
+  byId: Map<string, POI>;
+  prefs: UserPreferences;
+  profile: UserProfile | null;
+  history: TripRecord[];
+  branchEnabled: boolean;
+  selectionCount: number;
+}
 
-  const targetCount = DURATION_TO_WAYPOINTS[prefs.duration] ?? 2;
-  const actualCount = Math.min(targetCount, candidates.length);
+function buildPrompt(ctx: GenerateContext, revisionNote?: string): string {
+  const { prefs, profile, history, candidates, branchEnabled, selectionCount } = ctx;
 
-  // 长期属性（冷启动收集）和当下偏好分两块写进 prompt
   const profileLines: string[] = [];
   if (profile?.mbti) profileLines.push(`- MBTI 人格：${profile.mbti}`);
   if (profile?.interests && profile.interests.length > 0) {
-    profileLines.push(
-      `- 长期兴趣：${profile.interests.map((s) => SPECIAL_LABELS[s] ?? s).join("、")}`
-    );
+    profileLines.push(`- 长期兴趣：${profile.interests.map((s) => SPECIAL_LABELS[s] ?? s).join("、")}`);
   }
   const profileBlock = profileLines.length > 0
     ? `\n用户长期属性（影响整体文案语气和选址倾向）：\n${profileLines.join("\n")}\n`
     : "";
-
-  // intensity 门控：选了"别让我思考"或不足 2 站 → 不分叉
-  const branchEnabled = wantsBranch(prefs, actualCount);
-  // 分叉时主线只要 1 个第一站，第二站由 branch 的两个候选二选一
-  const selectionCount = branchEnabled ? 1 : actualCount;
+  const historyBlock = buildHistorySummary(history);
 
   const tasks = [
-    `从候选里挑选 ${selectionCount} 个 poi_id，按推荐游玩顺序排列`,
+    `从候选里挑选 ${selectionCount} 个 poi_id，按推荐游玩顺序排列，注意品类多样性（不要连续选同类型地点）`,
     `给每个挑选的地点写故事氛围、打卡任务、奖励文案、emoji`,
     `写一个 10 字以内有意境的路线标题`,
   ];
@@ -138,9 +160,13 @@ export async function generateRoute(
   }`
     : "";
 
-  const prompt = `
+  const revisionBlock = revisionNote
+    ? `\n⚠️ 上一版路线有以下问题，这次必须避免：\n${revisionNote}\n`
+    : "";
+
+  return `
 你是一个城市探索助手，为用户从下面的候选地点里挑选地点组成一条五道口周末散步路线。
-${profileBlock}
+${profileBlock}${historyBlock}${revisionBlock}
 用户当下偏好：
 - 心情：${MOOD_LABELS[prefs.mood] ?? prefs.mood}
 - 游玩时长：${DURATION_LABELS[prefs.duration] ?? prefs.duration}
@@ -176,57 +202,43 @@ ${taskBlock}
   }${branchJson}
 }
 `;
+}
 
-  const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash-lite",
-    contents: prompt,
-  });
-
-  const text = response.text ?? "";
+function parseAndHydrate(
+  text: string,
+  ctx: GenerateContext
+): GeneratedRoute {
+  const { candidates, byId, branchEnabled } = ctx;
   const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error("Gemini 返回的格式不对，没找到 JSON");
-  }
+  if (!jsonMatch) throw new Error("Gemini 返回的格式不对，没找到 JSON");
 
   const parsed = JSON.parse(jsonMatch[0]) as GeminiResponse;
-  const byId = new Map(candidates.map((p) => [p.id, p]));
-
   const usedIds = new Set<string>();
   const waypoints: Waypoint[] = [];
   for (const sel of parsed.selections ?? []) {
     const poi = byId.get(sel.poi_id);
-    if (!poi || usedIds.has(sel.poi_id)) continue; // 幻觉 id 或重复就跳过
+    if (!poi || usedIds.has(sel.poi_id)) continue;
     usedIds.add(sel.poi_id);
     waypoints.push(hydrate(sel, poi));
   }
 
-  // Gemini 全跳过了的兜底：拿前 N 个候选直接生成简易 waypoint（分叉时只要 1 个第一站）
   if (waypoints.length === 0) {
-    candidates.slice(0, selectionCount).forEach((poi) => {
+    candidates.slice(0, ctx.selectionCount).forEach((poi) => {
       usedIds.add(poi.id);
       waypoints.push({
-        name: poi.name,
-        description: poi.review_summary,
-        task: "到达后打个卡吧",
-        reward: "探索经验 +10",
-        emoji: "📍",
-        distanceText: walkingTimeText(
-          distanceMeters(ORIGIN, { lat: poi.lat, lng: poi.lng })
-        ),
-        lat: poi.lat,
-        lng: poi.lng,
+        name: poi.name, description: poi.review_summary,
+        task: "到达后打个卡吧", reward: "探索经验 +10", emoji: "📍",
+        distanceText: walkingTimeText(distanceMeters(ORIGIN, { lat: poi.lat, lng: poi.lng })),
+        lat: poi.lat, lng: poi.lng,
       });
     });
   }
 
-  // A/B 分叉：优先用 Gemini 的 branch（2 个有效且未用的候选），否则兜底挑对比对
   let branch: RouteBranch | undefined;
   if (branchEnabled) {
     const opts = parsed.branch?.options ?? [];
     const valid = opts.filter((o) => byId.has(o.poi_id) && !usedIds.has(o.poi_id));
-    const uniqueValid = valid.filter(
-      (o, i) => valid.findIndex((x) => x.poi_id === o.poi_id) === i
-    );
+    const uniqueValid = valid.filter((o, i) => valid.findIndex((x) => x.poi_id === o.poi_id) === i);
     if (parsed.branch?.axis && uniqueValid.length >= 2) {
       const a = hydrate(uniqueValid[0], byId.get(uniqueValid[0].poi_id)!);
       const b = hydrate(uniqueValid[1], byId.get(uniqueValid[1].poi_id)!);
@@ -237,16 +249,10 @@ ${taskBlock}
       const pair = pickContrastingPair(candidates, usedIds);
       if (pair) {
         const mk = (poi: POI): Waypoint => ({
-          name: poi.name,
-          description: poi.review_summary,
-          task: "到这儿打个卡",
-          reward: "探索经验 +20",
-          emoji: "📍",
-          distanceText: walkingTimeText(
-            distanceMeters(ORIGIN, { lat: poi.lat, lng: poi.lng })
-          ),
-          lat: poi.lat,
-          lng: poi.lng,
+          name: poi.name, description: poi.review_summary,
+          task: "到这儿打个卡", reward: "探索经验 +20", emoji: "📍",
+          distanceText: walkingTimeText(distanceMeters(ORIGIN, { lat: poi.lat, lng: poi.lng })),
+          lat: poi.lat, lng: poi.lng,
         });
         usedIds.add(pair[0].id);
         usedIds.add(pair[1].id);
@@ -255,7 +261,6 @@ ${taskBlock}
     }
   }
 
-  // 隐藏任务：优先用 Gemini 选的 hidden（须是另一个有效候选），否则取第一个未用候选兜底
   let hiddenTask: Waypoint | undefined;
   const hsel = parsed.hidden;
   if (hsel && byId.has(hsel.poi_id) && !usedIds.has(hsel.poi_id)) {
@@ -265,25 +270,74 @@ ${taskBlock}
     const leftover = candidates.find((p) => !usedIds.has(p.id));
     if (leftover) {
       hiddenTask = {
-        name: leftover.name,
-        description: leftover.review_summary,
-        task: "找到这个隐藏坐标，完成一次特别打卡",
-        reward: "隐藏奖励 +50 XP",
-        emoji: "✨",
-        distanceText: walkingTimeText(
-          distanceMeters(ORIGIN, { lat: leftover.lat, lng: leftover.lng })
-        ),
-        lat: leftover.lat,
-        lng: leftover.lng,
+        name: leftover.name, description: leftover.review_summary,
+        task: "找到这个隐藏坐标，完成一次特别打卡", reward: "隐藏奖励 +50 XP", emoji: "✨",
+        distanceText: walkingTimeText(distanceMeters(ORIGIN, { lat: leftover.lat, lng: leftover.lng })),
+        lat: leftover.lat, lng: leftover.lng,
       };
-      usedIds.add(leftover.id);
     }
   }
 
-  return {
-    title: parsed.title ?? "五道口漫游",
-    waypoints,
-    hiddenTask,
-    branch,
-  };
+  return { title: parsed.title ?? "五道口漫游", waypoints, hiddenTask, branch };
+}
+
+function resolveCategories(route: GeneratedRoute, byId: Map<string, POI>): string[] {
+  const cats: string[] = [];
+  for (const wp of route.waypoints) {
+    const poi = [...byId.values()].find((p) => p.name === wp.name);
+    cats.push(poi?.category ?? "未知");
+  }
+  if (route.hiddenTask) {
+    const poi = [...byId.values()].find((p) => p.name === route.hiddenTask!.name);
+    cats.push(poi?.category ?? "未知");
+  }
+  return cats;
+}
+
+export async function generateRoute(
+  prefs: UserPreferences,
+  profile: UserProfile | null = null,
+  history: TripRecord[] = []
+): Promise<GeneratedRoute> {
+  const candidates = filterCandidates(prefs);
+  if (candidates.length === 0) throw new Error("没有可用的 POI 候选");
+
+  const targetCount = DURATION_TO_WAYPOINTS[prefs.duration] ?? 2;
+  const actualCount = Math.min(targetCount, candidates.length);
+  const branchEnabled = wantsBranch(prefs, actualCount);
+  const selectionCount = branchEnabled ? 1 : actualCount;
+  const byId = new Map(candidates.map((p) => [p.id, p]));
+
+  const ctx: GenerateContext = { candidates, byId, prefs, profile, history, branchEnabled, selectionCount };
+
+  // ── ReAct 循环：生成 → 审查 → 修正（最多 1 轮）──
+  const prompt1 = buildPrompt(ctx);
+  const res1 = await ai.models.generateContent({ model: "gemini-2.5-flash-lite", contents: prompt1 });
+  let route = parseAndHydrate(res1.text ?? "", ctx);
+
+  const categories = resolveCategories(route, byId);
+  let review: ReviewResult;
+  try {
+    review = await reviewRoute(route, categories, prefs);
+  } catch (e) {
+    console.warn("路线审查出错，跳过：", e);
+    return route;
+  }
+
+  if (!review.passed && review.issues.length > 0) {
+    console.log("🔄 ReAct: 路线审查未通过，修正中…", review.issues.map((i) => i.description));
+    const revisionNote = review.issues.map((i) => `- ${i.description}`).join("\n");
+    const prompt2 = buildPrompt(ctx, revisionNote);
+    try {
+      const res2 = await ai.models.generateContent({ model: "gemini-2.5-flash-lite", contents: prompt2 });
+      route = parseAndHydrate(res2.text ?? "", ctx);
+      console.log("✅ ReAct: 修正后路线已生成");
+    } catch (e) {
+      console.warn("修正调用失败，使用原始路线：", e);
+    }
+  } else {
+    console.log("✅ 路线审查通过");
+  }
+
+  return route;
 }

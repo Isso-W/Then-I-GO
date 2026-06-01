@@ -26,6 +26,7 @@ The AI backend is organized around distinct agents, each with a single responsib
 | **Routing Agent** | Assembles POIs into a walkable sequence. Produces **binary tree decision nodes** at key junctures — two meaningfully different options (e.g. quiet bookstore vs. lively café) so the user navigates like a text adventure rather than following a fixed plan. |
 | **Narrative Agent** | Wraps each waypoint in story context and generates the hidden-task trigger text, check-in prompts, and reward copy. |
 | **Vlog Agent** | Post-trip: 把今天的路线站点 + 选定风格交给 Gemini，产出 Vlog 脚本（标题/每站旁白字幕/BGM/分享文案/人格金句）。成片形态 = 真实地图路线回放 + 到站照片 Live2D 特写 + City Walk 战报卡。三种风格（赛博朋克 / 复古胶片 / 日系清新）已实现。详见 **Vlog 生成 — Implemented**。 |
+| **Chat Agent** | 探索途中实时对话助手（`src/agents/chatAgent.ts`）。接收用户自然语言 + 当前路线 + 偏好 + 位置，返回回复文案 + 路线操作指令（`replace_next` 替换下一站 / `skip_current` 跳过当前站 / `add_stop` 末尾加站 / `none` 纯聊天）。候选 POI 从 `poiFilter` 实时过滤，确保推荐真实存在。详见 **探索体验 → 聊天改路线**。 |
 
 **Preference self-learning loop**: After each trip, the Profiling Agent reads which waypoints the user actually visited, how long they stayed, and whether they triggered hidden tasks, then automatically adjusts weights in the user profile. This closes the feedback loop without requiring explicit ratings.
 
@@ -37,7 +38,7 @@ The AI backend is organized around distinct agents, each with a single responsib
 
 Features still not present in the current prototype:
 
-- **Preference self-learning write-back** — backend call after trip completion to update the user profile (needs cross-trip persistence; not done).
+- ~~Preference self-learning write-back~~ — 部分完成：`TripRecord` 持久化 + `buildHistorySummary` 已就绪但暂未接入 prompt��后续仔细调优）。
 - **User-uploaded Vlog footage** — Vlog 画面目前用 3 张预生成占位 B-roll（见 **Vlog 生成 — Implemented**）；用户拍摄/上传真实片段的入口还没做。
 - **Social sharing reward** — sharing a generated Vlog to an external platform grants in-app titles or bonus items（目前分享只复制文案到剪贴板，无奖励回写）。
 - **Real GPS LBS** — the proximity check-in is currently *simulated* (see 探索体验 → 接近打卡); true `navigator.geolocation` is still not wired.
@@ -64,8 +65,8 @@ BBOX：lat 39.980~40.005，lng 116.320~116.358，以五道口地铁站为中心�
 npx tsx scripts/fetchStreetNetwork.ts   # 生成 scripts/data/street-network.json
 ```
 
-输出 35 条路段（主路/次路/支路/步行街）、76 条子线段，总长约 28km。
-覆盖成府路、中关村北大街、学院路、清华东路、双清路、王庄路等主要街道。
+输出 34 条路段（主路/次路/支路/步行街），总长约 28km。
+覆盖成府路、中关村北大街、学院路、清华东路、双清路、王庄路等主要街道。已删除孤立街道"清华科技园内部路"。
 
 ### 地表数据（`scripts/data/terrain.json`）
 
@@ -107,20 +108,26 @@ best_time                           推荐游玩时段文案
 
 **POI 类型覆盖**（20 种）：咖啡厅、餐厅系列（日韩/北京风味/素食）、奶茶甜品、书店、文创小店、美术馆、livehouse、公园绿地、酒吧系列、夜宵烧烤、便利店、花店、健身瑜伽、共享自习室、洗衣生活服务、宠物友好咖啡。
 
-### 路由逻辑 — Implemented
+### 路由逻辑 — Implemented（含 ReAct 审查）
 
-`routeAgent.ts` + `poiFilter.ts` 已实现下面的工作流（详见 AI Route Generation 节）：
+`routeAgent.ts` + `poiFilter.ts` + `routeReviewer.ts` 实现的工作流：
 
 ```
-1. 按用户偏好标签过滤 pois.json（tags 交集）
-2. 过滤不营业的 POI（open_hours vs 当前时间）
-3. 过滤排队过长的 POI（avg_wait_minutes > 阈值）
-4. 计算候选组合的总时长是否符合 duration 偏好
-5. 把筛选后的候选列表（10条以内）传给 Gemini
-6. Gemini 负责：最终选择 + 排序 + 写故事 + 生成打卡任务
+1. poiFilter.filterCandidates：按偏好标签/营业时间/排队时长过滤，渐进降级，取 top 10
+2. routeAgent.buildPrompt → Gemini call 1：从候选里选点 + 排序 + 写故事/任务/奖励
+3. routeReviewer.reviewRoute → Gemini call 2（ReAct 审查）：
+   - 品类多样性（连续同类型？整体太集中？）
+   - 活动节奏（饭后紧接剧烈运动？）
+   - 时间合理性（上午排酒吧？深夜排美术馆？）
+   - 体验递进（节奏是否单调？）
+   - 综合常识（连逛三家小卖铺？全程都在吃？）
+4. 审查未通过 → routeAgent.buildPrompt(revisionNote) → Gemini call 3：带着"⚠️ 上一版路线有以下问题"重新生成
+5. parseAndHydrate：解析 JSON + 用 POI 真实坐标填充 Waypoint
 ```
 
-这样 Gemini 不再凭空编造地点，而是从真实结构化数据里做最终决策。过滤在 `poiFilter.filterCandidates`（strict→no_wait→no_tags→all 渐进降级，有单测），最终选择 + 故事 + 任务由 `routeAgent.generateRoute` 调 Gemini 完成。
+**ReAct 模式**（Reason + Act）：生成→审查→修正，最多 1 轮修正。正常路线 2 次 Gemini 调用（~4-6s），需修正时 3 次（~6-10s）。控制台打印 `🔄 ReAct` 或 `✅ 路线审查通过`。
+
+过滤在 `poiFilter.filterCandidates`（strict→no_wait→no_tags→all 渐进降级，有单测）。`poiFilter` 还导出 `getActivityType(category)` 和 `getBaseCategory(category)` 活动类型映射（eating/drinking/browsing/sitting/outdoor/service）。
 
 ## AI Route Generation — Implemented
 
@@ -128,10 +135,13 @@ best_time                           推荐游玩时段文案
 
 | File | Role |
 |---|---|
-| `src/agents/routeAgent.ts` | 唯一与 Gemini API 通信的模块。接收 `UserPreferences`，返回 `GeneratedRoute`。 |
-| `src/types.ts` | 新增 `UserPreferences`、`Waypoint`、`GeneratedRoute` 三个接口。 |
-| `src/App.tsx` | 持有 `preferences` 和 `generatedRoute` 两个全局 state，协调调用时机。 |
-| `src/screens/ExploreScreen.tsx` | 消费 `generatedRoute`，驱动地图标记和任务卡片显示真实内容。 |
+| `src/agents/routeAgent.ts` | ReAct 路线生成：`buildPrompt` 构建 prompt，`parseAndHydrate` 解析，`generateRoute` 编排循环。 |
+| `src/agents/routeReviewer.ts` | ReAct 审查 agent：`reviewRoute` 调 Gemini 检查品类/节奏/时间/常识，返回 `{passed, issues}`。 |
+| `src/agents/chatAgent.ts` | 探索中对话助手，接收用户消息 + 当前路线上下文，返回回复 + 路线操作指令。 |
+| `src/agents/poiFilter.ts` | 候选过滤 + 评分 + 活动类型映射（`getActivityType`/`getBaseCategory`）。 |
+| `src/types.ts` | 共享接口：`UserPreferences`、`Waypoint`、`GeneratedRoute`、`TripRecord` 等。 |
+| `src/App.tsx` | 持有路线/偏好/waypointIndex 等全局 state，编排探索流程 + ReAct 调用。 |
+| `src/screens/ExploreScreen.tsx` | 消费 `generatedRoute` + `waypointIndex`，驱动动态循环探索。 |
 
 ### 数据流
 
@@ -154,11 +164,11 @@ GearConfirmationOverlay
           → isGenerating = false
           → step 切换到 initial
 
-ExploreScreen（地图界面）
-  └── TaskCard     使用 waypoints[0/1].name / task / description / reward
-      · waypoints[0] → initial / checkin_initial 阶段
-      · waypoints[1] → next_objective / checkin_next 阶段
-      · hidden_active 阶段仍使用硬编码内容（隐藏任务暂未接入 AI）
+ExploreScreen（地图界面，动态循环）
+  └── TaskCard     使用 waypoints[waypointIndex].name / task / description / reward
+      · waypointIndex=0: initial / checkin_initial → hidden → branch → advance
+      · waypointIndex=1..N: next_objective / checkin_next → advance 或 achievement_unlock
+      · TaskCard 显示"第 N/M 站"，不再硬编码"首站"/"终点"
 ```
 
 ### 容错设计
@@ -274,14 +284,80 @@ $env:GEMINI_API_KEY="..."; npx tsx scripts/generateVlogFrames.ts   # 重新生�
 ### 隐藏任务真实化
 `GeneratedRoute.hiddenTask?: Waypoint`——Gemini 在主路线之外额外选一个真实 POI（带故事/任务/奖励），幻觉时确定性兜底。`HiddenTaskAlert`/`TaskCard` 读它（删掉了写死的"转角咖啡店"）；`Map` 画隐藏针 + amber 导航虚线（隐藏阶段显示）。
 
+### 聊天改路线（`src/agents/chatAgent.ts` + `src/components/ChatPanel.tsx`）
+
+探索过程中（路线已生成且非拍照阶段），右下角浮现紫色气泡按钮 `ChatBubble`，点击弹出底部半屏 `ChatPanel`。用户用自然语言与"探索助手"对话，AI 可执行路线调整：
+
+- **`replace_next`**：替换下一站为候选 POI。`App.applyAction` 修改 `generatedRoute.waypoints` 末项。
+- **`skip_current`**：跳过当前站，直接推进 `exploreStep`（initial→hidden_found / next_objective→achievement_unlock）。
+- **`add_stop`**：在路线末尾追加新站点。
+- **`none`**：纯聊天，不改路线。
+
+`chatAgent.chatWithRoute()` 调 Gemini，prompt 内注入当前路线上下文 + 附近未使用的候选 POI（最多 8 个，来自 `poiFilter`），确保推荐的地点真实存在。操作结果以系统消息 `{ role: "system" }` 插入聊天记录。状态（`chatMessages` / `chatLoading`）由 `App.tsx` 持有。
+
 ### 地图层（`src/components/Map.tsx` / `mapProjection.ts` / `src/lib/roadGraph.ts`）
-SVG 地图：terrain 多边形底色（仅视觉）、真实路网底图、Dijkstra 沿街寻路（`roadGraph.ts`，有单测）、镜头跟随当前位置、**拖动/点击地图 → 吸附最近路 → 走过去**。所有 POI 都落在路上（保证可达可走）。退役了一批旧 mockup 的固定屏幕位置覆盖层（DottedPath / UnknownMarkers / 旧 NextTarget 等）。
+SVG 地图：terrain 多边形底色（仅视觉）、真实路网底图、Dijkstra 沿街寻路（`roadGraph.ts`，有单测）、镜头跟随当前位置、**拖动/点击地图 → 吸附最近路 → 走过去**。所有 POI 都落在路上（保证可达可走）。`shortestPath` 头尾先 `snapToRoad` 到路面再寻路，避免路线穿越无路区域。退役了一批旧 mockup 的固定屏幕位置覆盖层（DottedPath / UnknownMarkers / 旧 NextTarget 等）。
+
+### 历史记录 + 偏好自学习闭环 — Implemented
+
+探索完成后持久化 `TripRecord` 到 `localStorage("tripHistory")`，记录用户行为信号 + 显性反馈。
+
+**数据模型**（`src/types.ts` → `TripRecord`）：
+```
+id, date, waypoints[{name,emoji,lat,lng,visited,isHidden?,reaction?}],
+branchChosen?, chatActions[], distanceKm, durationMin, rewards[],
+intensity, preferences: UserPreferences, reaction?
+```
+
+**行为信号采集**（`App.tsx`，用 `useRef` 避免无效重渲染）：
+- `tripStartTime` — 路线生成时记录
+- `branchChosenRef` — A/B 选择时记录
+- `chatActionLog` — 聊天改路线操作累积
+- `hiddenTriggered` — 进入 `hidden_active` 时标记
+
+**反馈收集**（`src/components/TripFeedbackOverlay.tsx`）：
+探索完成后弹出极轻浮层"跟我吐槽一下"，一行 emoji（🤩😎😐😩💀💸），点一个即完成，5 秒自动消失。`reaction` 字段写入 TripRecord。
+
+**历史页面补反馈**（StoryScreen 历史 tab）：
+- 整条路线：右上角 `+ 评价` 按钮，展开 emoji 选择
+- 单个站点：每站右侧 `+` 按钮，展开该站 emoji 选择（`waypoints[].reaction`）
+- 选完立即写回 localStorage
+
+**StoryScreen "历史记录" tab**（替换原假数据）：
+`TripRecord` 卡片列表（`TripCard` 组件）——日期 + emoji 连珠（跳过的灰色）+ 统计行 + 奖励 tags + 反馈。
+
+**MineScreen 统计真实化**：天数/公里/任务/礼券从 `tripHistory` 聚合（预埋样本保证首次非空）。
+
+**足迹地图**（`MineScreen` → `FootprintMap`）：
+- 从 `tripHistory` 读取 visited waypoints，用 `projectLatLng` 投影到真实坐标
+- 🏠 固定在 ORIGIN（五道口地铁站），周围散布去过的站点 emoji
+- "查看全貌"按钮展开全屏大地图
+- 展开时有**迷雾效果**（SVG mask，去过的点挖洞透出，未探索区域被迷雾覆盖）
+- 迷雾颜色适配明暗主题（CSS 变量 `--fog-color`）
+- 底图渲染真实路网 + 地表色块（terrain），白天模式用浅色配色
+
+**预埋样本**（`src/data/sampleTrips.ts`）：3 条真实 POI 构成的 TripRecord，首次启动自动写入。
+
+**Vlog 持久化**：`generatedVlogs` 同步写入 `localStorage("vlogHistory")`，跨 session 可重播。
+
+**routeAgent 历史注入**（已实现但暂未启用）：`buildHistorySummary(history)` 函数已就绪，从最近 5 条记录提取摘要注入 prompt。目前 `generateRoute` 调用不传 history，后续仔细调优后再接入。
+
+**流程变更**：`achievement_unlock` → `AchievementOverlay.onContinue` → `showFeedback=true` → 反馈弹窗（提交/跳过）→ 存 TripRecord → 清 chatMessages → `setStep("intro")`。
+
+### 主题系统 — 自动时间切换
+
+主题初始化逻辑：优先读 `localStorage("appTheme")`；无存储时按系统时间自动选择（6:00~18:00 日间，其余夜间）。手动切换后存入 localStorage，后续不再自动判断。
+
+### Vlog 路线回放 — 镜头跟随 + 动态站点
+
+`RouteReplay.tsx` 回放时使用 `followBbox`（以 avatar 当前位置为中心，`FOLLOW_RADIUS_METERS`=500m 半径）作为 SVG viewBox，镜头跟着小人走。`frozen` 模式（战报卡缩略图）仍使用 `fullBbox` 显示全路线。
+
+站点顺序按实际探索路径排列：`wp[0] → hiddenTask → wp[1] → wp[2] → ...`（`routeGeometry.computeVlogGeo` 和 `StoryScreen.genStops` 同步），支持任意数量 waypoints。`vlogAgent` 生成的 scenes 与 stops 1:1 对齐，`RouteReplay.onStopChange(i)` 映射到 `scenes[i]` 的 LivePhoto 特写。
 
 ### 其它屏幕接真实数据
 - **StoryScreen 今日素材集** ← `generatedRoute` 站点（出发 + waypoints + 隐藏任务），过去日期回退示例
 - **BagScreen 优惠券** ← 今日各站 `reward`（叠在示例钱包上），资产数随之变真
 - **MineScreen** ← profile 的 MBTI 徽章；**铃铛=「通知」**(session 动态事件)、**系统消息=「系统消息」**(常驻公告)，各自弹底部面板
-- 刻意保留"有人气"的占位统计（28天/86km 等）——demo 卖愿景，做成真会显空账号
 
 > 测试：`src/lib/*` 与 `poiFilter` 的纯逻辑有 vitest 单测（`tests/`，`npm test`）。UI/屏幕不单测。
 
@@ -316,8 +392,28 @@ Copy `.env.example` to `.env.local` and set `GEMINI_API_KEY`. The app is designe
 
 **Screen routing** is handled entirely in `src/App.tsx` via a `screen: ScreenType` React state value — there is no router library. `onNavigate(screen)` callbacks are passed down to each screen component. The six screens are: `explore`, `story`, `bag`, `mine`, `event`, `settings`.
 
-**ExploreScreen sub-state machine**: The Explore screen has its own `step: ExploreStep` state (also owned by `App.tsx` so it survives tab switches). The step drives which overlays, map markers, task cards, and camera interfaces are rendered. The progression is:
-`intro` → `preference_selection` → `gear_confirmation` → `initial` → `checkin_initial` → `hidden_found` → `hidden_active` → `checkin_hidden` → `reward_hidden` → `branch_choice`（仅当 `route.branch` 存在，即正常/惊喜档）→ `next_objective` → `checkin_next` → `achievement_unlock` → (back to `intro`)。`vlog_ready` 也是已定义的 step。位置由 `src/lib/derivePosition.ts` 的 `positionFromStep(step, route)` 推导。
+**App-level state** includes:
+- `theme`（dark/light，持久化 localStorage，首次按时间自动选）
+- `tripHistory: TripRecord[]`（持久化 localStorage，预埋样本）+ `showFeedback`
+- `generatedVlogs: GeneratedVlog[]`（持久化 localStorage）
+- `chatMessages` + `chatLoading`（聊天面板状态）
+- `generatedRoute`（AI 路线）、`preferences`（偏好）、`exploreStep`（探索状态机）、`waypointIndex`（当前站点索引）
+- 行为信号追踪用 `useRef`（`tripStartTime` / `branchChosenRef` / `chatActionLog` / `hiddenTriggered` / `pendingRecord`），不触发重渲染
+
+`ExploreScreen` 接收 `waypointIndex` / `onAdvanceWaypoint` / `showFeedback` / `onAchievementContinue` / `onFeedbackReact` / `onFeedbackDismiss`。`StoryScreen` 接收 `tripHistory` / `onTripReaction` / `onWaypointReaction`。`MineScreen` 接收 `tripHistory`。
+
+**ExploreScreen 动态循环状态机**: `step: ExploreStep` 由 `App.tsx` 持有。`waypointIndex` 控制当前站点，支持任意数量 waypoints（不再硬编码 2 站）。流程：
+```
+intro → preference_selection → gear_confirmation →
+  waypointIndex=0: initial → checkin_initial →
+    hidden_found → hidden_active → checkin_hidden → reward_hidden →
+    branch_choice（如有）→ onAdvanceWaypoint（index+1）
+  waypointIndex=1..N: next_objective → checkin_next → onAdvanceWaypoint
+  最后一站 checkin 完 → achievement_unlock → 反馈 → intro
+```
+`onAdvanceWaypoint`：如果还有下一站则 `setWaypointIndex(+1)` + `setStep("next_objective")`，否则 `setStep("achievement_unlock")`。
+
+位置由 `positionFromStep(step, route, origin, waypointIndex)` 推导：`initial`=origin，`next_objective`=上一站位置（不瞬移），`checkin_*`=当前站位置。
 
 **Shared layout components** (`src/components/Layout.tsx`):
 - `AppLayout` — outer shell that constrains width to 500px and renders a simulated iOS status bar. Every screen wraps its content in this.
@@ -331,6 +427,7 @@ Copy `.env.example` to `.env.local` and set `GEMINI_API_KEY`. The app is designe
 - UI 基础类型：`ScreenType`（含 `onboarding`）、`ExploreStep`（含 `branch_choice`）、`Coupon`、`TimelineItemData`
 - 用户画像：`UserProfile`（冷启动收集的 MBTI / 兴趣，持久化到 localStorage `userProfile`）
 - AI 路线类型：`UserPreferences`（偏好输入）、`Waypoint`（单个打卡点）、`RouteBranch`（第二站 A/B 抉择）、`GeneratedRoute`（含 `title`、`waypoints[]`、可选 `hiddenTask`、`branch`）
+- 历史记录：`TripRecord`（探索完成后存档，含行为信号 + 反馈 + 站点级评价）
 - POI 数据类型：`POI`（数据库记录，含评价语料、时间约束、偏好匹配字段）
 
 **Gear persistence**: The gear checklist confirmed in `GearConfirmationOverlay` is saved to `localStorage` under the key `confirmedGear` (JSON array of string IDs). `BagScreen` reads this to populate the Equipment tab.
@@ -338,7 +435,8 @@ Copy `.env.example` to `.env.local` and set `GEMINI_API_KEY`. The app is designe
 ## Styling conventions
 
 - Tailwind CSS v4 via `@tailwindcss/vite` (no `tailwind.config.*` file needed).
-- Dark neon aesthetic: primary background `#05060F` / `#0A0A1A`, accent purple `#6C5CFF` / `#A98BFF`, gold `#FFD166`, cyan `#00E5FF`, alert red `#FF4D64`.
+- **主题系统**：CSS 变量定义在 `src/index.css`，通过根元素 `data-theme="dark|light"` 切换。变量包括 `--bg-base`、`--bg-card`、`--bg-nav`、`--bg-input`、`--border-subtle`、`--text-primary`/`secondary`/`muted`/`faint`、`--fog-color`（足迹地图迷雾）。主题初始化按时间自动选（6:00~18:00 日间），手动切换后持久化。共享组件（`Glass`、`BottomNav`、`TabBar`、`PageTitle`）已迁移到 CSS 变量。
+- Dark neon aesthetic（默认暗色）: primary background `#05060F` / `#0A0A1A`, accent purple `#6C5CFF` / `#A98BFF`, gold `#FFD166`, cyan `#00E5FF`, alert red `#FF4D64`. Light theme: background `#F5F5FA`, text `#1A1A2E`.
 - Animations use `motion/react` (`framer-motion` v12). `AnimatePresence` wraps conditional renders. `layoutId` is used on nav glow and tab underline for shared-element transitions.
 - Icons come exclusively from `lucide-react`.
 - The `@` path alias resolves to the project root (configured in `vite.config.ts`).

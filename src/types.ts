@@ -10,19 +10,19 @@ export interface UserProfile {
   completedAt: number;
 }
 
-export type ExploreStep = 
+export type ExploreStep =
   | "intro"
   | "preference_selection"
   | "gear_confirmation"
-  | "initial" 
-  | "checkin_initial" 
-  | "hidden_found" 
-  | "hidden_active" 
-  | "checkin_hidden" 
+  | "initial"
+  | "checkin_initial"
+  | "hidden_found"
+  | "hidden_active"
+  | "checkin_hidden"
   | "reward_hidden"
   | "branch_choice"
   | "next_objective"
-  | "checkin_next" 
+  | "checkin_next"
   | "vlog_ready"
   | "achievement_unlock";
 
@@ -122,6 +122,29 @@ export interface GeneratedVlog {
   verdict: string;      // 人格化总结金句（战报卡用），如"今天你是个 City Walker"
   geo?: VlogGeo;        // 路线回放几何（有真实路线时才有）
   createdAt: number;    // 生成时间戳
+}
+
+// ── 历史记录 ──────────────────────────────────────────────
+export interface TripRecord {
+  id: string;
+  date: string;
+  waypoints: {
+    name: string;
+    emoji: string;
+    lat: number;
+    lng: number;
+    visited: boolean;
+    isHidden?: boolean;
+    reaction?: string;
+  }[];
+  branchChosen?: number;
+  chatActions: string[];
+  distanceKm: number;
+  durationMin: number;
+  rewards: string[];
+  intensity: string;
+  preferences: UserPreferences;
+  reaction?: string;
 }
 
 // POI 数据库里的一条记录

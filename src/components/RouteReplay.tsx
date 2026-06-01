@@ -5,7 +5,9 @@ import {
   projectLatLng,
   bboxSizeMeters,
   computeViewBox,
+  defaultViewBox,
   MIN_VIEW_RADIUS_METERS,
+  FOLLOW_RADIUS_METERS,
   type LatLng,
   type BBox,
 } from "./mapProjection";
@@ -57,7 +59,31 @@ export function RouteReplay({
   onDone?: () => void;
   onStopChange?: (stopIndex: number | null) => void;
 }) {
-  const bbox = useMemo(() => computeViewBox(geo.fullPath, MIN_VIEW_RADIUS_METERS / 2, 1.35), [geo]);
+  const fullBbox = useMemo(() => computeViewBox(geo.fullPath, MIN_VIEW_RADIUS_METERS / 2, 1.35), [geo]);
+
+  // 每段时长（按段长 clamp）+ 到站停留（停留期间播放该站照片特写）
+  const schedule = useMemo(() => {
+    const HOLD = 2.4;
+    const legDur = geo.legs.map((l) => Math.min(2.4, Math.max(1.1, polyLenM(l) / 140)));
+    return { HOLD, legDur };
+  }, [geo]);
+
+  const [prog, setProg] = useState(() =>
+    frozen
+      ? { leg: Math.max(0, geo.legs.length - 1), frac: 1, arrived: geo.stops.length }
+      : { leg: 0, frac: 0, arrived: 0 }
+  );
+
+  // 视角跟随：走路时镜头跟着 avatar，frozen 时看全貌
+  const avatarLatLng = useMemo(
+    () => pointAlong(geo.legs[prog.leg] ?? geo.fullPath, prog.frac),
+    [prog, geo]
+  );
+  const followBbox = useMemo(
+    () => defaultViewBox(avatarLatLng, FOLLOW_RADIUS_METERS),
+    [avatarLatLng]
+  );
+  const bbox = frozen ? fullBbox : followBbox;
   const { width, height } = useMemo(() => bboxSizeMeters(bbox), [bbox]);
   const markerScale = width / REFERENCE_WIDTH_PX;
 
@@ -72,19 +98,6 @@ export function RouteReplay({
   const fullRoutePath = useMemo(() => pathStr(geo.fullPath, bbox), [geo, bbox]);
   const stopXY = useMemo(() => geo.stops.map((s) => projectLatLng({ lat: s.lat, lng: s.lng }, bbox)), [geo, bbox]);
   const originXY = useMemo(() => (geo.fullPath[0] ? projectLatLng(geo.fullPath[0], bbox) : { x: 0, y: 0 }), [geo, bbox]);
-
-  // 每段时长（按段长 clamp）+ 到站停留（停留期间播放该站照片特写）
-  const schedule = useMemo(() => {
-    const HOLD = 2.4;
-    const legDur = geo.legs.map((l) => Math.min(2.4, Math.max(1.1, polyLenM(l) / 140)));
-    return { HOLD, legDur };
-  }, [geo]);
-
-  const [prog, setProg] = useState(() =>
-    frozen
-      ? { leg: Math.max(0, geo.legs.length - 1), frac: 1, arrived: geo.stops.length }
-      : { leg: 0, frac: 0, arrived: 0 }
-  );
 
   // 回调放进 ref，避免父组件因切照片重渲染导致动画 effect 重启
   const onDoneRef = useRef(onDone);
@@ -137,8 +150,8 @@ export function RouteReplay({
   }, [prog, geo, bbox]);
 
   const avatar = useMemo(
-    () => projectLatLng(pointAlong(geo.legs[prog.leg] ?? geo.fullPath, prog.frac), bbox),
-    [prog, geo, bbox]
+    () => projectLatLng(avatarLatLng, bbox),
+    [avatarLatLng, bbox]
   );
 
   // 正在走路（非到站停留）时显示"前往…"小条

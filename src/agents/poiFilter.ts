@@ -42,6 +42,24 @@ export function isOpenAt(openHours: string, now: Date): boolean {
   return cur >= start || cur <= end;
 }
 
+export type ActivityType = "eating" | "drinking" | "browsing" | "sitting" | "outdoor" | "service";
+
+export function getActivityType(category: string): ActivityType {
+  if (/餐厅|烧烤|素食|轻食/.test(category)) return "eating";
+  if (/咖啡|奶茶|甜品|宠物友好咖啡/.test(category)) return "drinking";
+  if (/酒吧|livehouse/.test(category)) return "drinking";
+  if (/书店|美术馆|文创|花店/.test(category)) return "browsing";
+  if (/公园|绿地/.test(category)) return "outdoor";
+  if (/健身|瑜伽/.test(category)) return "outdoor";
+  if (/便利店|洗衣|生活服务/.test(category)) return "service";
+  return "sitting";
+}
+
+export function getBaseCategory(category: string): string {
+  const m = category.match(/^(餐厅|酒吧)/);
+  return m ? m[1] : category;
+}
+
 const WAIT_THRESHOLD_MIN = 15;
 const MAX_CANDIDATES = 10;
 const MIN_ACCEPTABLE = 5;
