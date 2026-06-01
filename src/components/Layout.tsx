@@ -1,25 +1,39 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+
+function useSystemTime() {
+  const fmt = () => {
+    const d = new Date();
+    return `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`;
+  };
+  const [time, setTime] = useState(fmt);
+  useEffect(() => {
+    const id = setInterval(() => setTime(fmt()), 10_000);
+    return () => clearInterval(id);
+  }, []);
+  return time;
+}
 
 interface PhoneShellProps {
   children: React.ReactNode;
 }
 
 export function AppLayout({ children }: PhoneShellProps) {
+  const time = useSystemTime();
   return (
-    <div className="relative h-full w-full max-w-[500px] mx-auto overflow-hidden bg-[#0A0A1A]">
+    <div className="relative h-full w-full max-w-[500px] mx-auto overflow-hidden" style={{ backgroundColor: "var(--bg-base)" }}>
       {/* Status Bar Area (Simplified for Web) */}
-      <div className="absolute left-0 right-0 top-0 z-50 flex items-center justify-between px-7 pt-4 text-white pointer-events-none">
-        <div className="text-[14px] font-semibold">9:41</div>
+      <div className="absolute left-0 right-0 top-0 z-50 flex items-center justify-between px-7 pt-4 pointer-events-none" style={{ color: "var(--text-primary)" }}>
+        <div className="text-[14px] font-semibold">{time}</div>
         <div className="flex items-center gap-1.5 opacity-80">
           <div className="flex h-3 items-end gap-[2px]">
-            <span className="h-1.5 w-0.5 rounded-full bg-white" />
-            <span className="h-2 w-0.5 rounded-full bg-white" />
-            <span className="h-2.5 w-0.5 rounded-full bg-white" />
-            <span className="h-3 w-0.5 rounded-full bg-white" />
+            <span className="h-1.5 w-0.5 rounded-full" style={{ backgroundColor: "var(--text-primary)" }} />
+            <span className="h-2 w-0.5 rounded-full" style={{ backgroundColor: "var(--text-primary)" }} />
+            <span className="h-2.5 w-0.5 rounded-full" style={{ backgroundColor: "var(--text-primary)" }} />
+            <span className="h-3 w-0.5 rounded-full" style={{ backgroundColor: "var(--text-primary)" }} />
           </div>
-          <div className="h-3 w-5 rounded-sm border border-white/60 relative">
-            <div className="absolute left-0 top-0 h-full w-3 bg-white/90" />
+          <div className="h-3 w-5 rounded-sm border relative" style={{ borderColor: "var(--text-muted)" }}>
+            <div className="absolute left-0 top-0 h-full w-3" style={{ backgroundColor: "var(--text-secondary)" }} />
           </div>
         </div>
       </div>

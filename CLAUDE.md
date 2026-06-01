@@ -10,9 +10,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Key differentiators**:
 - **Multi-agent route generation**: Multiple AI agents collaborate to produce a route — one agent handles user profiling (MBTI, past exploration history, stated mood/preferences), another sources nearby POIs, another assembles the narrative and task sequence. The Gemini API (`@google/genai`) is the AI backbone.
-- **Personalization inputs**: MBTI personality type, mood at launch time, duration preference, transport mode, interest tags (art / outdoor / food / nightlife / family-friendly / photo spots / niche / budget), food preferences, and "how much do you want to think?" intensity level — all collected in `PreferenceOverlay` before route generation.
+- **Personalization inputs**: MBTI personality type, mood at launch time, duration preference, transport mode, interest tags (art / outdoor / food / nightlife / family-friendly / photo spots / niche / budget), food preferences, companion type (独自/情侣/朋友/家庭), free-text notes, and intensity level (别让我思考 / 正常探索) — all collected in `PreferenceOverlay` before route generation.
 - **Gamified progression**: The route is structured as a sequence of tasks (`ExploreStep` state machine). Completing check-ins (photo/vlog capture) unlocks the next waypoint and awards XP + real merchant coupons (dining, bike-share, ride-hailing).
-- **Hidden task layer**: Beyond the main route, the system can surface hidden POI tasks mid-exploration that the user didn't plan for, adding surprise discovery moments.
+- **Hidden task layer**: One waypoint from the main route is marked as a hidden task (better rewards + small challenge). Generated in the same Gemini call, not separately.
 - **Vlog auto-generation**: Captured clips from check-ins are fed back to the AI to produce a short auto-edited Vlog of the day's exploration (see `StoryScreen`).
 
 ## Multi-Agent Design
@@ -117,10 +117,10 @@ best_time                           推荐游玩时段文案
 3. 过滤排队过长的 POI（avg_wait_minutes > 阈值）
 4. 计算候选组合的总时长是否符合 duration 偏好
 5. 把筛选后的候选列表（10条以内）传给 Gemini
-6. Gemini 负责：最终选择 + 排序 + 写故事 + 生成打卡任务
+6. Gemini 一次调用生成：所有 waypoints + 隐藏任务（最后一个 selection 标记 is_hidden）+ 可选 branch
 ```
 
-这样 Gemini 不再凭空编造地点，而是从真实结构化数据里做最终决策。过滤在 `poiFilter.filterCandidates`（strict→no_wait→no_tags→all 渐进降级，有单测），最终选择 + 故事 + 任务由 `routeAgent.generateRoute` 调 Gemini 完成。
+Gemini 不再凭空编造地点，而是从真实结构化数据里做最终决策。过滤在 `poiFilter.filterCandidates`（strict→no_wait→no_tags→all 渐进降级，有单测），最终选择 + 故事 + 任务由 `routeAgent.generateRoute` 调 Gemini 完成。隐藏任务不再单独生成，而是作为 selections 的最后一个带 `is_hidden: true` 标记，确保路线连贯。
 
 ## AI Route Generation — Implemented
 
@@ -154,11 +154,13 @@ GearConfirmationOverlay
           → isGenerating = false
           → step 切换到 initial
 
-ExploreScreen（地图界面）
-  └── TaskCard     使用 waypoints[0/1].name / task / description / reward
-      · waypoints[0] → initial / checkin_initial 阶段
-      · waypoints[1] → next_objective / checkin_next 阶段
-      · hidden_active 阶段仍使用硬编码内容（隐藏任务暂未接入 AI）
+ExploreScreen（地图界面，重设计 UI）
+  ├── ProgressPanel   当前进度 N/M + 统计行 + 今日目标
+  ├── DirectionPanel  下一目标方向 + 距离 + 图例
+  └── TaskCard        方向箭头 + 距离文字 + 描述 + 小挑战标签 + 奖励徽章
+      · waypoints[0] → initial / checkin_initial
+      · hiddenTask   → hidden_active / checkin_hidden
+      · waypoints[1] → next_objective / checkin_next
 ```
 
 ### 容错设计
@@ -278,10 +280,16 @@ $env:GEMINI_API_KEY="..."; npx tsx scripts/generateVlogFrames.ts   # 重新生�
 SVG 地图：terrain 多边形底色（仅视觉）、真实路网底图、Dijkstra 沿街寻路（`roadGraph.ts`，有单测）、镜头跟随当前位置、**拖动/点击地图 → 吸附最近路 → 走过去**。所有 POI 都落在路上（保证可达可走）。退役了一批旧 mockup 的固定屏幕位置覆盖层（DottedPath / UnknownMarkers / 旧 NextTarget 等）。
 
 ### 其它屏幕接真实数据
-- **StoryScreen 今日素材集** ← `generatedRoute` 站点（出发 + waypoints + 隐藏任务），过去日期回退示例
-- **BagScreen 优惠券** ← 今日各站 `reward`（叠在示例钱包上），资产数随之变真
-- **MineScreen** ← profile 的 MBTI 徽章；**铃铛=「通知」**(session 动态事件)、**系统消息=「系统消息」**(常驻公告)，各自弹底部面板
+- **StoryScreen**：Vlog 素材 tab 不变；历史记录 tab 改为 `TripCard` 卡片列表（日期 + avatar emoji + 站点列表含隐藏标 + 单站评价 + 统计行 + 奖励标签），当前路线自动生成今日卡片，叠在预埋样本之上
+- **BagScreen 优惠券** ← 今日各站 `reward`（叠在示例钱包上），点击弹出假彩蛋二维码（QR modal）
+- **MineScreen** ← profile 的 MBTI 徽章（可点击编辑）；铃铛=「通知」、系统消息=「系统消息」
 - 刻意保留"有人气"的占位统计（28天/86km 等）——demo 卖愿景，做成真会显空账号
+
+### 地图层改进（`src/components/Map.tsx`）
+- **缩放**：+/- 按钮 + 鼠标滚轮缩放，`zoomLevel` 动态调整 `FOLLOW_RADIUS_METERS`
+- **Avatar 小人**：红点替换为紫色发光 avatar（小人图标 + 双层脉冲光晕），`duration: 0` 即时跟随无弹跳
+- **方向箭头**：从当前位置指向下一目标的虚线 + 三角箭头，角度实时计算
+- **相机**：`CameraInterface` 请求真实摄像头（`getUserMedia`），无权限时回退到模拟视图
 
 > 测试：`src/lib/*` 与 `poiFilter` 的纯逻辑有 vitest 单测（`tests/`，`npm test`）。UI/屏幕不单测。
 
@@ -317,10 +325,14 @@ Copy `.env.example` to `.env.local` and set `GEMINI_API_KEY`. The app is designe
 **Screen routing** is handled entirely in `src/App.tsx` via a `screen: ScreenType` React state value — there is no router library. `onNavigate(screen)` callbacks are passed down to each screen component. The six screens are: `explore`, `story`, `bag`, `mine`, `event`, `settings`.
 
 **ExploreScreen sub-state machine**: The Explore screen has its own `step: ExploreStep` state (also owned by `App.tsx` so it survives tab switches). The step drives which overlays, map markers, task cards, and camera interfaces are rendered. The progression is:
-`intro` → `preference_selection` → `gear_confirmation` → `initial` → `checkin_initial` → `hidden_found` → `hidden_active` → `checkin_hidden` → `reward_hidden` → `branch_choice`（仅当 `route.branch` 存在，即正常/惊喜档）→ `next_objective` → `checkin_next` → `achievement_unlock` → (back to `intro`)。`vlog_ready` 也是已定义的 step。位置由 `src/lib/derivePosition.ts` 的 `positionFromStep(step, route)` 推导。
+`intro` → `preference_selection` → `gear_confirmation` → `initial` → `checkin_initial` → `hidden_found` → `hidden_active` → `checkin_hidden` → `reward_hidden` → `branch_choice`（仅当 `route.branch` 存在，即"正常探索"档）→ `next_objective` → `checkin_next` → `achievement_unlock` → (back to `intro`)。`vlog_ready` 也是已定义的 step。位置由 `src/lib/derivePosition.ts` 的 `positionFromStep(step, route)` 推导。
+
+**Intensity 梯子**（2 档）：
+- **别让我思考**（`don't_think`，默认/推荐）：隐藏下一站位置（mystery mode），不出 A/B 岔路
+- **正常探索**（`normal`）：显示下一站位置，出 A/B 岔路
 
 **Shared layout components** (`src/components/Layout.tsx`):
-- `AppLayout` — outer shell that constrains width to 500px and renders a simulated iOS status bar. Every screen wraps its content in this.
+- `AppLayout` — outer shell that constrains width to 500px and renders a simulated iOS status bar (real system clock). Every screen wraps its content in this.
 - `Glass` — glassmorphism `motion.div` card used throughout for floating panels.
 
 **Shared UI components** (`src/components/CommonUI.tsx`):
@@ -330,7 +342,8 @@ Copy `.env.example` to `.env.local` and set `GEMINI_API_KEY`. The app is designe
 **Types** (`src/types.ts`): 所有共享接口都在这里定义。
 - UI 基础类型：`ScreenType`（含 `onboarding`）、`ExploreStep`（含 `branch_choice`）、`Coupon`、`TimelineItemData`
 - 用户画像：`UserProfile`（冷启动收集的 MBTI / 兴趣，持久化到 localStorage `userProfile`）
-- AI 路线类型：`UserPreferences`（偏好输入）、`Waypoint`（单个打卡点）、`RouteBranch`（第二站 A/B 抉择）、`GeneratedRoute`（含 `title`、`waypoints[]`、可选 `hiddenTask`、`branch`）
+- AI 路线类型：`UserPreferences`（偏好输入，含 `companion`、`freeText`）、`Waypoint`（单个打卡点）、`RouteBranch`（第二站 A/B 抉择）、`GeneratedRoute`（含 `title`、`waypoints[]`、可选 `hiddenTask`、`branch`）
+- 历史记录：`TripRecord`（探索记录卡片，StoryScreen 历史 tab 用）
 - POI 数据类型：`POI`（数据库记录，含评价语料、时间约束、偏好匹配字段）
 
 **Gear persistence**: The gear checklist confirmed in `GearConfirmationOverlay` is saved to `localStorage` under the key `confirmedGear` (JSON array of string IDs). `BagScreen` reads this to populate the Equipment tab.
@@ -338,7 +351,8 @@ Copy `.env.example` to `.env.local` and set `GEMINI_API_KEY`. The app is designe
 ## Styling conventions
 
 - Tailwind CSS v4 via `@tailwindcss/vite` (no `tailwind.config.*` file needed).
-- Dark neon aesthetic: primary background `#05060F` / `#0A0A1A`, accent purple `#6C5CFF` / `#A98BFF`, gold `#FFD166`, cyan `#00E5FF`, alert red `#FF4D64`.
+- **主题系统**：CSS 变量定义在 `src/index.css`，通过根元素 `data-theme="dark|light"` 切换。变量包括 `--bg-base`、`--bg-card`、`--bg-nav`、`--bg-input`、`--border-subtle`、`--text-primary`/`secondary`/`muted`/`faint`。主题初始化按系统时间自动选（6:00~18:00 light，其余 dark），手动切换后持久化到 localStorage。大部分组件已迁移到 CSS 变量，不再硬编码暗色。
+- Dark neon aesthetic（默认暗色）: primary background `#05060F` / `#0A0A1A`, accent purple `#6C5CFF` / `#A98BFF`, gold `#FFD166`, cyan `#00E5FF`, alert red `#FF4D64`. Light theme: background `#F5F5FA`, text `#1A1A2E`.
 - Animations use `motion/react` (`framer-motion` v12). `AnimatePresence` wraps conditional renders. `layoutId` is used on nav glow and tab underline for shared-element transitions.
 - Icons come exclusively from `lucide-react`.
 - The `@` path alias resolves to the project root (configured in `vite.config.ts`).

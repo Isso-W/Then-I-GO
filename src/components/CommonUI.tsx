@@ -8,7 +8,7 @@ export function BottomNav({ active, onNavigate }: { active: ScreenType; onNaviga
     { key: "explore", name: "探索", icon: <Footprints size={23} /> },
     { key: "story", name: "故事", icon: <BookOpen size={23} /> },
     { key: "bag", name: "背包", icon: <Backpack size={23} /> },
-    { key: "mine", name: "我的", icon: <Smile size={24} />, dot: true },
+    { key: "mine", name: "我的", icon: <Smile size={24} /> },
   ];
 
   return (
@@ -20,7 +20,6 @@ export function BottomNav({ active, onNavigate }: { active: ScreenType; onNaviga
           className="relative flex h-full flex-1 flex-col items-center justify-center gap-1"
         >
           {i > 0 && <span className="absolute left-0 h-9 w-px" style={{ backgroundColor: "var(--border-subtle)" }} />}
-          {it.dot && <span className="absolute right-8 top-3 h-2.5 w-2.5 rounded-full bg-[#FF4D64]" />}
           <motion.div 
             whileTap={{ scale: 0.9 }}
             className={active === it.key ? "text-[#A98BFF] drop-shadow-[0_0_14px_rgba(108,92,255,.95)]" : "text-[#C7BCE7]/65"}

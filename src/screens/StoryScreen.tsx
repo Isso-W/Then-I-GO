@@ -1,9 +1,9 @@
 import React from "react";
-import { MapPin, Gift, Coffee, Star, PlayCircle, ChevronDown, ChevronRight, Sparkles, X, Loader2, Wand2, Film, Music, CheckCircle2, Play, Share2, RotateCcw, Check } from "lucide-react";
+import { MapPin, Gift, Coffee, Star, PlayCircle, ChevronRight, Sparkles, X, Loader2, Wand2, Film, Music, CheckCircle2, Play, Share2, RotateCcw, Check, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
 import { BottomNav, PageTitle, TabBar } from "../components/CommonUI";
-import { ScreenType, TimelineItemData, GeneratedRoute, GeneratedVlog, VlogStyle } from "../types";
+import { ScreenType, TimelineItemData, GeneratedRoute, GeneratedVlog, VlogStyle, TripRecord } from "../types";
 import { generateVlog, VlogStop } from "../agents/vlogAgent";
 import { computeVlogGeo } from "../lib/routeGeometry";
 import { RouteReplay } from "../components/RouteReplay";
@@ -50,6 +50,29 @@ function fmtDuration(scenes: { durationSec: number }[]): string {
   const s = total % 60;
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
+
+const SAMPLE_TRIPS: TripRecord[] = [
+  {
+    id: "sample-1", date: "昨天", avatar: "💀",
+    waypoints: [
+      { name: "7-Eleven", emoji: "🏪" },
+      { name: "便利蜂", emoji: "🏪" },
+      { name: "便利蜂", emoji: "🐝", isHidden: true },
+    ],
+    stationCount: 3, distanceKm: 3.4, durationMin: 2,
+    rewards: ["一张7-Eleven指定商品买一送一券", "随机小惊喜！", "一杯免费咖啡"],
+  },
+  {
+    id: "sample-2", date: "05.30", avatar: "😎",
+    waypoints: [
+      { name: "罗森（清华东路店）", emoji: "🏪" },
+      { name: "7-Eleven", emoji: "🍦" },
+      { name: "便利店A", emoji: "✨", isHidden: true },
+    ],
+    stationCount: 3, distanceKm: 4.9, durationMin: 3,
+    rewards: ["一杯便利店特调饮品", "「生活观察家」徽章", "一张明日小确幸券"],
+  },
+];
 
 export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGenerated }: {
   onNavigate: (s: ScreenType) => void;
@@ -216,16 +239,26 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
     { id: 3, date: "2024.05.15", title: "重访清华西门", duration: "00:58", img: "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=400&q=80" },
   ];
 
+  const todayTrip: TripRecord | null = generatedRoute ? {
+    id: "today",
+    date: "今天",
+    avatar: "🍀",
+    waypoints: [
+      ...generatedRoute.waypoints.map(wp => ({ name: wp.name, emoji: wp.emoji })),
+      ...(generatedRoute.hiddenTask ? [{ name: generatedRoute.hiddenTask.name, emoji: generatedRoute.hiddenTask.emoji, isHidden: true }] : []),
+    ],
+    stationCount: generatedRoute.waypoints.length + (generatedRoute.hiddenTask ? 1 : 0),
+    distanceKm: parseFloat((generatedRoute.waypoints.length * 1.8).toFixed(1)),
+    durationMin: generatedRoute.waypoints.length,
+    rewards: generatedRoute.waypoints.map(wp => wp.reward).filter(Boolean),
+  } : null;
+  const allTrips: TripRecord[] = [...(todayTrip ? [todayTrip] : []), ...SAMPLE_TRIPS];
+
   return (
     <AppLayout>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_15%,rgba(108,92,255,.18),transparent_30%)]" />
       <PageTitle 
         title="故事" 
-        right={
-          <button className="flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1.5 text-[11px] text-white/80 bg-white/5">
-            拍摄设置 <ChevronDown size={12} />
-          </button>
-        } 
       />
       
       <main className="absolute inset-x-5 top-[100px] bottom-[104px] overflow-y-auto no-scrollbar pb-6">
@@ -372,72 +405,11 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-4"
               >
-                <div className="grid grid-cols-1 gap-3">
-                  {/* 本 session 真实生成的 Vlog —— 可点击重播 */}
-                  {realHistory.map(({ vlog, date, duration, img }, idx) => (
-                    <motion.button
-                      key={vlog.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      onClick={() => setPlayingVlog(vlog)}
-                      className="group relative overflow-hidden rounded-2xl border border-[#6C5CFF]/30 bg-[#6C5CFF]/[0.06] p-3 flex gap-3 text-left active:bg-[#6C5CFF]/[0.12] transition-colors"
-                    >
-                      <div className="relative h-20 w-24 rounded-xl overflow-hidden shrink-0 bg-white/5">
-                        <img src={img} alt={vlog.title} className={`absolute inset-0 h-full w-full object-cover ${STYLE_META[vlog.style].filter} transition-transform duration-500 group-hover:scale-110`} />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
-                          <PlayCircle size={28} className="text-white" />
-                        </div>
-                        <div className="absolute bottom-1 right-1 rounded px-1 py-0.5 bg-black/60 text-[8px] font-bold text-white">{duration}</div>
-                      </div>
-                      <div className="flex-1 flex flex-col justify-center min-w-0">
-                        <div className="flex items-center gap-1.5 text-[10px] text-white/30 font-bold">
-                          {date}
-                          <span className="rounded-full px-1.5 py-0.5 text-[8px] font-black" style={{ background: `${STYLE_META[vlog.style].accent}22`, color: STYLE_META[vlog.style].accent }}>
-                            {STYLE_META[vlog.style].label}
-                          </span>
-                        </div>
-                        <h3 className="text-[15px] font-bold text-white/90 truncate mt-0.5">{vlog.title}</h3>
-                        <div className="mt-2 flex items-center gap-3 text-[10px] text-white/40">
-                          <span className="flex items-center gap-1 font-bold text-[#A98BFF]"><Music size={11} /> {vlog.bgm}</span>
-                        </div>
-                      </div>
-                    </motion.button>
-                  ))}
-
-                  {/* 示例历史（静态展示） */}
-                  {sampleHistory.map((vlog, idx) => (
-                    <motion.div
-                      key={vlog.id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: (realHistory.length + idx) * 0.05 }}
-                      className="group relative overflow-hidden rounded-2xl border border-white/5 bg-white/[0.03] p-3 flex gap-3 active:bg-white/[0.06] transition-colors"
-                    >
-                      <div className="relative h-20 w-24 rounded-xl overflow-hidden shrink-0 bg-white/5">
-                        <img
-                          src={vlog.img}
-                          alt={vlog.title}
-                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
-                          <PlayCircle size={28} className="text-white/80" />
-                        </div>
-                        <div className="absolute bottom-1 right-1 rounded px-1 py-0.5 bg-black/60 text-[8px] font-bold text-white">
-                          {vlog.duration}
-                        </div>
-                      </div>
-
-                      <div className="flex-1 flex flex-col justify-center min-w-0">
-                        <div className="text-[10px] text-white/30 font-bold">{vlog.date}</div>
-                        <h3 className="text-[15px] font-bold text-white/90 truncate mt-0.5">{vlog.title}</h3>
-                        <div className="mt-2 flex items-center gap-3 text-[10px] text-white/40">
-                          <span className="flex items-center gap-1 font-bold text-[#6C5CFF]">分享</span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
+                {allTrips.map((trip, idx) => (
+                  <React.Fragment key={trip.id}>
+                    <TripCard trip={trip} delay={idx * 0.06} />
+                  </React.Fragment>
+                ))}
               </motion.div>
             )}
           </AnimatePresence>
@@ -469,6 +441,82 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
   );
 }
 
+// ── 旅程卡片（new_ui 设计）────────────────────────────────
+const REWARD_COLORS = ["#6C5CFF", "#00E5FF", "#FFD166", "#FF4D64", "#7FE7C4", "#F59E0B"];
+
+function TripCard({ trip, delay = 0 }: { trip: TripRecord; delay?: number }) {
+  const [reactions, setReactions] = React.useState<Record<number, string>>({});
+  const [showReactionIdx, setShowReactionIdx] = React.useState<number | null>(null);
+  const EMOJIS = ["🤩", "😎", "😐", "😩", "💀", "💸"];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      className="rounded-2xl border p-4"
+      style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)" }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-[12px] font-bold" style={{ color: "var(--text-muted)" }}>{trip.date}</span>
+        <span className="text-[22px]">{trip.avatar}</span>
+      </div>
+
+      <div className="space-y-2.5">
+        {trip.waypoints.map((wp, i) => (
+          <div key={i} className="flex items-center gap-3">
+            <span className="text-[16px] w-6 text-center shrink-0">{wp.emoji}</span>
+            <span className="flex-1 text-[14px] font-bold truncate" style={{ color: "var(--text-primary)" }}>
+              {wp.name}
+              {wp.isHidden && (
+                <span className="ml-2 inline-block rounded px-1.5 py-0.5 text-[9px] font-black bg-amber-500/20 text-amber-400">隐藏</span>
+              )}
+            </span>
+            {reactions[i] ? (
+              <span className="text-[14px]">{reactions[i]}</span>
+            ) : (
+              <button
+                onClick={() => setShowReactionIdx(showReactionIdx === i ? null : i)}
+                className="h-6 w-6 flex items-center justify-center rounded-full border transition-colors"
+                style={{ borderColor: "var(--border-subtle)", color: "var(--text-muted)" }}
+              >
+                <Plus size={12} />
+              </button>
+            )}
+            {showReactionIdx === i && (
+              <div className="flex gap-1 ml-1">
+                {EMOJIS.map(e => (
+                  <button key={e} className="text-[14px] hover:scale-125 transition-transform" onClick={() => { setReactions(r => ({ ...r, [i]: e })); setShowReactionIdx(null); }}>
+                    {e}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 text-[11px] font-bold" style={{ color: "var(--text-muted)" }}>
+        {trip.stationCount}站 · {trip.distanceKm}km · {trip.durationMin}min
+      </div>
+
+      {trip.rewards.length > 0 && (
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          {trip.rewards.map((r, i) => (
+            <span
+              key={i}
+              className="rounded-full px-2.5 py-1 text-[10px] font-bold"
+              style={{ backgroundColor: `${REWARD_COLORS[i % REWARD_COLORS.length]}22`, color: REWARD_COLORS[i % REWARD_COLORS.length] }}
+            >
+              {r}
+            </span>
+          ))}
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
 // ── 风格选择浮层 ──────────────────────────────────────────
 function StylePickerOverlay({ onPick, onCancel }: { onPick: (s: VlogStyle) => void; onCancel: () => void }) {
   return (
@@ -485,7 +533,7 @@ function StylePickerOverlay({ onPick, onCancel }: { onPick: (s: VlogStyle) => vo
         exit={{ y: 320 }}
         transition={{ type: "spring", damping: 28, stiffness: 280 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full rounded-t-3xl border-t border-white/10 bg-[#0A0A1A] p-6 pb-10"
+        className="w-full rounded-t-3xl border-t border-white/10 bg-[var(--bg-base)] p-6 pb-10"
       >
         <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/15" />
         <h2 className="text-[18px] font-black text-white">选择 Vlog 风格</h2>
@@ -734,7 +782,7 @@ function VlogPlayerOverlay({ vlog, onClose }: { vlog: GeneratedVlog; onClose: ()
 
             {/* 路线缩略图（静态全貌） */}
             {hasGeo && (
-              <div className="mt-5 h-44 w-full overflow-hidden rounded-2xl border border-white/10 bg-[#05060F]">
+              <div className="mt-5 h-44 w-full overflow-hidden rounded-2xl border border-white/10 bg-[var(--bg-base)]">
                 <RouteReplay geo={vlog.geo!} accent={theme.accent} frozen />
               </div>
             )}

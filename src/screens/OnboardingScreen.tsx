@@ -57,7 +57,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: (profile: UserPro
 
   return (
     <AppLayout>
-      <div className="absolute inset-0 z-0 bg-[#05070A]">
+      <div className="absolute inset-0 z-0" style={{ backgroundColor: "var(--bg-base)" }}>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(108,92,255,0.18),transparent_60%)]" />
       </div>
 

@@ -30,6 +30,9 @@ const FOOD_LABELS: Record<string, string> = {
 const INTENSITY_LABELS: Record<string, string> = {
   relaxed: "轻松带路", normal: "正常探索", "don't_think": "别让我思考（全权安排）",
 };
+const COMPANION_LABELS: Record<string, string> = {
+  solo: "独自", couple: "情侣", friends: "朋友", family: "家庭",
+};
 
 // 时长 → 期望打卡点数量
 const DURATION_TO_WAYPOINTS: Record<string, number> = {
@@ -45,6 +48,7 @@ interface GeminiSelection {
   task: string;
   reward: string;
   emoji: string;
+  is_hidden?: boolean;
 }
 interface GeminiBranch {
   axis: string;
@@ -53,7 +57,6 @@ interface GeminiBranch {
 interface GeminiResponse {
   title: string;
   selections: GeminiSelection[];
-  hidden?: GeminiSelection;
   branch?: GeminiBranch;
 }
 
@@ -112,19 +115,18 @@ export async function generateRoute(
   // 分叉时主线只要 1 个第一站，第二站由 branch 的两个候选二选一
   const selectionCount = branchEnabled ? 1 : actualCount;
 
+  const totalCount = selectionCount + 1;
   const tasks = [
-    `从候选里挑选 ${selectionCount} 个 poi_id，按推荐游玩顺序排列`,
+    `从候选里挑选 ${totalCount} 个 poi_id，按推荐游玩顺序排列。最后一个作为"隐藏任务"站点——它应该路线上离其他站点不远、能自然串联，但奖励比正常站点更好（限定徽章、隐藏菜单券等稀缺奖励），同时设一个有一点点小挑战的打卡任务（如拍到某个特定角度/找到某个隐藏细节）`,
     `给每个挑选的地点写故事氛围、打卡任务、奖励文案、emoji`,
     `写一个 10 字以内有意境的路线标题`,
+    `在最后一个 selection 里加 "is_hidden": true 标记`,
   ];
   if (branchEnabled) {
     tasks.push(
-      `再选 2 个气质明显相反的地点作为"第二站"的两个候选（一安静一热闹 / 一文艺一烟火气 / 一室内一户外…），并给这次二选一写一句抉择提示 axis（如"想安静还是想热闹？"），放进 branch 字段；这 2 个要和 selections、hidden 都不同`
+      `再选 2 个气质明显相反的地点作为"第二站"的两个候选（一安静一热闹 / 一文艺一烟火气 / 一室内一户外…），并给这次二选一写一句抉择提示 axis（如"想安静还是想热闹？"），放进 branch 字段；这 2 个要和 selections 都不同`
     );
   }
-  tasks.push(
-    `另外再选 1 个与上面都不同的地点作为"隐藏任务"（藏在附近的惊喜坐标），写神秘氛围/打卡任务/奖励/emoji，放进 hidden 字段`
-  );
   const taskBlock = tasks.map((t, i) => `${i + 1}. ${t}`).join("\n");
 
   const branchJson = branchEnabled
@@ -148,6 +150,7 @@ ${profileBlock}
 - 偏好标签：${prefs.special.map(s => SPECIAL_LABELS[s] ?? s).join("、") || "无特殊偏好"}
 - 餐饮偏好：${prefs.foodPreference.map(f => FOOD_LABELS[f] ?? f).join("、") || "无特殊偏好"}
 - 安排程度：${INTENSITY_LABELS[prefs.intensity] ?? prefs.intensity}
+- 同行人物：${COMPANION_LABELS[prefs.companion ?? "solo"] ?? prefs.companion ?? "独自"}${prefs.freeText ? `\n- 用户备注：${prefs.freeText}` : ""}
 
 候选地点（必须从这里选，不要编造）：
 ${buildCandidateBlock(candidates)}
@@ -164,17 +167,12 @@ ${taskBlock}
       "description": "这个地点的故事或氛围描述（30字以内）",
       "task": "到达后的打卡任务提示（20字以内）",
       "reward": "完成后的奖励（如：美团单车7天卡、餐饮券8折）",
-      "emoji": "一个代表这个地点的 emoji"
+      "emoji": "一个代表这个地点的 emoji",
+      "is_hidden": false
     }
-  ],
-  "hidden": {
-    "poi_id": "另一个与 selections 都不同的候选 id",
-    "description": "隐藏地点的神秘氛围描述（30字以内）",
-    "task": "隐藏打卡任务提示（20字以内）",
-    "reward": "隐藏奖励（如：限定徽章、隐藏菜单券）",
-    "emoji": "一个代表这个地点的 emoji"
-  }${branchJson}
+  ]${branchJson}
 }
+注意：最后一个 selection 必须设 "is_hidden": true，它的 reward 应该更好（限定/稀缺奖励），task 应该有趣且有一点小挑战。
 `;
 
   const response = await ai.models.generateContent({
@@ -255,13 +253,18 @@ ${taskBlock}
     }
   }
 
-  // 隐藏任务：优先用 Gemini 选的 hidden（须是另一个有效候选），否则取第一个未用候选兜底
+  // 隐藏任务：从 selections 里找标记了 is_hidden 的那个（通常是最后一个），
+  // 把它从 waypoints 里拿出来放到 hiddenTask。没标记则取最后一个。
   let hiddenTask: Waypoint | undefined;
-  const hsel = parsed.hidden;
-  if (hsel && byId.has(hsel.poi_id) && !usedIds.has(hsel.poi_id)) {
-    hiddenTask = hydrate(hsel, byId.get(hsel.poi_id)!);
-    usedIds.add(hsel.poi_id);
-  } else {
+  const hiddenIdx = waypoints.length > 1
+    ? (parsed.selections?.findIndex(s => s.is_hidden && byId.has(s.poi_id)) ?? -1)
+    : -1;
+  if (hiddenIdx >= 0 && hiddenIdx < waypoints.length) {
+    hiddenTask = waypoints.splice(hiddenIdx, 1)[0];
+  } else if (waypoints.length > 1) {
+    hiddenTask = waypoints.pop();
+  }
+  if (!hiddenTask) {
     const leftover = candidates.find((p) => !usedIds.has(p.id));
     if (leftover) {
       hiddenTask = {
@@ -276,7 +279,6 @@ ${taskBlock}
         lat: leftover.lat,
         lng: leftover.lng,
       };
-      usedIds.add(leftover.id);
     }
   }
 

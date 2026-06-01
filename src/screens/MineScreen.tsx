@@ -62,9 +62,19 @@ export function MineScreen({ onNavigate, profile, generatedRoute }: { onNavigate
             <div className="flex items-center gap-2">
               <div className="text-[20px] font-bold">那我走</div>
               {profile?.mbti && (
-                <span className="rounded-full bg-[#6C5CFF]/20 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-[#A98BFF]">
-                  {profile.mbti}
-                </span>
+                <button
+                  onClick={() => {
+                    const next = prompt("修改你的 MBTI（如 INFP、ENTJ）：", profile.mbti);
+                    if (next && /^[EI][NS][TF][JP]$/i.test(next.trim())) {
+                      const updated = { ...profile, mbti: next.trim().toUpperCase() };
+                      try { localStorage.setItem("userProfile", JSON.stringify(updated)); } catch {}
+                      window.location.reload();
+                    }
+                  }}
+                  className="rounded-full bg-[#6C5CFF]/20 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-[#A98BFF] active:scale-95 transition-transform"
+                >
+                  {profile.mbti} ✎
+                </button>
               )}
             </div>
             <div className="mt-1 flex items-center gap-2">
@@ -123,7 +133,7 @@ function NotificationsOverlay({ title, messages, onClose }: { title: string; mes
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 26, stiffness: 240 }}
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[70%] overflow-y-auto no-scrollbar rounded-t-[28px] border-t border-white/10 bg-[#0F172A] p-5 pb-8 shadow-[0_-20px_60px_rgba(0,0,0,0.6)]"
+        className="max-h-[70%] overflow-y-auto no-scrollbar rounded-t-[28px] border-t border-white/10 bg-[var(--bg-card)] p-5 pb-8 shadow-[0_-20px_60px_rgba(0,0,0,0.6)]"
       >
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">

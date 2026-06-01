@@ -8,6 +8,7 @@ import { ScreenType, Coupon, GeneratedRoute } from "../types";
 export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: ScreenType) => void; generatedRoute?: GeneratedRoute | null }) {
   const [activeTab, setActiveTab] = useState(0);
   const [gear, setGear] = useState<string[]>([]);
+  const [qrCoupon, setQrCoupon] = useState<string | null>(null);
 
   useEffect(() => {
     const savedGear = localStorage.getItem('confirmedGear');
@@ -101,7 +102,7 @@ export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Scre
               </Glass>
               
               <div className="mt-5 space-y-4">
-                {coupons.map((c, idx) => <CouponCard key={c.title} {...c} index={idx} />)}
+                {coupons.map((c, idx) => <CouponCard key={c.title} {...c} index={idx} onClaim={() => setQrCoupon(c.title)} />)}
               </div>
             </motion.div>
           )}
@@ -164,6 +165,49 @@ export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Scre
         </AnimatePresence>
       </main>
       <BottomNav active="bag" onNavigate={onNavigate} />
+
+      <AnimatePresence>
+        {qrCoupon && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[110] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+            onClick={() => setQrCoupon(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-[280px] rounded-3xl p-6 text-center"
+              style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)" }}
+            >
+              <div className="text-[18px] font-black" style={{ color: "var(--text-primary)" }}>🎉 领取优惠券</div>
+              <p className="mt-1 text-[12px]" style={{ color: "var(--text-muted)" }}>{qrCoupon}</p>
+              <div className="mx-auto mt-4 flex h-40 w-40 items-center justify-center rounded-2xl bg-white p-3">
+                <svg viewBox="0 0 100 100" className="h-full w-full">
+                  {Array.from({ length: 10 }).map((_, r) =>
+                    Array.from({ length: 10 }).map((_, c) => {
+                      const fill = ((r * 7 + c * 13 + r * c) % 3 !== 0) ? "#1A1A2E" : "none";
+                      return <rect key={`${r}-${c}`} x={c * 10} y={r * 10} width={9} height={9} rx={1} fill={fill} />;
+                    })
+                  )}
+                  <rect x={5} y={5} width={25} height={25} rx={3} fill="none" stroke="#6C5CFF" strokeWidth={3} />
+                  <rect x={70} y={5} width={25} height={25} rx={3} fill="none" stroke="#6C5CFF" strokeWidth={3} />
+                  <rect x={5} y={70} width={25} height={25} rx={3} fill="none" stroke="#6C5CFF" strokeWidth={3} />
+                  <rect x={40} y={40} width={20} height={20} rx={2} fill="#6C5CFF" />
+                  <text x={50} y={53} textAnchor="middle" fontSize={10} fill="white" fontWeight="bold">GO</text>
+                </svg>
+              </div>
+              <p className="mt-3 text-[11px]" style={{ color: "var(--text-muted)" }}>扫码到店出示即可使用</p>
+              <button onClick={() => setQrCoupon(null)} className="mt-4 w-full rounded-full bg-[#6C5CFF] py-2.5 text-[14px] font-bold text-white active:scale-95 transition-transform">
+                知道了
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AppLayout>
   );
 }
@@ -171,15 +215,17 @@ export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Scre
 interface CouponCardProps extends Coupon {
   index: number;
   key?: string | number;
+  onClaim?: () => void;
 }
 
-function CouponCard({ title, desc, date, amount, icon, color, tag, index }: CouponCardProps) {
+function CouponCard({ title, desc, date, amount, icon, color, tag, index, onClaim }: CouponCardProps) {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, x: -10 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.05 }}
       whileTap={{ scale: 0.98 }}
+      onClick={onClaim}
       className={`relative flex h-[82px] overflow-hidden rounded-xl border border-white/10 bg-gradient-to-r ${color} shadow-lg cursor-pointer`}
     >
       <div className="flex w-[64px] items-center justify-center bg-black/20">
@@ -211,8 +257,8 @@ function CouponCard({ title, desc, date, amount, icon, color, tag, index }: Coup
       </div>
 
       {/* Ticket Punches */}
-      <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-[#0A0A1A] border border-white/5" />
-      <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-[#0A0A1A] border border-white/5" />
+      <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-[var(--bg-base)] border border-white/5" />
+      <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-[var(--bg-base)] border border-white/5" />
     </motion.div>
   );
 }

@@ -53,6 +53,8 @@ export interface UserPreferences {
   special: string[];
   foodPreference: string[];
   intensity: string;
+  companion?: string;
+  freeText?: string;
 }
 
 // AI 生成的单个打卡点
@@ -122,6 +124,19 @@ export interface GeneratedVlog {
   verdict: string;      // 人格化总结金句（战报卡用），如"今天你是个 City Walker"
   geo?: VlogGeo;        // 路线回放几何（有真实路线时才有）
   createdAt: number;    // 生成时间戳
+}
+
+// 一次探索的完整记录
+export interface TripRecord {
+  id: string;
+  date: string;
+  avatar: string;
+  waypoints: { name: string; emoji: string; isHidden?: boolean; reaction?: string }[];
+  stationCount: number;
+  distanceKm: number;
+  durationMin: number;
+  rewards: string[];
+  reaction?: string;
 }
 
 // POI 数据库里的一条记录

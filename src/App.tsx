@@ -34,7 +34,12 @@ function loadProfile(): UserProfile | null {
 export default function App() {
   // 主题：暗色(dark) / 浅色(light)，持久化到 localStorage
   const [theme, setTheme] = useState<"dark" | "light">(() => {
-    try { return (localStorage.getItem(THEME_KEY) as "dark" | "light") ?? "dark"; } catch { return "dark"; }
+    try {
+      const saved = localStorage.getItem(THEME_KEY) as "dark" | "light" | null;
+      if (saved) return saved;
+      const hour = new Date().getHours();
+      return (hour >= 6 && hour < 18) ? "light" : "dark";
+    } catch { return "dark"; }
   });
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
@@ -165,9 +170,15 @@ export default function App() {
     runGeneration(DEFAULT_PREFERENCES);
   };
 
-  // 偏好页确认
+  // 偏好页确认 → 先进装备确认
   const handlePreferenceConfirm = (prefs: UserPreferences) => {
-    runGeneration(prefs);
+    setPreferences(prefs);
+    setExploreStep("gear_confirmation");
+  };
+
+  // 装备确认 → 开始生成路线
+  const handleGearConfirm = () => {
+    runGeneration(preferences ?? DEFAULT_PREFERENCES);
   };
 
   // 二叉树 A/B：用户选定第二站 → 写回 waypoints[1] → 进 next_objective
@@ -218,11 +229,12 @@ export default function App() {
               onNavigate={navigate}
               onPreferenceConfirm={handlePreferenceConfirm}
               onDirectStart={handleDirectStart}
+              onGearConfirm={handleGearConfirm}
               generatedRoute={generatedRoute}
               currentPosition={currentPosition}
               onUserDrag={setOverridePosition}
               onBranchChoice={handleBranchChoice}
-              mystery={preferences?.intensity === "relaxed"}
+              mystery={preferences?.intensity === "don't_think"}
               chatMessages={chatMessages}
               chatLoading={chatLoading}
               onChatSend={handleChatSend}

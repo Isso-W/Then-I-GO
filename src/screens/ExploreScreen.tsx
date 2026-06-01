@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Sparkles, Zap, BookOpen, Compass, Gift, Navigation, HelpCircle, Clock, RotateCcw, CheckCircle2, ChevronDown, MapPin, ExternalLink, Camera, X, RefreshCw, Bike, Rocket, Target, Layers, ChevronLeft, Smile, Frown, Meh, Wind, Utensils, Search, Palette, Mountain, Coffee, Book, Users, CameraIcon, Gem, PiggyBank, Flame, Pizza, Wand2, Smartphone, Battery, Umbrella, CreditCard, Info, ChevronRight } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Sparkles, Zap, Compass, Gift, Navigation, HelpCircle, Clock, RotateCcw, CheckCircle2, ChevronDown, MapPin, ExternalLink, Camera, X, RefreshCw, Bike, Rocket, Target, Layers, ChevronLeft, Smile, Frown, Meh, Wind, Utensils, Search, Palette, Mountain, Coffee, Book, Users, CameraIcon, Gem, PiggyBank, Flame, Pizza, Wand2, Smartphone, Battery, Umbrella, CreditCard, Info, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
 import { BottomNav } from "../components/CommonUI";
@@ -15,6 +15,7 @@ export function ExploreScreen({
   setStep,
   onPreferenceConfirm,
   onDirectStart,
+  onGearConfirm,
   generatedRoute,
   currentPosition,
   onUserDrag,
@@ -29,6 +30,7 @@ export function ExploreScreen({
   setStep: (s: ExploreStep) => void;
   onPreferenceConfirm: (prefs: UserPreferences) => void;
   onDirectStart: () => void;
+  onGearConfirm?: () => void;
   generatedRoute: GeneratedRoute | null;
   currentPosition: LatLng;
   onUserDrag?: (p: LatLng) => void;
@@ -56,7 +58,7 @@ export function ExploreScreen({
     setStep("reward_hidden");
   };
 
-  const isGameStarted = !["intro", "preference_selection"].includes(step);
+  const isGameStarted = !["intro", "preference_selection", "gear_confirmation"].includes(step);
   const isCapturing = ["checkin_initial", "checkin_hidden", "checkin_next"].includes(step);
 
   // 接近触发打卡（模拟 LBS）：红点进入激活 waypoint 半径内才允许打卡。
@@ -83,9 +85,8 @@ export function ExploreScreen({
       </div>
       <FogLayer />
       {(step === "intro" || (isGameStarted && !isCapturing)) && <ExploreHeader />}
-      {isGameStarted && !isCapturing && <ProgressPanel step={step} />}
-      {isGameStarted && !isCapturing && <FloatingActions onAction={(a) => a === 'event' && onNavigate('event')} />}
-      {isGameStarted && !isCapturing && <Legend step={step} />}
+      {isGameStarted && !isCapturing && <ProgressPanel step={step} route={generatedRoute} />}
+      {isGameStarted && !isCapturing && <DirectionPanel route={generatedRoute} step={step} rangeLabel={rangeLabel} />}
       
       <AnimatePresence>
         {step === "intro" && (
@@ -97,6 +98,9 @@ export function ExploreScreen({
         )}
         {step === "preference_selection" && (
           <PreferenceOverlay key="preference" onConfirm={onPreferenceConfirm} onBack={() => setStep("intro")} />
+        )}
+        {step === "gear_confirmation" && (
+          <GearConfirmationOverlay onConfirm={() => onGearConfirm?.()} onBack={() => setStep("preference_selection")} />
         )}
       </AnimatePresence>
 
@@ -196,19 +200,31 @@ export function ExploreScreen({
 function FogLayer() {
   return (
     <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
-      <motion.div 
-        animate={{ x: [0, 20, 0], opacity: [0.15, 0.25, 0.15] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-        className="absolute -left-28 top-[25%] h-44 w-80 rounded-full bg-slate-300/20 blur-2xl" 
+      {/* 上方浓雾 */}
+      <div className="absolute -left-10 -top-10 right-0 h-[35%] bg-gradient-to-b from-[#07101d] via-[#07101d]/80 to-transparent" />
+      {/* 下方浓雾 */}
+      <div className="absolute -left-10 -bottom-10 right-0 h-[30%] bg-gradient-to-t from-[#07101d] via-[#07101d]/70 to-transparent" />
+      {/* 左右边缘雾 */}
+      <div className="absolute left-0 top-0 bottom-0 w-[20%] bg-gradient-to-r from-[#07101d]/80 to-transparent" />
+      <div className="absolute right-0 top-0 bottom-0 w-[20%] bg-gradient-to-l from-[#07101d]/80 to-transparent" />
+      {/* 漂浮迷雾 */}
+      <motion.div
+        animate={{ x: [0, 30, 0], opacity: [0.2, 0.35, 0.2] }}
+        transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+        className="absolute -left-20 top-[20%] h-56 w-96 rounded-full bg-slate-400/15 blur-3xl"
       />
-      <motion.div 
-        animate={{ x: [0, -30, 0], opacity: [0.1, 0.2, 0.1] }}
-        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-        className="absolute -right-24 top-[20%] h-52 w-96 rounded-full bg-slate-300/20 blur-3xl" 
+      <motion.div
+        animate={{ x: [0, -25, 0], opacity: [0.15, 0.3, 0.15] }}
+        transition={{ duration: 16, repeat: Infinity, ease: "linear" }}
+        className="absolute -right-16 top-[35%] h-48 w-80 rounded-full bg-indigo-400/10 blur-3xl"
       />
-      <div className="absolute left-[10%] bottom-[30%] h-40 w-80 rounded-full bg-slate-300/24 blur-3xl" />
-      <div className="absolute right-[-10%] bottom-[20%] h-48 w-80 rounded-full bg-slate-300/18 blur-3xl" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_52%_58%,transparent_0%,transparent_24%,rgba(10,10,26,0.18)_45%,rgba(10,10,26,0.72)_100%)]" />
+      <motion.div
+        animate={{ y: [0, -15, 0], opacity: [0.1, 0.25, 0.1] }}
+        transition={{ duration: 14, repeat: Infinity, ease: "linear" }}
+        className="absolute left-[15%] bottom-[25%] h-52 w-96 rounded-full bg-purple-300/12 blur-3xl"
+      />
+      {/* 中央透光区域 */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,transparent_0%,transparent_18%,rgba(7,16,29,0.3)_40%,rgba(7,16,29,0.75)_100%)]" />
     </div>
   );
 }
@@ -216,31 +232,47 @@ function FogLayer() {
 function ExploreHeader() {
   return (
     <header className="absolute left-5 right-5 top-[56px] z-30 flex items-start justify-between">
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-      >
+      <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
         <h1 className="flex items-center gap-2 text-[24px] font-bold leading-none text-white drop-shadow-lg">
           那我走 <Sparkles size={14} className="text-[#FFD166]" />
         </h1>
-        <p className="mt-1.5 text-[12px] text-[#D7D7E8]/80 font-medium">你只管出门，剩下由系统决定</p>
+        <p className="mt-1.5 text-[12px] text-[#D7D7E8]/80 font-medium">你只管走出门，剩下的由系统决定</p>
       </motion.div>
-      <button className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 py-1.5 px-3 text-[11px] text-white backdrop-blur-md transition-all active:scale-95">
-        <BookOpen size={14} />日志
+      <button className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 py-1.5 px-3 text-[11px] text-white backdrop-blur-md active:scale-95 transition-all">
+        <Clock size={12} />任务日志
       </button>
     </header>
   );
 }
 
-function ProgressPanel({ step }: { step: ExploreStep }) {
+function ProgressPanel({ step, route }: { step: ExploreStep; route: GeneratedRoute | null }) {
+  const total = route ? route.waypoints.length + (route.hiddenTask ? 1 : 0) : 5;
+  const current = step === "initial" || step === "checkin_initial" ? 1
+    : step === "hidden_active" || step === "checkin_hidden" || step === "hidden_found" ? 2
+    : step === "next_objective" || step === "checkin_next" ? Math.min(3, total)
+    : step === "achievement_unlock" ? total : 1;
+  const pct = Math.round((current / total) * 100);
+
   return (
-    <Glass className="absolute left-4 top-[120px] z-20 w-[115px] p-2.5 text-white bg-[#0F172A]/80">
-      <div className="flex items-center justify-between text-[10px]">
-        <div className="flex items-center gap-1.5 opacity-60 font-medium">
-          <Zap size={12} className="fill-[#FFD166] text-[#FFD166]" />
-          <span>体力</span>
+    <Glass className="absolute left-4 top-[120px] z-20 w-[140px] p-3 text-white">
+      <div className="text-[10px] font-bold text-white/50">当前进度</div>
+      <div className="mt-1 flex items-baseline gap-1.5">
+        <span className="text-[18px] font-black">{current}/{total}</span>
+      </div>
+      <div className="mt-1.5 h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+        <motion.div className="h-full rounded-full bg-[#6C5CFF]" initial={{ width: 0 }} animate={{ width: `${pct}%` }} />
+      </div>
+      <div className="mt-2.5 flex items-center gap-2 text-[9px] font-bold text-white/60">
+        <span className="flex items-center gap-0.5"><Flame size={9} className="text-orange-400" />240</span>
+        <span className="flex items-center gap-0.5"><Zap size={9} className="text-[#FFD166]" />80分</span>
+        <span className="flex items-center gap-0.5"><MapPin size={9} className="text-[#A98BFF]" />4.5</span>
+      </div>
+      <div className="mt-2 border-t border-white/5 pt-2">
+        <div className="text-[9px] font-bold text-white/40">今日目标</div>
+        <div className="mt-1 space-y-1 text-[9px] text-white/50">
+          <div className="flex items-center gap-1"><CheckCircle2 size={8} className="text-emerald-400" />完成首站打卡</div>
+          <div className="flex items-center gap-1"><Target size={8} className="text-white/30" />触发隐藏任务</div>
         </div>
-        <span className="font-bold text-[#FFD166]">85</span>
       </div>
     </Glass>
   );
@@ -265,20 +297,26 @@ function FloatingActions({ onAction }: { onAction: (a: string) => void }) {
   );
 }
 
-function Legend({ step }: { step?: ExploreStep }) {
-  const isIntro = step === "intro";
+function DirectionPanel({ route, step, rangeLabel }: { route: GeneratedRoute | null; step: ExploreStep; rangeLabel: string | null }) {
+  const wp = step === "initial" || step === "checkin_initial" ? route?.waypoints[0]
+    : step === "hidden_active" || step === "checkin_hidden" ? route?.hiddenTask
+    : route?.waypoints[1];
+
   return (
-    <div className="absolute right-5 bottom-[40%] z-30 flex flex-col gap-3">
-      <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1A1A2E]/80 border border-white/10 text-white/40 shadow-lg active:scale-95">
-        <HelpCircle size={20} />
-      </button>
-      <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1A1A2E]/80 border border-white/10 text-white shadow-lg active:scale-95">
-        <Target size={20} />
-      </button>
-      <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1A1A2E]/80 border border-white/10 text-white shadow-lg active:scale-95">
-        <Layers size={20} />
-      </button>
-    </div>
+    <Glass className="absolute right-4 top-[120px] z-20 w-[130px] p-3 text-white">
+      <div className="text-[9px] font-bold text-[#A98BFF]">下一目标</div>
+      <div className="mt-1.5 flex items-center gap-1.5">
+        <Navigation size={12} className="text-[#6C5CFF] rotate-45 shrink-0" />
+        <span className="text-[12px] font-black leading-tight">{wp?.distanceText ?? "向前走"}</span>
+      </div>
+      <div className="mt-1 text-[9px] text-white/40">{rangeLabel ? `距目标 ${rangeLabel}` : "预计 2 分钟到达"}</div>
+
+      <div className="mt-3 border-t border-white/5 pt-2 space-y-1.5 text-[8px] text-white/40">
+        <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#6C5CFF]" />打卡点</div>
+        <div className="flex items-center gap-1.5"><span className="h-2 w-2 rotate-45 border border-[#FFD166] bg-transparent" />下一目标</div>
+        <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" />已完成</div>
+      </div>
+    </Glass>
   );
 }
 
@@ -292,7 +330,7 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, inRange, hasTar
   rangeLabel: string | null;
   mystery?: boolean;
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
 
   const isHiddenActive = step === "hidden_active" || step === "checkin_hidden";
   const isInitial = step === "initial" || step === "checkin_initial";
@@ -305,84 +343,66 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, inRange, hasTar
   const getTaskContent = () => {
     if (isInitial) return {
       title: wp0?.name ?? "前往第一站",
-      desc: wp0?.task ?? "前方直走100m|预计6min到达",
-      detail: wp0?.description ?? "目的地在地下，那里夏凉冬不凉",
+      desc: wp0?.description ?? "目的地在地下，那里夏凉冬不凉",
+      task: wp0?.task ?? "前方直走100m",
       reward: wp0?.reward ?? "+10 XP",
+      emoji: wp0?.emoji ?? "📍",
       color: "#6C5CFF",
+      distanceText: wp0?.distanceText ?? "向前走",
+      isChallenge: false,
     };
     if (isHiddenActive) return {
       title: hidden?.name ? `秘密：${hidden.name}` : "隐藏坐标",
-      desc: hidden?.task ?? "开启特殊的视频打卡",
-      detail: hidden?.description ?? "附近藏着一个未公开的坐标，去发现它，完成一次特别打卡。",
+      desc: hidden?.description ?? "附近藏着一个未公开的坐标，去发现它。",
+      task: hidden?.task ?? "开启特殊的视频打卡",
       reward: hidden?.reward ?? "+50 XP",
+      emoji: hidden?.emoji ?? "✨",
       color: "#F59E0B",
+      distanceText: hidden?.distanceText ?? "向前走",
+      isChallenge: true,
     };
     if (isNext) return {
       title: wp1?.name ?? "前往下一站",
-      desc: wp1?.task ?? "左转直走1km|预计12min到达",
-      detail: wp1?.description ?? "那里是个即便你发呆四个小时，也会被认为'思考人生'的合法场所",
+      desc: wp1?.description ?? "那里是个即便你发呆四个小时，也会被认为'思考人生'的合法场所",
+      task: wp1?.task ?? "左转直走",
       reward: wp1?.reward ?? "+20 XP",
+      emoji: wp1?.emoji ?? "📍",
       color: "#0066FF",
+      distanceText: wp1?.distanceText ?? "向前走",
+      isChallenge: false,
     };
-    return { title: "任务完成", desc: "点击查看后续", detail: "", reward: "+0", color: "#10B981" };
+    return { title: "任务完成", desc: "", task: "点击查看后续", reward: "+0", emoji: "🎉", color: "#10B981", distanceText: "", isChallenge: false };
   };
 
   const content = getTaskContent();
-  // 惊喜模式：到达（inRange）前藏起目的地名字，到了才揭晓；故事/任务文案仍作预告
   const displayTitle = mystery && hasTarget && !inRange ? "？？？" : content.title;
 
   const handleAction = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onCheckIn(); // 随时可打卡/记录；接近只做提醒，不拦截
+    onCheckIn();
   };
 
   return (
-    <Glass 
+    <Glass
       onClick={() => setIsExpanded(!isExpanded)}
-      className={`relative w-full z-40 p-6 text-white overflow-hidden transition-all duration-300 cursor-pointer rounded-[32px] bg-[#0F172A]/90 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]`}
+      className="relative w-full z-40 text-white overflow-hidden cursor-pointer rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
     >
-      <div className={`absolute inset-0 bg-gradient-to-br from-[${content.color}]/10 to-transparent pointer-events-none`} />
-      
-      <div className="mb-2.5 flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <Sparkles size={14} className="text-[#FFD166]" />
-          <h2 className="text-[16px] font-bold uppercase tracking-tight">
-            {isInitial ? "首站探索" : isHiddenActive ? "触发：隐藏任务" : isNext ? "今日终点" : "探索中"}
+      <div className="flex items-center justify-between px-5 pt-4 pb-2">
+        <div className="flex items-center gap-2">
+          <motion.div animate={{ rotate: isExpanded ? 0 : -90 }} className="text-white/40">
+            <ChevronDown size={14} />
+          </motion.div>
+          <h2 className="text-[13px] font-black text-white/80">
+            {isInitial ? "下一步任务" : isHiddenActive ? "隐藏任务" : isNext ? "下一步任务" : "探索中"}
           </h2>
-          {hasTarget && (
-            <span
-              className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
-                inRange ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-white/45"
-              }`}
-            >
-              {inRange ? "✓ 到了 · 可打卡" : `距目标 ${rangeLabel}`}
-            </span>
+          {hasTarget && !inRange && rangeLabel && (
+            <span className="text-[10px] text-white/30">距离 {rangeLabel} 的路程</span>
+          )}
+          {hasTarget && inRange && (
+            <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold text-emerald-300">✓ 到了</span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 text-[16px] font-mono font-bold text-white/80">
-          <Clock size={14} />
-          <span>{isInitial ? "01:45" : isNext ? "12:00" : "∞"}</span>
-          <motion.div
-            animate={{ rotate: isExpanded ? 180 : 0 }}
-            className="ml-1 opacity-40"
-          >
-            <ChevronDown size={16} />
-          </motion.div>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-2.5">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/5 text-white ring-1 ring-white/10">
-          <Camera size={20} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-[15px] font-bold truncate text-white">{displayTitle}</div>
-          <p className="text-[11px] text-white/40 truncate">{content.desc}</p>
-        </div>
-        <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-lg">
-          <span className="text-[13px] font-bold text-[#FFD166]">{content.reward}</span>
-          <Zap size={12} className="fill-[#FFD166] text-[#FFD166]" />
-        </div>
+        <span className="text-[11px] font-mono font-bold text-white/40">{isInitial ? "02:00" : isNext ? "12:00" : "∞"}</span>
       </div>
 
       <AnimatePresence>
@@ -393,18 +413,38 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, inRange, hasTar
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="mt-4 space-y-3 pt-1">
-              <p className="text-[12px] leading-relaxed text-white/50">
-                {content.detail}
-              </p>
-              
-              <button
-                onClick={handleAction}
-                className="w-full rounded-xl py-3 text-[14px] font-bold text-white shadow-lg active:scale-[0.98] transition-transform"
-                style={{ backgroundImage: `linear-gradient(to right, ${content.color}, #5B21B6)` }}
-              >
-                开启打卡 / 记录 VLOG
-              </button>
+            <div className="px-5 pb-4 space-y-3">
+              <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.03] p-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#6C5CFF]/15 text-[22px]">
+                  <Navigation size={20} className="text-[#A98BFF] rotate-45" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[15px] font-black text-white">{content.distanceText}</div>
+                  <p className="mt-0.5 text-[11px] text-white/40 line-clamp-2">{content.desc}</p>
+                </div>
+                {content.isChallenge && (
+                  <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[9px] font-black text-amber-400">小挑战</span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-1 rounded-full bg-[#6C5CFF]/15 px-2.5 py-1 text-[11px] font-bold text-[#A98BFF]">
+                    <Zap size={10} className="fill-[#A98BFF]" />+10
+                  </span>
+                  <span className="flex items-center gap-1 rounded-full bg-[#FFD166]/15 px-2.5 py-1 text-[11px] font-bold text-[#FFD166]">
+                    <Gift size={10} />+5
+                  </span>
+                </div>
+                <button
+                  onClick={handleAction}
+                  className="rounded-full bg-[#6C5CFF] px-4 py-2 text-[12px] font-bold text-white shadow-lg active:scale-95 transition-transform"
+                >
+                  {inRange ? "打卡" : "记录"}
+                </button>
+              </div>
+
+              <p className="text-center text-[10px] text-white/25">保持好奇心的你真棒！</p>
             </div>
           </motion.div>
         )}
@@ -489,7 +529,7 @@ function BranchChoiceOverlay({ branch, onPick, mystery }: { branch?: RouteBranch
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.08 * i }}
             onClick={() => onPick(i)}
-            className="flex-1 rounded-3xl border border-white/10 bg-[#14142B]/90 p-4 text-left shadow-[0_18px_50px_rgba(0,0,0,.45)] active:scale-[0.97] transition-transform"
+            className="flex-1 rounded-3xl border border-white/10 bg-[var(--bg-card)]/90 p-4 text-left shadow-[0_18px_50px_rgba(0,0,0,.45)] active:scale-[0.97] transition-transform"
           >
             <div className="text-3xl">{opt.emoji}</div>
             <div className="mt-2 text-[15px] font-bold text-white">{mystery ? "？？？" : opt.name}</div>
@@ -508,6 +548,20 @@ function BranchChoiceOverlay({ branch, onPick, mystery }: { branch?: RouteBranch
 function CameraInterface({ onCapture, onClose }: { onCapture: () => void, onClose: () => void }) {
   const [isRecording, setIsRecording] = useState(false);
   const [progress, setProgress] = useState(0);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [hasCamera, setHasCamera] = useState(false);
+
+  useEffect(() => {
+    navigator.mediaDevices?.getUserMedia({ video: { facingMode: "environment" }, audio: false })
+      .then((stream) => {
+        streamRef.current = stream;
+        if (videoRef.current) videoRef.current.srcObject = stream;
+        setHasCamera(true);
+      })
+      .catch(() => setHasCamera(false));
+    return () => { streamRef.current?.getTracks().forEach(t => t.stop()); };
+  }, []);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -527,14 +581,18 @@ function CameraInterface({ onCapture, onClose }: { onCapture: () => void, onClos
   }, [isRecording, onCapture]);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
       className="absolute inset-0 z-[100] bg-black"
     >
-      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1541167760496-162955ed8a9f?auto=format&fit=crop&q=80&w=1200')] bg-cover bg-center opacity-80" />
+      {hasCamera ? (
+        <video ref={videoRef} autoPlay playsInline muted className="absolute inset-0 h-full w-full object-cover" />
+      ) : (
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1541167760496-162955ed8a9f?auto=format&fit=crop&q=80&w=1200')] bg-cover bg-center opacity-80" />
+      )}
       <div className="absolute inset-0 bg-black/40" />
       
       <div className="relative flex h-full flex-col justify-between p-6 pt-16 pb-12">
@@ -646,8 +704,9 @@ function VlogSuccessOverlay({ onContinue }: { onContinue: () => void }) {
 }
 
 const IntroOverlay: React.FC<{ onDirectStart: () => void; onCustomize: () => void }> = ({ onDirectStart, onCustomize }) => {
+  const [collapsed, setCollapsed] = useState(false);
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -659,41 +718,59 @@ const IntroOverlay: React.FC<{ onDirectStart: () => void; onCustomize: () => voi
         transition={{ type: "spring", damping: 25, stiffness: 120 }}
         className="w-full max-w-sm mx-auto"
       >
-        <div className="rounded-[32px] bg-[#0F172A]/90 border border-white/10 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-5">
+        <div className="rounded-[32px] border p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl" style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)" }}>
+          <button onClick={() => setCollapsed(!collapsed)} className="flex w-full items-center justify-between mb-1">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white/50">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-muted)" }}>
                 <Compass size={20} />
               </div>
-              <h2 className="text-lg font-black text-white italic tracking-tight">当前位置</h2>
+              <h2 className="text-lg font-black italic tracking-tight" style={{ color: "var(--text-primary)" }}>当前位置</h2>
             </div>
-            <div className="flex items-center gap-1.5 rounded-full bg-[#FFD166]/10 border border-[#FFD166]/20 px-3 py-1">
-               <span className="text-[10px] font-bold text-[#FFD166] uppercase tracking-wider">五道口 · 北京</span>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 rounded-full bg-[#FFD166]/10 border border-[#FFD166]/20 px-3 py-1">
+                 <span className="text-[10px] font-bold text-[#FFD166] uppercase tracking-wider">五道口 · 北京</span>
+              </div>
+              <motion.div animate={{ rotate: collapsed ? 180 : 0 }} transition={{ duration: 0.2 }}>
+                <ChevronDown size={16} style={{ color: "var(--text-muted)" }} />
+              </motion.div>
             </div>
-          </div>
-          
-          <p className="text-[14px] font-medium text-white/70 leading-relaxed mb-6 px-1">
-            在迷雾中隐藏着未知的惊喜。踏出你的第一步，解锁神秘故事
-          </p>
+          </button>
 
-          <div className="flex flex-col gap-3">
-            <button 
-              onClick={onDirectStart}
-              className="group relative flex w-full items-center justify-center gap-2 rounded-full bg-[#6C5CFF] py-3 text-[15px] font-black text-white shadow-[0_10px_30px_rgba(108,92,255,0.4)] active:scale-[0.98] transition-all overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-              <span className="relative tracking-wider">开始探索吧！</span>
-              <Rocket size={16} className="relative fill-white" />
-            </button>
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="overflow-hidden"
+              >
+                <p className="text-[14px] font-medium leading-relaxed mb-6 mt-4 px-1" style={{ color: "var(--text-muted)" }}>
+                  在迷雾中隐藏着未知的惊喜。踏出你的第一步，解锁神秘故事
+                </p>
 
-            <button 
-              onClick={onCustomize}
-              className="w-full flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 py-3 text-[14px] font-bold text-white/60 active:scale-[0.98] transition-all"
-            >
-              <Target size={14} className="opacity-60" />
-              <span>自定义偏好</span>
-            </button>
-          </div>
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={onDirectStart}
+                    className="group relative flex w-full items-center justify-center gap-2 rounded-full bg-[#6C5CFF] py-3 text-[15px] font-black text-white shadow-[0_10px_30px_rgba(108,92,255,0.4)] active:scale-[0.98] transition-all overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                    <span className="relative tracking-wider">开始探索吧！</span>
+                    <Rocket size={16} className="relative fill-white" />
+                  </button>
+
+                  <button
+                    onClick={onCustomize}
+                    className="w-full flex items-center justify-center gap-2 rounded-full border py-3 text-[14px] font-bold active:scale-[0.98] transition-all"
+                    style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-input)", color: "var(--text-muted)" }}
+                  >
+                    <Target size={14} className="opacity-60" />
+                    <span>自定义偏好</span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
     </motion.div>
@@ -767,7 +844,7 @@ function AchievementOverlay({ onContinue }: { onContinue: () => void }) {
       animate={{ opacity: 1 }}
       className="absolute inset-0 z-[130] flex items-center justify-center p-8 backdrop-blur-2xl bg-black/60"
     >
-      <div className="w-full max-w-sm rounded-[40px] bg-[#0F172A] p-8 text-center border-2 border-white/10 relative overflow-hidden">
+      <div className="w-full max-w-sm rounded-[40px] bg-[var(--bg-card)] p-8 text-center border-2 border-white/10 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(108,92,255,0.2),transparent_70%)]" />
         
         <div className="relative z-10">
@@ -778,7 +855,7 @@ function AchievementOverlay({ onContinue }: { onContinue: () => void }) {
             className="mb-8 flex justify-center"
           >
             <div className="h-32 w-32 rounded-full bg-gradient-to-tr from-[#6C5CFF] to-[#A855F7] p-1 shadow-[0_0_50px_rgba(108,92,255,0.6)]">
-              <div className="h-full w-full rounded-full bg-[#0F172A] flex items-center justify-center">
+              <div className="h-full w-full rounded-full bg-[var(--bg-card)] flex items-center justify-center">
                  <Compass size={60} className="text-white" />
               </div>
             </div>
@@ -811,6 +888,8 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
   const [special, setSpecial] = useState<string[]>(["outdoor"]);
   const [foodPreference, setFoodPreference] = useState<string[]>(["coffee"]);
   const [intensity, setIntensity] = useState("don't_think");
+  const [companion, setCompanion] = useState("solo");
+  const [freeText, setFreeText] = useState("");
 
   const moods = [
     { id: "happy", icon: Smile, label: "开心" },
@@ -851,11 +930,9 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
     { id: "coffee", icon: Coffee, label: "甜品咖啡" },
   ];
 
-  // 省心 → 冒险 的梯子，每档行为不同（sub 写明区别，就在「程度」问号旁的选择区里）
   const intensities: { id: string; icon: typeof Target; label: string; sub?: string; recommended?: boolean }[] = [
-    { id: "don't_think", icon: Wand2, label: "别让我思考", sub: "不用选·直接带路", recommended: true },
-    { id: "normal", icon: Book, label: "正常探索", sub: "有岔路·你来选" },
-    { id: "relaxed", icon: Sparkles, label: "惊喜模式", sub: "藏目的地·到了揭晓" },
+    { id: "don't_think", icon: Wand2, label: "别让我思考", sub: "隐藏下一站·直接带路", recommended: true },
+    { id: "normal", icon: Book, label: "正常探索", sub: "显示下一站·你来选" },
   ];
 
   const toggleList = (list: string[], setList: (l: string[]) => void, id: string) => {
@@ -871,7 +948,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
       initial={{ opacity: 0, scale: 1.05 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-[100] flex flex-col bg-[#05070A]"
+      className="absolute inset-0 z-[100] flex flex-col bg-[var(--bg-base)]"
     >
       <div className="flex items-center px-4 py-4 mt-12">
         <button onClick={onBack} className="p-2 text-white/80 active:scale-90 bg-white/5 rounded-full">
@@ -927,7 +1004,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
               key={m.id}
               onClick={() => setMood(m.id)}
               className={`flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl border transition-all ${
-                mood === m.id ? "bg-[#1A1A2E] border-[#6C5CFF] text-[#6C5CFF]" : "bg-white/5 border-transparent text-white/40"
+                mood === m.id ? "bg-[var(--bg-card)] border-[#6C5CFF] text-[#6C5CFF]" : "bg-white/5 border-transparent text-white/40"
               }`}
             >
               <m.icon size={18} strokeWidth={mood === m.id ? 2.5 : 2} />
@@ -945,7 +1022,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
                   key={d.id}
                   onClick={() => setDuration(d.id)}
                   className={`py-2 px-1 rounded-xl border text-[9px] font-bold transition-all ${
-                    duration === d.id ? "bg-[#1A1A2E] border-[#6C5CFF] text-white shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-white/5 border-transparent text-white/30"
+                    duration === d.id ? "bg-[var(--bg-card)] border-[#6C5CFF] text-white shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-white/5 border-transparent text-white/30"
                   }`}
                 >
                   {d.label}
@@ -961,7 +1038,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
                    key={t.id}
                    onClick={() => setTransport(t.id)}
                    className={`flex items-center justify-center gap-2 py-2 rounded-xl border text-[9px] font-bold transition-all ${
-                     transport === t.id ? "bg-[#1A1A2E] border-[#6C5CFF] text-white shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-white/5 border-transparent text-white/30"
+                     transport === t.id ? "bg-[var(--bg-card)] border-[#6C5CFF] text-white shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-white/5 border-transparent text-white/30"
                    }`}
                  >
                    <t.icon size={12} />
@@ -980,11 +1057,32 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
               key={s.id}
               onClick={() => toggleList(special, setSpecial, s.id)}
               className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-[9px] font-bold transition-all ${
-                special.includes(s.id) ? "bg-[#1A1A2E] border-[#6C5CFF] text-white shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-white/5 border-transparent text-white/40"
+                special.includes(s.id) ? "bg-[var(--bg-card)] border-[#6C5CFF] text-white shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-white/5 border-transparent text-white/40"
               }`}
             >
               <s.icon size={11} />
               {s.label}
+            </button>
+          ))}
+        </div>
+
+        <SectionTitle num="" title="同行人物" sub="(可选)" />
+        <div className="flex flex-wrap gap-2 mb-6">
+          {([
+            { id: "solo", icon: Users, label: "独自" },
+            { id: "couple", icon: Users, label: "情侣" },
+            { id: "friends", icon: Users, label: "朋友" },
+            { id: "family", icon: Users, label: "家庭" },
+          ] as const).map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setCompanion(c.id)}
+              className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-[9px] font-bold transition-all ${
+                companion === c.id ? "bg-[var(--bg-card)] border-[#6C5CFF] text-white shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-white/5 border-transparent text-white/40"
+              }`}
+            >
+              <c.icon size={11} />
+              {c.label}
             </button>
           ))}
         </div>
@@ -996,7 +1094,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
               key={f.id}
               onClick={() => toggleList(foodPreference, setFoodPreference, f.id)}
               className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-[9px] font-bold transition-all ${
-                foodPreference.includes(f.id) ? "bg-[#1A1A2E] border-[#6C5CFF] text-white shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-white/5 border-transparent text-white/40"
+                foodPreference.includes(f.id) ? "bg-[var(--bg-card)] border-[#6C5CFF] text-white shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-white/5 border-transparent text-white/40"
               }`}
             >
               <f.icon size={11} />
@@ -1005,24 +1103,33 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
           ))}
         </div>
 
+        <SectionTitle num="" title="还有想说的？" sub="(可选)" />
+        <textarea
+          value={freeText}
+          onChange={(e) => setFreeText(e.target.value)}
+          placeholder="比如：今天想吃火锅、想看日落、想找安静的地方发呆…"
+          rows={2}
+          className="mb-6 w-full resize-none rounded-xl border px-3 py-2.5 text-[12px] font-medium placeholder:text-white/20 focus:outline-none focus:border-[#6C5CFF]"
+          style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-subtle)", color: "var(--text-primary)" }}
+        />
+
         <SectionTitle
           num={5}
           title="今天想被安排什么程度？"
           help={
             <div className="space-y-1.5">
-              <div><span className="font-bold text-white">别让我思考</span>：不用选，直接带你逛</div>
-              <div><span className="font-bold text-white">正常探索</span>：路上有岔路，你来选</div>
-              <div><span className="font-bold text-white">惊喜模式</span>：目的地藏起来，到了才揭晓</div>
+              <div><span className="font-bold text-white">别让我思考</span>：隐藏下一站位置，直接带你走</div>
+              <div><span className="font-bold text-white">正常探索</span>：显示下一站位置，岔路你来选</div>
             </div>
           }
         />
-        <div className="grid grid-cols-3 gap-2 mb-6">
+        <div className="grid grid-cols-2 gap-2 mb-6">
           {intensities.map((i) => (
             <button
               key={i.id}
               onClick={() => setIntensity(i.id)}
               className={`relative flex flex-col items-center text-center gap-1 p-1 py-2.5 rounded-xl border transition-all ${
-                intensity === i.id ? "bg-[#1A1A2E] border-[#6C5CFF] text-white shadow-[0_0_20px_rgba(108,92,255,0.3)]" : "bg-white/5 border-transparent text-white/30"
+                intensity === i.id ? "bg-[var(--bg-card)] border-[#6C5CFF] text-white shadow-[0_0_20px_rgba(108,92,255,0.3)]" : "bg-white/5 border-transparent text-white/30"
               }`}
             >
               {i.recommended && (
@@ -1039,7 +1146,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
 
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] p-5 bg-gradient-to-t from-[#05070A] via-[#05070A] to-transparent">
         <button 
-          onClick={() => onConfirm({ mood, duration, transport, special, foodPreference, intensity })}
+          onClick={() => onConfirm({ mood, duration, transport, special, foodPreference, intensity, companion, freeText: freeText.trim() || undefined })}
           className="group relative flex w-full items-center justify-center gap-3 rounded-full bg-[#6C5CFF] py-3.5 text-[16px] font-black text-white shadow-[0_15px_40px_rgba(108,92,255,0.4)] active:scale-[0.98] transition-all overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -1063,7 +1170,7 @@ function SectionTitle({ num, title, sub, help }: { num: number | string; title: 
       {help && (
         <span className="group relative inline-flex">
           <HelpCircle size={12} className="text-white/30 hover:text-white/70 cursor-help transition-colors" />
-          <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full z-50 mt-2 w-56 rounded-xl border border-white/10 bg-[#14142B] p-3 text-left text-[11px] leading-relaxed text-white/70 opacity-0 shadow-[0_12px_30px_rgba(0,0,0,0.55)] transition-opacity duration-150 group-hover:opacity-100">
+          <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full z-50 mt-2 w-56 rounded-xl border border-white/10 bg-[var(--bg-card)] p-3 text-left text-[11px] leading-relaxed text-white/70 opacity-0 shadow-[0_12px_30px_rgba(0,0,0,0.55)] transition-opacity duration-150 group-hover:opacity-100">
             {help}
           </span>
         </span>
@@ -1100,7 +1207,7 @@ function GearConfirmationOverlay({ onConfirm, onBack }: { onConfirm: () => void;
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
-      className="absolute inset-0 z-[100] flex flex-col bg-[#05070A]"
+      className="absolute inset-0 z-[100] flex flex-col bg-[var(--bg-base)]"
     >
       <div className="flex items-center px-4 py-4 mt-12">
         <button onClick={onBack} className="p-2 text-white/80 active:scale-90 bg-white/5 rounded-full">
@@ -1122,7 +1229,7 @@ function GearConfirmationOverlay({ onConfirm, onBack }: { onConfirm: () => void;
               onClick={() => toggleGear(item.id)}
               className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${
                 confirmed.includes(item.id) 
-                  ? "bg-[#1A1A2E] border-[#6C5CFF] shadow-[0_8px_20px_rgba(108,92,255,0.15)]" 
+                  ? "bg-[var(--bg-card)] border-[#6C5CFF] shadow-[0_8px_20px_rgba(108,92,255,0.15)]" 
                   : "bg-white/5 border-white/5"
               }`}
             >

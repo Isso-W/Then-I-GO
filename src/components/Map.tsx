@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useEffect, type MouseEvent } from "react";
+import React, { useMemo, useRef, useState, useEffect, type MouseEvent } from "react";
 import { motion } from "motion/react";
 import streetNetwork from "../../scripts/data/street-network.json";
 import terrainRaw from "../../scripts/data/terrain.json";
@@ -86,8 +86,8 @@ export function Map({
 }) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  // 拖动期间设为 true，用来在随后的 click 事件里识别"这是拖动结尾，不是点击"
   const dragMovedRef = useRef(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   // 跟随模式：视野始终以"显示位置"为中心，固定半径。
   // - 拖动时 displayPosition 1:1 跟随 currentPosition（跟手不延迟）
@@ -121,8 +121,8 @@ export function Map({
   }, [currentPosition, isDragging]);
 
   const viewBox = useMemo(
-    () => defaultViewBox(displayPosition, FOLLOW_RADIUS_METERS),
-    [displayPosition]
+    () => defaultViewBox(displayPosition, FOLLOW_RADIUS_METERS / zoomLevel),
+    [displayPosition, zoomLevel]
   );
 
   const { width, height } = useMemo(() => bboxSizeMeters(viewBox), [viewBox]);
@@ -203,6 +203,15 @@ export function Map({
 
   const currentPos = projectLatLng(currentPosition, viewBox);
 
+  const nextWp = step === "initial" || step === "checkin_initial" ? route?.waypoints[0]
+    : step === "hidden_active" || step === "checkin_hidden" ? route?.hiddenTask
+    : step === "next_objective" || step === "checkin_next" ? route?.waypoints[1]
+    : undefined;
+  const nextWpPos = nextWp ? projectLatLng({ lat: nextWp.lat, lng: nextWp.lng }, viewBox) : null;
+  const dirAngle = nextWpPos
+    ? Math.atan2(nextWpPos.x - currentPos.x, -(nextWpPos.y - currentPos.y)) * (180 / Math.PI)
+    : 0;
+
   // 客户端像素 → SVG 用户坐标系（米）→ 经纬度
   // 用 getScreenCTM 自动处理 viewBox / preserveAspectRatio 缩放
   function clientToLatLng(clientX: number, clientY: number): LatLng | null {
@@ -251,7 +260,16 @@ export function Map({
     onUserDrag(snapToRoad(ll, ROAD_GRAPH));
   };
 
+  const zoomIn = () => setZoomLevel((z) => Math.min(z * 1.4, 4));
+  const zoomOut = () => setZoomLevel((z) => Math.max(z / 1.4, 0.4));
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    if (e.deltaY < 0) zoomIn(); else zoomOut();
+  };
+
   return (
+    <div className="absolute inset-0" onWheel={handleWheel}>
     <svg
       ref={svgRef}
       viewBox={`0 0 ${width} ${height}`}
@@ -393,19 +411,21 @@ export function Map({
           </g>
         ))}
 
-      {/* 当前位置：红色脉冲点。
-        - 普通状态：spring 跟随 currentPos（check-in 切站时平滑）
-        - 拖动中：直接置位、关掉 spring，跟手不延迟
-        - 可拖拽（cursor: grab/grabbing）
-      */}
+      {/* 方向箭头：指向下一个目标 */}
+      {nextWpPos && (
+        <g transform={`translate(${currentPos.x}, ${currentPos.y})`}>
+          <g transform={`scale(${markerScale}) rotate(${dirAngle})`}>
+            <line x1={0} y1={0} x2={0} y2={-38} stroke="#A98BFF" strokeWidth={2} opacity={0.5} strokeDasharray="4 3" />
+            <polygon points="0,-44 -5,-34 5,-34" fill="#A98BFF" opacity={0.7} />
+          </g>
+        </g>
+      )}
+
+      {/* 当前位置：发光 avatar */}
       <motion.g
         initial={false}
         animate={{ x: currentPos.x, y: currentPos.y }}
-        transition={
-          isDragging
-            ? { duration: 0 }
-            : { type: "spring", damping: 18, stiffness: 90, mass: 0.8 }
-        }
+        transition={{ duration: 0 }}
         style={{ cursor: onUserDrag ? (isDragging ? "grabbing" : "grab") : "default" }}
         onPointerDown={(e) => {
           if (!onUserDrag) return;
@@ -415,25 +435,28 @@ export function Map({
         }}
       >
         <g transform={`scale(${markerScale})`}>
-          {/* 拖拽热区：透明大圆，比可视点大很多，触控好按 */}
           <circle r={28} fill="transparent" />
-          <circle r={14} fill="#FF4D64" opacity={0.25}>
-            <animate
-              attributeName="r"
-              values="12;22;12"
-              dur="2.4s"
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="opacity"
-              values="0.35;0.1;0.35"
-              dur="2.4s"
-              repeatCount="indefinite"
-            />
+          {/* 外圈光晕 */}
+          <circle r={20} fill="#6C5CFF" opacity={0.08}>
+            <animate attributeName="r" values="18;26;18" dur="3s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.12;0.04;0.12" dur="3s" repeatCount="indefinite" />
           </circle>
-          <circle r={6} fill="#FF4D64" stroke="#FFFFFF" strokeWidth={1.5} />
+          <circle r={14} fill="#6C5CFF" opacity={0.15}>
+            <animate attributeName="r" values="13;17;13" dur="2.4s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.2;0.08;0.2" dur="2.4s" repeatCount="indefinite" />
+          </circle>
+          {/* avatar 底座 */}
+          <circle r={10} fill="#6C5CFF" stroke="#A98BFF" strokeWidth={1.5} />
+          {/* 小人图标 */}
+          <circle cx={0} cy={-3} r={3} fill="white" />
+          <path d="M-4,5 Q-4,0 0,0 Q4,0 4,5" fill="white" opacity={0.9} />
         </g>
       </motion.g>
     </svg>
+    <div className="absolute right-3 top-[120px] z-20 flex flex-col gap-1.5">
+      <button onClick={zoomIn} className="flex h-8 w-8 items-center justify-center rounded-lg border text-[16px] font-bold backdrop-blur-md active:scale-90 transition-transform" style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)", color: "var(--text-primary)" }}>+</button>
+      <button onClick={zoomOut} className="flex h-8 w-8 items-center justify-center rounded-lg border text-[16px] font-bold backdrop-blur-md active:scale-90 transition-transform" style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)", color: "var(--text-primary)" }}>−</button>
+    </div>
+    </div>
   );
 }
