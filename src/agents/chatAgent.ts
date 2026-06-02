@@ -1,8 +1,6 @@
-import { GoogleGenAI } from "@google/genai";
+import { generateContent } from "../lib/gemini";
 import type { GeneratedRoute, UserPreferences, Waypoint, POI } from "../types";
 import { filterCandidates, distanceMeters, walkingTimeText, ORIGIN } from "./poiFilter";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 export interface ChatAction {
   type: "replace_next" | "skip_current" | "add_stop" | "none";
@@ -67,12 +65,7 @@ action.type 说明：
 `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-lite",
-      contents: prompt,
-    });
-
-    const text = response.text ?? "";
+    const text = await generateContent("gemini-2.5-flash-lite", prompt);
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return { message: "抱歉，我没理解你的意思，能换个说法吗？", action: { type: "none" } };

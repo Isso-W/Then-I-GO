@@ -1,15 +1,53 @@
-import React from "react";
-import { ArrowLeft, User, Bell, Shield, Smartphone, HelpCircle, LogOut, ChevronRight, Moon, Globe, Volume2 } from "lucide-react";
-import { motion } from "motion/react";
+import React, { useState } from "react";
+import { ArrowLeft, User, Bell, Shield, Smartphone, HelpCircle, LogOut, ChevronRight, Moon, X } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
+import type { UserProfile } from "../types";
 
-export function SettingsScreen({ onBack, theme, onToggleTheme }: { onBack: () => void; theme?: "dark" | "light"; onToggleTheme?: () => void }) {
+const PROFILE_KEY = "userProfile";
+
+const MBTI_TYPES: { code: string; label: string }[] = [
+  { code: "INTJ", label: "建筑师" },
+  { code: "INTP", label: "逻辑学家" },
+  { code: "ENTJ", label: "指挥官" },
+  { code: "ENTP", label: "辩论家" },
+  { code: "INFJ", label: "提倡者" },
+  { code: "INFP", label: "调停者" },
+  { code: "ENFJ", label: "主人公" },
+  { code: "ENFP", label: "竞选者" },
+  { code: "ISTJ", label: "物流师" },
+  { code: "ISFJ", label: "守卫者" },
+  { code: "ESTJ", label: "总经理" },
+  { code: "ESFJ", label: "执政官" },
+  { code: "ISTP", label: "鉴赏家" },
+  { code: "ISFP", label: "探险家" },
+  { code: "ESTP", label: "企业家" },
+  { code: "ESFP", label: "表演者" },
+];
+
+export function SettingsScreen({ onBack, theme, onToggleTheme, profile, onUpdateProfile }: {
+  onBack: () => void;
+  theme?: "dark" | "light";
+  onToggleTheme?: () => void;
+  profile?: UserProfile | null;
+  onUpdateProfile?: (p: UserProfile) => void;
+}) {
+  const [mbtiOpen, setMbtiOpen] = useState(false);
+
+  const handleMbtiSelect = (code: string) => {
+    if (!profile) return;
+    const updated = { ...profile, mbti: code };
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(updated)); } catch {}
+    onUpdateProfile?.(updated);
+    setMbtiOpen(false);
+  };
+
   return (
     <AppLayout>
       <div className="absolute inset-0" style={{ backgroundColor: "var(--bg-base)" }} />
-      
+
       <header className="absolute left-0 right-0 top-[60px] z-30 flex items-center px-6">
-        <button 
+        <button
           onClick={onBack}
           className="flex h-10 w-10 items-center justify-center rounded-full active:scale-90"
           style={{ border: "1px solid var(--border-subtle)", backgroundColor: "var(--bg-input)", color: "var(--text-primary)" }}
@@ -26,6 +64,13 @@ export function SettingsScreen({ onBack, theme, onToggleTheme }: { onBack: () =>
             <SettingItem icon={<User size={18} />} label="个人资料" detail="那我走" />
             <div className="mx-4 h-px bg-white/5" />
             <SettingItem icon={<Smartphone size={18} />} label="绑定手机" detail="138****8888" />
+            <div className="mx-4 h-px bg-white/5" />
+            <SettingItem
+              icon={<span className="text-[16px]">🧠</span>}
+              label="MBTI 人格"
+              detail={profile?.mbti ?? "未设置"}
+              onClick={() => setMbtiOpen(true)}
+            />
           </Glass>
         </section>
 
@@ -47,20 +92,92 @@ export function SettingsScreen({ onBack, theme, onToggleTheme }: { onBack: () =>
           </Glass>
         </section>
 
-        <motion.button 
+        <motion.button
           whileTap={{ scale: 0.98 }}
           className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl border border-[#FF4D64]/30 bg-[#FF4D64]/10 text-[16px] font-bold text-[#FF4D64] mb-10"
         >
           <LogOut size={18} /> 退出登录
         </motion.button>
       </main>
+
+      <AnimatePresence>
+        {mbtiOpen && (
+          <MbtiPickerOverlay
+            current={profile?.mbti}
+            onSelect={handleMbtiSelect}
+            onClose={() => setMbtiOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </AppLayout>
   );
 }
 
-function SettingItem({ icon, label, detail }: { icon: React.ReactNode; label: string; detail?: string }) {
+function MbtiPickerOverlay({ current, onSelect, onClose }: {
+  current?: string;
+  onSelect: (code: string) => void;
+  onClose: () => void;
+}) {
   return (
-    <button className="flex w-full items-center justify-between p-5 transition-colors group" style={{ color: "var(--text-primary)" }}>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      className="absolute inset-0 z-[120] flex flex-col justify-end bg-black/60 backdrop-blur-sm"
+    >
+      <motion.div
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 26, stiffness: 240 }}
+        onClick={(e) => e.stopPropagation()}
+        className="max-h-[80%] overflow-y-auto no-scrollbar rounded-t-[28px] border-t p-5 pb-8 shadow-[0_-20px_60px_rgba(0,0,0,0.6)]"
+        style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)" }}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-[18px] font-black" style={{ color: "var(--text-primary)" }}>选择你的 MBTI</h2>
+          <button onClick={onClose} className="rounded-full p-1.5 active:scale-90" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-muted)" }}>
+            <X size={18} />
+          </button>
+        </div>
+        <p className="text-[12px] mb-5" style={{ color: "var(--text-muted)" }}>AI 会根据你的人格类型调整路线风格和文案语气</p>
+
+        <div className="grid grid-cols-4 gap-2.5">
+          {MBTI_TYPES.map((t, i) => {
+            const selected = current === t.code;
+            return (
+              <motion.button
+                key={t.code}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.02 }}
+                whileTap={{ scale: 0.92 }}
+                onClick={() => onSelect(t.code)}
+                className={`flex flex-col items-center gap-1 rounded-2xl border p-3 transition-colors ${
+                  selected
+                    ? "border-[#6C5CFF] bg-[#6C5CFF]/15"
+                    : "border-transparent bg-white/[0.04] active:bg-white/[0.08]"
+                }`}
+              >
+                <span className={`text-[14px] font-black tracking-wider ${selected ? "text-[#A98BFF]" : ""}`} style={selected ? undefined : { color: "var(--text-primary)" }}>
+                  {t.code}
+                </span>
+                <span className={`text-[10px] ${selected ? "text-[#A98BFF]/80" : ""}`} style={selected ? undefined : { color: "var(--text-muted)" }}>
+                  {t.label}
+                </span>
+              </motion.button>
+            );
+          })}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function SettingItem({ icon, label, detail, onClick }: { icon: React.ReactNode; label: string; detail?: string; onClick?: () => void }) {
+  return (
+    <button onClick={onClick} className="flex w-full items-center justify-between p-5 transition-colors group" style={{ color: "var(--text-primary)" }}>
       <div className="flex items-center gap-4">
         <div className="group-hover:text-[#A98BFF] transition-colors" style={{ color: "var(--text-muted)" }}>{icon}</div>
         <span className="text-[17px] font-medium" style={{ color: "var(--text-secondary)" }}>{label}</span>

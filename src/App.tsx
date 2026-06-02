@@ -181,7 +181,7 @@ export default function App() {
     chatActionLog.current = [];
     hiddenTriggered.current = false;
     try {
-      const route = await generateRoute(prefs, profile);
+      const route = await generateRoute(prefs, profile, tripHistory);
       setGeneratedRoute(route);
       setOverridePosition(null);
       setWaypointIndex(0);
@@ -212,9 +212,15 @@ export default function App() {
     runGeneration(DEFAULT_PREFERENCES);
   };
 
-  // 偏好页确认
+  // 偏好页确认 → 先进装备确认
   const handlePreferenceConfirm = (prefs: UserPreferences) => {
-    runGeneration(prefs);
+    setPreferences(prefs);
+    setExploreStep("gear_confirmation");
+  };
+
+  // 装备确认 → 开始生成路线
+  const handleGearConfirm = () => {
+    runGeneration(preferences ?? DEFAULT_PREFERENCES);
   };
 
   // 二叉树 A/B：用户选定第二站 → 写回 waypoints[1] → 进 next_objective
@@ -370,6 +376,7 @@ export default function App() {
               onNavigate={navigate}
               onPreferenceConfirm={handlePreferenceConfirm}
               onDirectStart={handleDirectStart}
+              onGearConfirm={handleGearConfirm}
               generatedRoute={generatedRoute}
               currentPosition={currentPosition}
               onUserDrag={setOverridePosition}
@@ -409,7 +416,7 @@ export default function App() {
           {screen === "bag" && <BagScreen onNavigate={navigate} generatedRoute={generatedRoute} />}
           {screen === "mine" && <MineScreen onNavigate={navigate} profile={profile} generatedRoute={generatedRoute} tripHistory={tripHistory} />}
           {screen === "event" && <EventDetailScreen onBack={() => navigate("explore")} />}
-          {screen === "settings" && <SettingsScreen onBack={() => navigate("mine")} theme={theme} onToggleTheme={toggleTheme} />}
+          {screen === "settings" && <SettingsScreen onBack={() => navigate("mine")} theme={theme} onToggleTheme={toggleTheme} profile={profile} onUpdateProfile={setProfile} />}
         </motion.div>
       </AnimatePresence>
     </div>

@@ -1,7 +1,5 @@
-import { GoogleGenAI } from "@google/genai";
+import { generateContent } from "../lib/gemini";
 import type { GeneratedVlog, VlogScene, VlogStyle } from "../types";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 // 三种风格的中文描述 + BGM 倾向，喂给 prompt 影响文案语气
 const STYLE_BRIEF: Record<VlogStyle, { label: string; vibe: string; bgm: string }> = {
@@ -160,11 +158,7 @@ ${stopBlock}
 `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-lite",
-      contents: prompt,
-    });
-    const text = response.text ?? "";
+    const text = await generateContent("gemini-2.5-flash-lite", prompt);
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("没找到 JSON");
 

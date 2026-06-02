@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { generateContent } from "../lib/gemini";
 import type { UserPreferences, UserProfile, GeneratedRoute, POI, Waypoint, RouteBranch, TripRecord } from "../types";
 import {
   filterCandidates,
@@ -8,8 +8,6 @@ import {
 } from "./poiFilter";
 import { wantsBranch, pickContrastingPair } from "../lib/branch";
 import { reviewRoute, type ReviewResult } from "./routeReviewer";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 const MOOD_LABELS: Record<string, string> = {
   happy: "开心", tired: "疲惫", bored: "无聊",
@@ -54,7 +52,6 @@ interface GeminiBranch {
 interface GeminiResponse {
   title: string;
   selections: GeminiSelection[];
-  hidden?: GeminiSelection;
   branch?: GeminiBranch;
 }
 
@@ -134,19 +131,18 @@ function buildPrompt(ctx: GenerateContext, revisionNote?: string): string {
     : "";
   const historyBlock = buildHistorySummary(history);
 
+  const totalSelections = selectionCount + 1; // +1 for hidden task (will be extracted from last selection)
   const tasks = [
-    `从候选里挑选 ${selectionCount} 个 poi_id，按推荐游玩顺序排列，注意品类多样性（不要连续选同类型地点）`,
+    `从候选里挑选 ${totalSelections} 个 poi_id，按推荐游玩顺序排列，注意品类多样性（不要连续选同类型地点）`,
     `给每个挑选的地点写故事氛围、打卡任务、奖励文案、emoji`,
     `写一个 10 字以内有意境的路线标题`,
+    `最后一个地点会被设为"隐藏惊喜站"，所以它的奖励要比其他站更好（限定徽章、隐藏菜单券等稀缺奖励），任务要有趣且有一点小挑战`,
   ];
   if (branchEnabled) {
     tasks.push(
-      `再选 2 个气质明显相反的地点作为"第二站"的两个候选（一安静一热闹 / 一文艺一烟火气 / 一室内一户外…），并给这次二选一写一句抉择提示 axis（如"想安静还是想热闹？"），放进 branch 字段；这 2 个要和 selections、hidden 都不同`
+      `再选 2 个气质明显相反的地点作为"第二站"的两个候选（一安静一热闹 / 一文艺一烟火气 / 一室内一户外…），并给这次二选一写一句抉择提示 axis（如"想安静还是想热闹？"），放进 branch 字段；这 2 个要和 selections 都不同`
     );
   }
-  tasks.push(
-    `另外再选 1 个与上面都不同的地点作为"隐藏任务"（藏在附近的惊喜坐标），写神秘氛围/打卡任务/奖励/emoji，放进 hidden 字段`
-  );
   const taskBlock = tasks.map((t, i) => `${i + 1}. ${t}`).join("\n");
 
   const branchJson = branchEnabled
@@ -192,15 +188,9 @@ ${taskBlock}
       "reward": "完成后的奖励（如：美团单车7天卡、餐饮券8折）",
       "emoji": "一个代表这个地点的 emoji"
     }
-  ],
-  "hidden": {
-    "poi_id": "另一个与 selections 都不同的候选 id",
-    "description": "隐藏地点的神秘氛围描述（30字以内）",
-    "task": "隐藏打卡任务提示（20字以内）",
-    "reward": "隐藏奖励（如：限定徽章、隐藏菜单券）",
-    "emoji": "一个代表这个地点的 emoji"
-  }${branchJson}
+  ]${branchJson}
 }
+注意：最后一个 selection 会被设为隐藏惊喜站，它的 reward 应该更好（限定/稀缺奖励），task 应该有趣且有一点小挑战。
 `;
 }
 
@@ -262,10 +252,8 @@ function parseAndHydrate(
   }
 
   let hiddenTask: Waypoint | undefined;
-  const hsel = parsed.hidden;
-  if (hsel && byId.has(hsel.poi_id) && !usedIds.has(hsel.poi_id)) {
-    hiddenTask = hydrate(hsel, byId.get(hsel.poi_id)!);
-    usedIds.add(hsel.poi_id);
+  if (waypoints.length > 1) {
+    hiddenTask = waypoints.pop()!;
   } else {
     const leftover = candidates.find((p) => !usedIds.has(p.id));
     if (leftover) {
@@ -312,8 +300,8 @@ export async function generateRoute(
 
   // ── ReAct 循环：生成 → 审查 → 修正（最多 1 轮）──
   const prompt1 = buildPrompt(ctx);
-  const res1 = await ai.models.generateContent({ model: "gemini-2.5-flash-lite", contents: prompt1 });
-  let route = parseAndHydrate(res1.text ?? "", ctx);
+  const text1 = await generateContent("gemini-2.5-flash-lite", prompt1);
+  let route = parseAndHydrate(text1, ctx);
 
   const categories = resolveCategories(route, byId);
   let review: ReviewResult;
@@ -329,8 +317,8 @@ export async function generateRoute(
     const revisionNote = review.issues.map((i) => `- ${i.description}`).join("\n");
     const prompt2 = buildPrompt(ctx, revisionNote);
     try {
-      const res2 = await ai.models.generateContent({ model: "gemini-2.5-flash-lite", contents: prompt2 });
-      route = parseAndHydrate(res2.text ?? "", ctx);
+      const text2 = await generateContent("gemini-2.5-flash-lite", prompt2);
+      route = parseAndHydrate(text2, ctx);
       console.log("✅ ReAct: 修正后路线已生成");
     } catch (e) {
       console.warn("修正调用失败，使用原始路线：", e);

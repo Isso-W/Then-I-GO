@@ -225,14 +225,7 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
   return (
     <AppLayout>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_15%,rgba(108,92,255,.18),transparent_30%)]" />
-      <PageTitle 
-        title="故事" 
-        right={
-          <button className="flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1.5 text-[11px] text-white/80 bg-white/5">
-            拍摄设置 <ChevronDown size={12} />
-          </button>
-        } 
-      />
+      <PageTitle title="故事" />
       
       <main className="absolute inset-x-5 top-[100px] bottom-[104px] overflow-y-auto no-scrollbar pb-6">
         <TabBar tabs={["Vlog 素材", "历史记录"]} active={activeTab} onChange={setActiveTab} />

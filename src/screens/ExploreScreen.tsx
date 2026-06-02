@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Sparkles, Zap, BookOpen, Compass, Gift, Navigation, HelpCircle, Clock, RotateCcw, CheckCircle2, ChevronDown, MapPin, ExternalLink, Camera, X, RefreshCw, Bike, Rocket, Target, Layers, ChevronLeft, Smile, Frown, Meh, Wind, Utensils, Search, Palette, Mountain, Coffee, Book, Users, CameraIcon, Gem, PiggyBank, Flame, Pizza, Wand2, Smartphone, Battery, Umbrella, CreditCard, Info, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
@@ -9,6 +9,7 @@ import type { LatLng } from "../components/mapProjection";
 import { ChatBubble, ChatPanel, type ChatMessage } from "../components/ChatPanel";
 import { TripFeedbackOverlay } from "../components/TripFeedbackOverlay";
 import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute, Waypoint, RouteBranch } from "../types";
+import { useWeather, weatherEmoji, weatherAdvice } from "../lib/useWeather";
 
 export function ExploreScreen({
   onNavigate,
@@ -16,6 +17,7 @@ export function ExploreScreen({
   setStep,
   onPreferenceConfirm,
   onDirectStart,
+  onGearConfirm,
   generatedRoute,
   currentPosition,
   onUserDrag,
@@ -36,6 +38,7 @@ export function ExploreScreen({
   setStep: (s: ExploreStep) => void;
   onPreferenceConfirm: (prefs: UserPreferences) => void;
   onDirectStart: () => void;
+  onGearConfirm?: () => void;
   generatedRoute: GeneratedRoute | null;
   currentPosition: LatLng;
   onUserDrag?: (p: LatLng) => void;
@@ -52,6 +55,19 @@ export function ExploreScreen({
   onAdvanceWaypoint?: () => void;
 }) {
   const [chatOpen, setChatOpen] = useState(false);
+
+  const prevPosRef = useRef<LatLng>(currentPosition);
+  const headingRef = useRef<number>(0);
+  useEffect(() => {
+    const prev = prevPosRef.current;
+    const dLat = currentPosition.lat - prev.lat;
+    const dLng = currentPosition.lng - prev.lng;
+    const moved = Math.hypot(dLat * 111320, dLng * 111320 * Math.cos(currentPosition.lat * Math.PI / 180));
+    if (moved > 2) {
+      headingRef.current = computeBearing(prev, currentPosition);
+      prevPosRef.current = currentPosition;
+    }
+  }, [currentPosition]);
 
   const handleInitialComplete = () => {
     setStep("checkin_initial");
@@ -92,11 +108,12 @@ export function ExploreScreen({
   return (
     <AppLayout>
       <div className="absolute inset-0 z-0 overflow-hidden bg-[#07101d]">
-        <Map route={generatedRoute} currentPosition={currentPosition} onUserDrag={onUserDrag} step={step} />
+        <Map route={generatedRoute} currentPosition={currentPosition} onUserDrag={onUserDrag} step={step} waypointIndex={waypointIndex} />
       </div>
       <FogLayer />
       {(step === "intro" || (isGameStarted && !isCapturing)) && <ExploreHeader />}
       {isGameStarted && !isCapturing && <ProgressPanel step={step} />}
+      {isGameStarted && !isCapturing && <DirectionPanel distToTarget={distToTarget} inRange={inRange} heading={headingRef.current} currentPosition={currentPosition} target={activeTarget} />}
       {isGameStarted && !isCapturing && <FloatingActions onAction={(a) => a === 'event' && onNavigate('event')} />}
       {isGameStarted && !isCapturing && <Legend step={step} />}
       
@@ -110,6 +127,9 @@ export function ExploreScreen({
         )}
         {step === "preference_selection" && (
           <PreferenceOverlay key="preference" onConfirm={onPreferenceConfirm} onBack={() => setStep("intro")} />
+        )}
+        {step === "gear_confirmation" && (
+          <GearConfirmationOverlay onConfirm={() => onGearConfirm?.()} onBack={() => setStep("preference_selection")} />
         )}
       </AnimatePresence>
 
@@ -252,10 +272,65 @@ function ExploreHeader() {
         </h1>
         <p className="mt-1.5 text-[12px] text-[#D7D7E8]/80 font-medium">你只管出门，剩下由系统决定</p>
       </motion.div>
-      <button className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 py-1.5 px-3 text-[11px] text-white backdrop-blur-md transition-all active:scale-95">
-        <BookOpen size={14} />日志
-      </button>
     </header>
+  );
+}
+
+function liveDistLabel(meters: number): string {
+  if (meters < 1) return "已到达";
+  if (meters < 1000) return `${Math.round(meters)} 米`;
+  return `${(meters / 1000).toFixed(1)} km`;
+}
+
+function liveEta(meters: number): string {
+  const min = Math.ceil(meters / 80);
+  return min <= 0 ? "已到达" : `预计 ${min} 分钟到达`;
+}
+
+function relativeTurnAngle(heading: number, targetBearing: number): number {
+  let diff = targetBearing - heading;
+  while (diff > 180) diff -= 360;
+  while (diff < -180) diff += 360;
+  return diff;
+}
+
+function computeBearing(from: LatLng, to: { lat: number; lng: number }): number {
+  return Math.atan2(to.lng - from.lng, to.lat - from.lat) * (180 / Math.PI);
+}
+
+function DirectionPanel({ distToTarget, inRange, heading, currentPosition, target }: {
+  distToTarget: number; inRange: boolean; heading: number; currentPosition: LatLng; target?: { lat: number; lng: number }
+}) {
+  const angle = target ? relativeTurnAngle(heading, computeBearing(currentPosition, target)) : 0;
+  return (
+    <Glass className="absolute right-4 top-[56px] z-20 w-[130px] p-3 text-white">
+      <div className="text-[9px] font-bold text-[#A98BFF]">下一目标</div>
+      {inRange ? (
+        <div className="mt-2 flex items-center gap-1.5">
+          <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+          <span className="text-[13px] font-black text-emerald-400">已到达</span>
+        </div>
+      ) : (
+        <div className="mt-2 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#6C5CFF]/20">
+            <Navigation
+              size={22}
+              className="text-[#A98BFF] fill-[#A98BFF]/30 transition-transform duration-300"
+              style={{ transform: `rotate(${angle - 45}deg)` }}
+            />
+          </div>
+          <div>
+            <div className="text-[14px] font-black leading-tight">{liveDistLabel(distToTarget)}</div>
+            <div className="text-[10px] text-white/40">{liveEta(distToTarget)}</div>
+          </div>
+        </div>
+      )}
+      <div className="mt-3 border-t border-white/5 pt-2 space-y-1.5 text-[8px] text-white/40">
+        <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#6C5CFF]" />打卡点</div>
+        <div className="flex items-center gap-1.5"><span className="h-2 w-2 rotate-45 border border-[#FFD166] bg-transparent" />下一目标</div>
+        <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" />已完成</div>
+      </div>
+    </Glass>
   );
 }
 
@@ -675,8 +750,10 @@ function VlogSuccessOverlay({ onContinue }: { onContinue: () => void }) {
 }
 
 const IntroOverlay: React.FC<{ onDirectStart: () => void; onCustomize: () => void }> = ({ onDirectStart, onCustomize }) => {
+  const [collapsed, setCollapsed] = useState(false);
+
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -688,41 +765,62 @@ const IntroOverlay: React.FC<{ onDirectStart: () => void; onCustomize: () => voi
         transition={{ type: "spring", damping: 25, stiffness: 120 }}
         className="w-full max-w-sm mx-auto"
       >
-        <div className="rounded-[32px] bg-[#0F172A]/90 border border-white/10 p-6 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-5">
+        <div className="rounded-[32px] bg-[#0F172A]/90 border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl overflow-hidden">
+          {/* Toggle bar — always visible */}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="w-full flex items-center justify-between px-6 py-3 active:bg-white/5 transition-colors"
+          >
             <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5 text-white/50">
-                <Compass size={20} />
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-white/50">
+                <Compass size={18} />
               </div>
-              <h2 className="text-lg font-black text-white italic tracking-tight">当前位置</h2>
+              <span className="text-[15px] font-black text-white italic tracking-tight">当前位置</span>
+              <div className="flex items-center gap-1.5 rounded-full bg-[#FFD166]/10 border border-[#FFD166]/20 px-2.5 py-0.5">
+                <span className="text-[10px] font-bold text-[#FFD166] uppercase tracking-wider">五道口 · 北京</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 rounded-full bg-[#FFD166]/10 border border-[#FFD166]/20 px-3 py-1">
-               <span className="text-[10px] font-bold text-[#FFD166] uppercase tracking-wider">五道口 · 北京</span>
-            </div>
-          </div>
-          
-          <p className="text-[14px] font-medium text-white/70 leading-relaxed mb-6 px-1">
-            在迷雾中隐藏着未知的惊喜。踏出你的第一步，解锁神秘故事
-          </p>
+            <motion.div animate={{ rotate: collapsed ? 180 : 0 }} transition={{ duration: 0.2 }}>
+              <ChevronDown size={18} className="text-white/40" />
+            </motion.div>
+          </button>
 
-          <div className="flex flex-col gap-3">
-            <button 
-              onClick={onDirectStart}
-              className="group relative flex w-full items-center justify-center gap-2 rounded-full bg-[#6C5CFF] py-3 text-[15px] font-black text-white shadow-[0_10px_30px_rgba(108,92,255,0.4)] active:scale-[0.98] transition-all overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-              <span className="relative tracking-wider">开始探索吧！</span>
-              <Rocket size={16} className="relative fill-white" />
-            </button>
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="overflow-hidden"
+              >
+                <div className="px-6 pb-6">
+                  <p className="text-[13px] font-medium text-white/50 leading-relaxed mb-5 px-1">
+                    迷雾中隐藏着未知的惊喜，踏出第一步，解锁你的故事
+                  </p>
 
-            <button 
-              onClick={onCustomize}
-              className="w-full flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 py-3 text-[14px] font-bold text-white/60 active:scale-[0.98] transition-all"
-            >
-              <Target size={14} className="opacity-60" />
-              <span>自定义偏好</span>
-            </button>
-          </div>
+                  <div className="flex flex-col gap-3">
+                    <button
+                      onClick={onDirectStart}
+                      className="group relative flex w-full items-center justify-center gap-2 rounded-full bg-[#6C5CFF] py-3 text-[15px] font-black text-white shadow-[0_10px_30px_rgba(108,92,255,0.4)] active:scale-[0.98] transition-all overflow-hidden"
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                      <span className="relative tracking-wider">开始探索吧！</span>
+                      <Rocket size={16} className="relative fill-white" />
+                    </button>
+
+                    <button
+                      onClick={onCustomize}
+                      className="w-full flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 py-3 text-[14px] font-bold text-white/60 active:scale-[0.98] transition-all"
+                    >
+                      <Target size={14} className="opacity-60" />
+                      <span>自定义偏好</span>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </motion.div>
     </motion.div>
@@ -834,6 +932,7 @@ function AchievementOverlay({ onContinue }: { onContinue: () => void }) {
 }
 
 const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void; onBack: () => void }> = ({ onConfirm, onBack }) => {
+  const { weather, weatherImage } = useWeather();
   const [mood, setMood] = useState("happy");
   const [duration, setDuration] = useState("1h");
   const [transport, setTransport] = useState("walk");
@@ -916,35 +1015,40 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
 
       <div className="flex-1 overflow-y-auto px-5 pb-40 scrollbar-hide">
         <div className="relative mb-6 mt-1 overflow-hidden rounded-3xl bg-gradient-to-br from-[#1E293B] to-[#0F172A] p-4 shadow-xl border border-white/5">
-          <img 
-            src="https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=600&q=80" 
-            alt="北京天际线"
-            className="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-overlay"
-          />
+          {weatherImage && (
+            <img src={weatherImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-[#0F172A]/60 to-transparent" />
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#6C5CFF]/10 blur-[60px] rounded-full" />
           <div className="flex justify-between items-start relative z-10">
             <div>
               <div className="flex items-center gap-1.5 rounded-full bg-white/5 border border-white/10 px-2.5 py-1 text-[10px] font-bold text-white/80 w-fit">
-                <MapPin size={10} /> 五道口 <ChevronDown size={10} />
+                <MapPin size={10} /> 五道口
               </div>
               <div className="mt-3 flex items-center gap-2">
-                <div className="text-3xl font-black text-white">22°C</div>
-                <div className="text-xs font-bold text-white/60">晴</div>
+                <span className="text-3xl">{weather ? weatherEmoji(weather.icon) : "⏳"}</span>
+                <div>
+                  <div className="text-3xl font-black text-white">{weather?.temp ?? "--"}°C</div>
+                  <div className="text-xs font-bold text-white/60">{weather?.desc ?? "加载中"}</div>
+                </div>
               </div>
               <div className="mt-2 rounded-full bg-[#6C5CFF]/20 border border-[#6C5CFF]/30 px-3 py-0.5 text-[10px] font-bold text-[#A594FF] w-fit">
-                适合步行探索
+                {weather ? weatherAdvice(weather).tag : "..."}
               </div>
             </div>
             <div className="text-right">
-              <div className="text-[12px] font-bold text-white mb-1">今天适合户外路线</div>
-              <p className="text-[10px] text-white/40 leading-tight max-w-[130px]">
-                系统会优先推荐公园、街区、露台餐饮等地点
-              </p>
-              <div className="mt-3 flex justify-end">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#8F5CFF]/20 border border-[#8F5CFF]/30 text-[#8F5CFF]">
-                  <Mountain size={18} />
-                </div>
+              <div className="text-[12px] font-bold text-white mb-1">
+                {weather ? `体感 ${weather.feelsLike}°C` : ""}
               </div>
+              <p className="text-[10px] text-white/40 leading-tight max-w-[130px]">
+                {weather ? weatherAdvice(weather).tip : "正在获取天气..."}
+              </p>
+              {weather && (
+                <div className="mt-2 flex justify-end gap-3 text-[10px] text-white/40">
+                  <span>💧 {weather.humidity}%</span>
+                  <span>💨 {weather.windSpeed}km/h</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

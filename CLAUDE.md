@@ -179,8 +179,40 @@ ExploreScreen（地图界面，动态循环）
 
 - 模型：`gemini-2.5-flash-lite`（`gemini-2.5-flash` 在国内高峰期频繁 503，lite 版稳定性更好）
 - 要求 Gemini **只返回 JSON**，用正则 `/\{[\s\S]*\}/` 或 `/\[[\s\S]*\]/` 从响应文本中提取，防止 Gemini 在 JSON 前后多说话导致解析失败。
-- API Key 通过 `process.env.GEMINI_API_KEY` 注入（由 `vite.config.ts` 的 `define` 字段在构建时替换）。
-- 脚本层通过 `$env:GEMINI_API_KEY="..."; npx tsx scripts/xxx.ts` 传入，或读取 `.env.local`。
+- **Vertex AI 代理**：前端 agent 不直接调 SDK，统一通过 `src/lib/gemini.ts` 的 `generateContent(model, prompt)` → `POST /api/generate`。Vite 插件 `vite-plugin-gemini-proxy.ts` 在 dev server 的 Node.js 层读 `GOOGLE_APPLICATION_CREDENTIALS`（服务账号 JSON）调 Vertex AI，自动从凭据文件提取 `project_id`。无凭据时回退到 `GEMINI_API_KEY`（AI Studio）。
+- 脚本层通过 `$env:GOOGLE_APPLICATION_CREDENTIALS="..."; npx tsx scripts/xxx.ts` 传入。
+
+### 天气 API
+
+Vite 插件同时提供 `/api/weather` 端点，调 `wttr.in` 获取五道口实时天气（温度/体感/天气描述/湿度/风速），英文→中文映射，失败时回退默认值。`src/lib/useWeather.ts` 提供 `useWeather()` hook + `weatherEmoji()` / `weatherAdvice()` 辅助函数。天气卡背景使用本地图片（`public/weather/{sunny,cloudy,rainy,snowy,foggy}.jpg`）按天气代码映射。
+
+### 隐藏任务生成
+
+隐藏任务不再由 Gemini 独立生成，而是从主路线的 selections 中取最后一个 `pop()` 出来。Gemini 一次调用生成 N+1 个站点（多 1 个用于隐藏任务），最后一个的奖励要求更好、任务更有挑战。这保证隐藏任务与主线品类不冲突、坐标真实。
+
+### 路线审查 ReAct
+
+`routeAgent.ts` 内置 ReAct 循环：生成路线 → `routeReviewer.ts` 审查（品类多样性/活动节奏/时间合理性/体验递进）→ 未通过则带审查意见重新生成（最多 1 轮修正）。
+
+### 历史记录影响路线
+
+`generateRoute` 接收 `tripHistory: TripRecord[]`，`buildHistorySummary` 提取最近 5 次记录（去过/跳过的地点、反馈倾向、岔路偏好、聊天调整次数），注入 prompt 避免重复推荐。
+
+### 导航系统
+
+- **实时导航线**：`Map.tsx` 用 Dijkstra 从 avatar 到当前目标沿路网寻路，渲染紫色虚线 + 方向箭头
+- **方向指示**：`DirectionPanel` 显示旋转箭头图标（实时指向目标）+ 距离 + ETA，不用文字方向
+- **Heading tracking**：`ExploreScreen` 追踪用户行走方向（>2m 阈值），箭头角度 = 行走方向到目标的相对夹角
+- **动态 waypointIndex**：Map 和 ExploreScreen 都使用 `waypointIndex` prop，支持任意数量站点的导航
+- **缩放**：鼠标滚轮缩放地图，无按钮
+
+### 装备确认流程
+
+偏好确认后进入 `gear_confirmation` 步骤，`GearConfirmationOverlay` 让用户确认携带装备（手机/充电宝/雨伞/身份证），确认后保存到 `localStorage.confirmedGear`，背包页装备 tab 读取显示。
+
+### 设置页 MBTI 修改
+
+`SettingsScreen` 新增 MBTI 人格行，点击弹出 `MbtiPickerOverlay`（16 种 MBTI 4×4 网格），选中即保存到 `localStorage.userProfile`。
 
 ## Vlog 生成 — Implemented
 

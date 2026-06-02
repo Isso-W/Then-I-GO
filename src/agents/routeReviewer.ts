@@ -1,7 +1,5 @@
-import { GoogleGenAI } from "@google/genai";
+import { generateContent } from "../lib/gemini";
 import type { GeneratedRoute, UserPreferences } from "../types";
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 export interface ReviewIssue {
   type: "ai_review";
@@ -49,11 +47,7 @@ ${route.hiddenTask ? `隐藏任务: ${route.hiddenTask.name}（${waypointCategor
 `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-lite",
-      contents: prompt,
-    });
-    const text = response.text ?? "";
+    const text = await generateContent("gemini-2.5-flash-lite", prompt);
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return { passed: true, issues: [] };
 

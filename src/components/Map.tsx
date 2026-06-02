@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useEffect, type MouseEvent } from "react";
+import React, { useMemo, useRef, useState, useEffect, type MouseEvent } from "react";
 import { motion } from "motion/react";
 import streetNetwork from "../../scripts/data/street-network.json";
 import terrainRaw from "../../scripts/data/terrain.json";
@@ -17,10 +17,8 @@ import type { GeneratedRoute, ExploreStep } from "../types";
 
 const network = streetNetwork as { streets: Street[]; bbox: BBox };
 
-// 路网图只构建一次（modules 顶层，模块缓存即可，无需 React state）
 const ROAD_GRAPH = buildGraph(network.streets);
 
-// 地表多边形 —— 校园 / 公园 / 水体 / 商业区
 interface TerrainPolygon {
   name: string;
   type: "campus" | "park" | "water" | "commercial";
@@ -34,7 +32,6 @@ const TERRAIN_STYLE: Record<TerrainPolygon["type"], { fill: string; opacity: num
   commercial: { fill: "#3D3013", opacity: 0.45 },
 };
 
-// 不同等级道路的渲染样式（stroke 用 non-scaling-stroke，单位 = CSS px）
 const HIGHWAY_STYLE: Record<string, { stroke: string; width: number; dash?: string }> = {
   primary: { stroke: "#6C5CFF", width: 2.5 },
   secondary: { stroke: "#4B40A8", width: 2 },
@@ -46,7 +43,6 @@ const HIGHWAY_STYLE: Record<string, { stroke: string; width: number; dash?: stri
 };
 const DEFAULT_STYLE = { stroke: "#2A2358", width: 1 };
 
-// 用一组 LatLng 生成 SVG path 字符串
 function pointsToPath(points: LatLng[], bbox: BBox): string {
   if (points.length === 0) return "";
   const head = projectLatLng(points[0], bbox);
@@ -58,7 +54,6 @@ function pointsToPath(points: LatLng[], bbox: BBox): string {
   return d;
 }
 
-// 多边形 → SVG polygon 的 points 属性字符串
 function polygonPointsAttr(points: LatLng[], bbox: BBox): string {
   return points
     .map((p) => {
@@ -68,7 +63,6 @@ function polygonPointsAttr(points: LatLng[], bbox: BBox): string {
     .join(" ");
 }
 
-// 容器宽度 ≈ 500px。marker 用这个 scale 来抵消 viewBox 缩放，保证在屏上大小恒定
 const REFERENCE_WIDTH_PX = 500;
 
 export function Map({
@@ -76,22 +70,19 @@ export function Map({
   currentPosition = ORIGIN,
   onUserDrag,
   step,
+  waypointIndex = 0,
 }: {
   route: GeneratedRoute | null;
   currentPosition?: LatLng;
-  /** 用户拖动红点（测试用模拟走路）。回调收到的坐标已经吸附到路上。 */
   onUserDrag?: (p: LatLng) => void;
-  /** 当前探索阶段，用来决定隐藏任务针 / "?"标记的显隐 */
   step?: ExploreStep;
+  waypointIndex?: number;
 }) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  // 拖动期间设为 true，用来在随后的 click 事件里识别"这是拖动结尾，不是点击"
   const dragMovedRef = useRef(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
-  // 跟随模式：视野始终以"显示位置"为中心，固定半径。
-  // - 拖动时 displayPosition 1:1 跟随 currentPosition（跟手不延迟）
-  // - 否则用指数平滑（每帧靠近 20%），让 check-in 这种瞬移变成 ~200ms 平滑平移
   const [displayPosition, setDisplayPosition] = useState<LatLng>(currentPosition);
 
   useEffect(() => {
@@ -107,7 +98,7 @@ export function Map({
         const dyM = dy * 111_320;
         const dxM = dx * 111_320 * Math.cos((currentPosition.lat * Math.PI) / 180);
         if (Math.hypot(dxM, dyM) < 0.5) {
-          return currentPosition; // 收敛，结束循环
+          return currentPosition;
         }
         raf = requestAnimationFrame(step);
         return {
@@ -121,8 +112,8 @@ export function Map({
   }, [currentPosition, isDragging]);
 
   const viewBox = useMemo(
-    () => defaultViewBox(displayPosition, FOLLOW_RADIUS_METERS),
-    [displayPosition]
+    () => defaultViewBox(displayPosition, FOLLOW_RADIUS_METERS / zoomLevel),
+    [displayPosition, zoomLevel]
   );
 
   const { width, height } = useMemo(() => bboxSizeMeters(viewBox), [viewBox]);
@@ -144,35 +135,16 @@ export function Map({
     }));
   }, [viewBox]);
 
-  // 路线 polyline：用路网图寻路得到沿街折线，起点固定 ORIGIN
-  const routeData = useMemo(() => {
-    if (!route || route.waypoints.length === 0) return null;
-    const waypointCoords = route.waypoints.map((wp) => ({ lat: wp.lat, lng: wp.lng }));
-    const routedPoly = routePolyline([ORIGIN, ...waypointCoords], ROAD_GRAPH);
-    return {
-      path: pointsToPath(routedPoly, viewBox),
-      waypoints: route.waypoints.map((wp) => ({
-        ...wp,
-        pos: projectLatLng({ lat: wp.lat, lng: wp.lng }, viewBox),
-      })),
-    };
-  }, [route, viewBox]);
+  const gameActive = step && !["intro", "preference_selection", "gear_confirmation", "achievement_unlock"].includes(step);
 
-  // 隐藏任务导航线：从第一站（或起点）沿街走到隐藏点（仅隐藏阶段显示）
-  const hiddenRouteData = useMemo(() => {
-    if (!route?.hiddenTask) return null;
-    const start = route.waypoints[0] ?? ORIGIN;
-    const poly = routePolyline(
-      [
-        { lat: start.lat, lng: start.lng },
-        { lat: route.hiddenTask.lat, lng: route.hiddenTask.lng },
-      ],
-      ROAD_GRAPH
-    );
-    return pointsToPath(poly, viewBox);
-  }, [route, viewBox]);
+  const waypointMarkers = useMemo(() => {
+    if (!route || route.waypoints.length === 0 || !gameActive) return [];
+    return route.waypoints.map((wp) => ({
+      ...wp,
+      pos: projectLatLng({ lat: wp.lat, lng: wp.lng }, viewBox),
+    }));
+  }, [route, viewBox, gameActive]);
 
-  // 隐藏任务针：真坐标投影，跟随地图平移
   const hiddenMark = useMemo(
     () =>
       route?.hiddenTask
@@ -189,7 +161,6 @@ export function Map({
     step === "checkin_hidden" ||
     step === "reward_hidden";
 
-  // A/B 分叉候选标记：branch_choice 时把两个候选画在真坐标上
   const branchMarks = useMemo(
     () =>
       (route?.branch?.options ?? []).map((wp, i) => ({
@@ -203,8 +174,26 @@ export function Map({
 
   const currentPos = projectLatLng(currentPosition, viewBox);
 
-  // 客户端像素 → SVG 用户坐标系（米）→ 经纬度
-  // 用 getScreenCTM 自动处理 viewBox / preserveAspectRatio 缩放
+  // Determine next waypoint based on explore step
+  const nextWp = step === "initial" || step === "checkin_initial" ? route?.waypoints[waypointIndex]
+    : step === "hidden_active" || step === "checkin_hidden" ? route?.hiddenTask
+    : step === "next_objective" || step === "checkin_next" ? route?.waypoints[waypointIndex]
+    : undefined;
+  const nextWpPos = nextWp ? projectLatLng({ lat: nextWp.lat, lng: nextWp.lng }, viewBox) : null;
+  const dirAngle = nextWpPos
+    ? Math.atan2(nextWpPos.x - currentPos.x, -(nextWpPos.y - currentPos.y)) * (180 / Math.PI)
+    : 0;
+
+  // Live navigation path: Dijkstra from avatar to next waypoint
+  const navPath = useMemo(() => {
+    if (!nextWp) return null;
+    const poly = routePolyline(
+      [currentPosition, { lat: nextWp.lat, lng: nextWp.lng }],
+      ROAD_GRAPH
+    );
+    return pointsToPath(poly, viewBox);
+  }, [currentPosition, nextWp, viewBox]);
+
   function clientToLatLng(clientX: number, clientY: number): LatLng | null {
     const svg = svgRef.current;
     if (!svg) return null;
@@ -217,7 +206,6 @@ export function Map({
     return unprojectXY({ x: local.x, y: local.y }, viewBox);
   }
 
-  // 全局 pointermove/up 监听只在拖动期间挂上，避免在普通状态消耗事件
   useEffect(() => {
     if (!isDragging || !onUserDrag) return;
     const onMove = (e: PointerEvent) => {
@@ -235,11 +223,8 @@ export function Map({
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
     };
-    // viewBox 变化时也要重绑，让 clientToLatLng 用最新投影
   }, [isDragging, onUserDrag, viewBox]);
 
-  // 点击地图任意位置 → snap 到最近的路 → 瞬移过去（viewBox 平滑跟过去）
-  // 拖动结尾的 pointerup 会带出一个 click，用 dragMovedRef 屏蔽
   const handleMapClick = (e: MouseEvent<SVGSVGElement>) => {
     if (!onUserDrag) return;
     if (dragMovedRef.current) {
@@ -251,161 +236,94 @@ export function Map({
     onUserDrag(snapToRoad(ll, ROAD_GRAPH));
   };
 
+  const zoomIn = () => setZoomLevel((z) => Math.min(z * 1.4, 4));
+  const zoomOut = () => setZoomLevel((z) => Math.max(z / 1.4, 0.4));
+
+  const handleWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    if (e.deltaY < 0) zoomIn(); else zoomOut();
+  };
+
   return (
+    <div className="absolute inset-0 outline-none" onWheel={handleWheel}>
     <svg
       ref={svgRef}
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="xMidYMid slice"
-      className="absolute inset-0 h-full w-full"
+      className="absolute inset-0 h-full w-full outline-none"
       style={{ cursor: onUserDrag ? "pointer" : "default" }}
       onClick={handleMapClick}
     >
-      {/* 地表色块（校园/公园/水体/商业区）—— 在路网下方 */}
+      {/* Terrain */}
       <g>
         {terrainShapes.map((t) => (
-          <polygon
-            key={t.key}
-            points={t.pts}
-            fill={t.style.fill}
-            opacity={t.style.opacity}
-            stroke="none"
-          />
+          <polygon key={t.key} points={t.pts} fill={t.style.fill} opacity={t.style.opacity} stroke="none" />
         ))}
       </g>
 
-      {/* 路网底图 */}
+      {/* Road network */}
       <g opacity={0.65}>
         {streetPaths.map((s) => (
           <path
-            key={s.key}
-            d={s.d}
-            fill="none"
-            stroke={s.style.stroke}
-            strokeWidth={s.style.width}
-            strokeDasharray={s.style.dash}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
+            key={s.key} d={s.d} fill="none" stroke={s.style.stroke}
+            strokeWidth={s.style.width} strokeDasharray={s.style.dash}
+            strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke"
           />
         ))}
       </g>
 
-      {/* 当前路线高亮 */}
-      {routeData && (
-        <g>
-          {/* 外发光 */}
-          <path
-            d={routeData.path}
-            fill="none"
-            stroke="#A98BFF"
-            strokeWidth={10}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            opacity={0.3}
-            vectorEffect="non-scaling-stroke"
-          />
-          {/* 主线（虚线表示路径） */}
-          <path
-            d={routeData.path}
-            fill="none"
-            stroke="#A98BFF"
-            strokeWidth={3}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeDasharray="8 5"
-            vectorEffect="non-scaling-stroke"
-          />
-        </g>
-      )}
-
-      {/* 隐藏任务导航线（amber 虚线，仅隐藏阶段显示） */}
-      {showHidden && hiddenRouteData && (
-        <path
-          d={hiddenRouteData}
-          fill="none"
-          stroke="#F59E0B"
-          strokeWidth={3}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeDasharray="6 6"
-          opacity={0.85}
-          vectorEffect="non-scaling-stroke"
-        />
-      )}
-
-      {/* Waypoint markers — 用 scale 保持屏上大小恒定 */}
-      {routeData?.waypoints.map((wp, i) => (
-        <g
-          key={i}
-          transform={`translate(${wp.pos.x}, ${wp.pos.y}) scale(${markerScale})`}
-        >
+      {/* Waypoint markers */}
+      {waypointMarkers.map((wp, i) => (
+        <g key={i} transform={`translate(${wp.pos.x}, ${wp.pos.y}) scale(${markerScale})`}>
           <circle r={26} fill="#A98BFF" opacity={0.2} />
           <circle r={18} fill="#6C5CFF" stroke="#FFFFFF" strokeWidth={2} />
-          <text
-            textAnchor="middle"
-            dominantBaseline="central"
-            fontSize={20}
-          >
-            {wp.emoji}
-          </text>
-          {/* 序号小徽章 */}
+          <text textAnchor="middle" dominantBaseline="central" fontSize={20}>{wp.emoji}</text>
           <g transform="translate(14, -14)">
             <circle r={8} fill="#FFD166" />
-            <text
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontSize={10}
-              fontWeight={800}
-              fill="#0A0A1A"
-            >
-              {i + 1}
-            </text>
+            <text textAnchor="middle" dominantBaseline="central" fontSize={10} fontWeight={800} fill="#0A0A1A">{i + 1}</text>
           </g>
         </g>
       ))}
 
-      {/* 隐藏任务针（真坐标） */}
+      {/* Hidden task marker */}
       {showHidden && hiddenMark && (
         <g transform={`translate(${hiddenMark.x}, ${hiddenMark.y}) scale(${markerScale})`}>
           <circle r={24} fill="#F59E0B" opacity={0.2} />
           <circle r={16} fill="#D97706" stroke="#FCD34D" strokeWidth={2} />
-          <text textAnchor="middle" dominantBaseline="central" fontSize={18}>
-            {hiddenMark.emoji}
-          </text>
+          <text textAnchor="middle" dominantBaseline="central" fontSize={18}>{hiddenMark.emoji}</text>
         </g>
       )}
 
-      {/* A/B 分叉候选标记（branch_choice 时显示） */}
+      {/* Branch choice markers */}
       {showBranch &&
         branchMarks.map((m) => (
           <g key={`branch-${m.key}`} transform={`translate(${m.x}, ${m.y}) scale(${markerScale})`}>
             <circle r={24} fill="#6C5CFF" opacity={0.2} />
             <circle r={17} fill="#5B3BFF" stroke="#A98BFF" strokeWidth={2} />
-            <text
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontSize={16}
-              fontWeight={800}
-              fill="#FFFFFF"
-            >
-              {m.label}
-            </text>
+            <text textAnchor="middle" dominantBaseline="central" fontSize={16} fontWeight={800} fill="#FFFFFF">{m.label}</text>
           </g>
         ))}
 
-      {/* 当前位置：红色脉冲点。
-        - 普通状态：spring 跟随 currentPos（check-in 切站时平滑）
-        - 拖动中：直接置位、关掉 spring，跟手不延迟
-        - 可拖拽（cursor: grab/grabbing）
-      */}
+      {/* Live navigation path from avatar to next target */}
+      {navPath && nextWpPos && (
+        <g>
+          <path
+            d={navPath} fill="none" stroke="#A98BFF"
+            strokeWidth={3 * markerScale} opacity={0.5}
+            strokeDasharray={`${8 * markerScale} ${5 * markerScale}`}
+            strokeLinecap="round"
+          />
+          <g transform={`translate(${currentPos.x}, ${currentPos.y}) scale(${markerScale}) rotate(${dirAngle})`}>
+            <polygon points="0,-28 -5,-20 5,-20" fill="#A98BFF" opacity={0.9} />
+          </g>
+        </g>
+      )}
+
+      {/* Avatar */}
       <motion.g
         initial={false}
         animate={{ x: currentPos.x, y: currentPos.y }}
-        transition={
-          isDragging
-            ? { duration: 0 }
-            : { type: "spring", damping: 18, stiffness: 90, mass: 0.8 }
-        }
+        transition={{ duration: 0 }}
         style={{ cursor: onUserDrag ? (isDragging ? "grabbing" : "grab") : "default" }}
         onPointerDown={(e) => {
           if (!onUserDrag) return;
@@ -415,25 +333,21 @@ export function Map({
         }}
       >
         <g transform={`scale(${markerScale})`}>
-          {/* 拖拽热区：透明大圆，比可视点大很多，触控好按 */}
           <circle r={28} fill="transparent" />
-          <circle r={14} fill="#FF4D64" opacity={0.25}>
-            <animate
-              attributeName="r"
-              values="12;22;12"
-              dur="2.4s"
-              repeatCount="indefinite"
-            />
-            <animate
-              attributeName="opacity"
-              values="0.35;0.1;0.35"
-              dur="2.4s"
-              repeatCount="indefinite"
-            />
+          <circle r={20} fill="#6C5CFF" opacity={0.08}>
+            <animate attributeName="r" values="18;26;18" dur="3s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.12;0.04;0.12" dur="3s" repeatCount="indefinite" />
           </circle>
-          <circle r={6} fill="#FF4D64" stroke="#FFFFFF" strokeWidth={1.5} />
+          <circle r={14} fill="#6C5CFF" opacity={0.15}>
+            <animate attributeName="r" values="13;17;13" dur="2.4s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.2;0.08;0.2" dur="2.4s" repeatCount="indefinite" />
+          </circle>
+          <circle r={10} fill="#6C5CFF" stroke="#A98BFF" strokeWidth={1.5} />
+          <circle cx={0} cy={-3} r={3} fill="white" />
+          <path d="M-4,5 Q-4,0 0,0 Q4,0 4,5" fill="white" opacity={0.9} />
         </g>
       </motion.g>
     </svg>
+    </div>
   );
 }
