@@ -42,16 +42,17 @@ export function isOpenAt(openHours: string, now: Date): boolean {
   return cur >= start || cur <= end;
 }
 
-export type ActivityType = "eating" | "drinking" | "browsing" | "sitting" | "outdoor" | "service";
+export type ActivityType = "eating" | "drinking" | "browsing" | "sitting" | "outdoor" | "service" | "entertainment";
 
 export function getActivityType(category: string): ActivityType {
-  if (/餐厅|烧烤|素食|轻食/.test(category)) return "eating";
+  if (/餐厅|烧烤|素食|轻食|美食城|美食街|小吃/.test(category)) return "eating";
   if (/咖啡|奶茶|甜品|宠物友好咖啡/.test(category)) return "drinking";
-  if (/酒吧|livehouse/.test(category)) return "drinking";
+  if (/酒吧|livehouse|夜店/.test(category)) return "drinking";
   if (/书店|美术馆|文创|花店/.test(category)) return "browsing";
-  if (/公园|绿地/.test(category)) return "outdoor";
-  if (/健身|瑜伽/.test(category)) return "outdoor";
-  if (/便利店|洗衣|生活服务/.test(category)) return "service";
+  if (/公园|绿地|景点|地标/.test(category)) return "outdoor";
+  if (/健身|瑜伽|运动|溜冰/.test(category)) return "outdoor";
+  if (/便利店/.test(category)) return "service";
+  if (/电影院|KTV|台球|棋牌|桌游|密室/.test(category)) return "entertainment";
   return "sitting";
 }
 
@@ -59,6 +60,8 @@ export function getBaseCategory(category: string): string {
   const m = category.match(/^(餐厅|酒吧)/);
   return m ? m[1] : category;
 }
+
+const MAX_PER_CATEGORY = 2;
 
 const WAIT_THRESHOLD_MIN = 15;
 const MAX_CANDIDATES = 10;
@@ -113,11 +116,20 @@ export function filterCandidates(
   for (const stage of stages) {
     const matched = applyFilters(prefs, now, stage, pool);
     if (matched.length >= MIN_ACCEPTABLE || stage === "all") {
-      return matched
+      const sorted = matched
         .map((p) => ({ poi: p, score: scorePOI(p, prefs) }))
-        .sort((a, b) => b.score - a.score)
-        .slice(0, MAX_CANDIDATES)
-        .map((x) => x.poi);
+        .sort((a, b) => b.score - a.score);
+      const catCount = new Map<string, number>();
+      const capped: POI[] = [];
+      for (const { poi } of sorted) {
+        const base = getBaseCategory(poi.category);
+        const count = catCount.get(base) ?? 0;
+        if (count >= MAX_PER_CATEGORY) continue;
+        catCount.set(base, count + 1);
+        capped.push(poi);
+        if (capped.length >= MAX_CANDIDATES) break;
+      }
+      return capped;
     }
   }
   return [];

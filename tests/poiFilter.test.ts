@@ -43,6 +43,9 @@ const makePrefs = (overrides: Partial<UserPreferences> = {}): UserPreferences =>
   ...overrides,
 });
 
+const CATEGORIES = ["咖啡厅", "书店", "文创小店", "美术馆", "公园绿地", "餐厅-日韩料理", "餐厅-北京风味", "奶茶甜品", "livehouse", "花店", "景点/地标", "电影院", "夜店", "KTV", "台球/棋牌"];
+const catOf = (i: number) => CATEGORIES[i % CATEGORIES.length];
+
 // 一个"中午 12 点"的固定时刻，方便测营业时间
 const NOON = new Date("2026-05-25T12:00:00");
 const MIDNIGHT_AM_1 = new Date("2026-05-25T01:00:00");
@@ -159,9 +162,9 @@ describe("filterCandidates 渐进降级", () => {
     // 选 1h (60min)，single POI avg_stay 超 30min → strict 阶段被过滤
     const pool = [
       ...Array.from({ length: 5 }, (_, i) =>
-        makePOI({ id: `short${i}`, tags: ["art"], avg_stay_minutes: 20 })
+        makePOI({ id: `short${i}`, category: catOf(i), tags: ["art"], avg_stay_minutes: 20 })
       ),
-      makePOI({ id: "long", tags: ["art"], avg_stay_minutes: 55 }),
+      makePOI({ id: "long", category: catOf(5), tags: ["art"], avg_stay_minutes: 55 }),
     ];
     const prefs = makePrefs({ special: ["art"], duration: "1h" });
     const result = filterCandidates(prefs, NOON, pool);
@@ -171,7 +174,7 @@ describe("filterCandidates 渐进降级", () => {
 
   it("strict 阶段命中 ≥5 时停在 strict，不再放宽", () => {
     const pool = Array.from({ length: 6 }, (_, i) =>
-      makePOI({ id: `s${i}`, tags: ["art"], avg_wait_minutes: 0, rating: 4.0 + i * 0.1 })
+      makePOI({ id: `s${i}`, category: catOf(i), tags: ["art"], avg_wait_minutes: 0, rating: 4.0 + i * 0.1 })
     );
     const prefs = makePrefs({ special: ["art"] });
     const result = filterCandidates(prefs, NOON, pool);
@@ -182,10 +185,10 @@ describe("filterCandidates 渐进降级", () => {
     // 4 个完全匹配 + 6 个除了 wait 超标外都匹配
     const pool: POI[] = [
       ...Array.from({ length: 4 }, (_, i) =>
-        makePOI({ id: `ok${i}`, tags: ["art"], avg_wait_minutes: 0 })
+        makePOI({ id: `ok${i}`, category: catOf(i), tags: ["art"], avg_wait_minutes: 0 })
       ),
       ...Array.from({ length: 6 }, (_, i) =>
-        makePOI({ id: `slow${i}`, tags: ["art"], avg_wait_minutes: 99 })
+        makePOI({ id: `slow${i}`, category: catOf(i + 4), tags: ["art"], avg_wait_minutes: 99 })
       ),
     ];
     const prefs = makePrefs({ special: ["art"] });
@@ -198,7 +201,7 @@ describe("filterCandidates 渐进降级", () => {
 
   it("tags 完全不匹配但有同时段开放的 POI 时，降到 no_tags 阶段", () => {
     const pool = Array.from({ length: 8 }, (_, i) =>
-      makePOI({ id: `n${i}`, tags: ["food"], avg_wait_minutes: 0 })
+      makePOI({ id: `n${i}`, category: catOf(i), tags: ["food"], avg_wait_minutes: 0 })
     );
     const prefs = makePrefs({ special: ["art"] }); // 与 pool 标签零交集
     const result = filterCandidates(prefs, NOON, pool);
@@ -207,7 +210,7 @@ describe("filterCandidates 渐进降级", () => {
 
   it("所有 POI 都关门时，降到 all 阶段（兜底返回）", () => {
     const pool = Array.from({ length: 6 }, (_, i) =>
-      makePOI({ id: `closed${i}`, open_hours: "03:00-04:00" })
+      makePOI({ id: `closed${i}`, category: catOf(i), open_hours: "03:00-04:00" })
     );
     const prefs = makePrefs();
     const result = filterCandidates(prefs, NOON, pool); // 12:00 都关
@@ -220,7 +223,7 @@ describe("filterCandidates 渐进降级", () => {
 
   it("超过 10 个候选时截断到 10", () => {
     const pool = Array.from({ length: 15 }, (_, i) =>
-      makePOI({ id: `m${i}`, tags: ["art"], rating: 3.0 + i * 0.1 })
+      makePOI({ id: `m${i}`, category: catOf(i), tags: ["art"], rating: 3.0 + i * 0.1 })
     );
     const prefs = makePrefs({ special: ["art"] });
     const result = filterCandidates(prefs, NOON, pool);
@@ -229,9 +232,9 @@ describe("filterCandidates 渐进降级", () => {
 
   it("结果按 score 降序排列", () => {
     const pool = [
-      makePOI({ id: "low", tags: ["art"], rating: 3.0 }),
-      makePOI({ id: "mid", tags: ["art"], rating: 4.0 }),
-      makePOI({ id: "high", tags: ["art"], rating: 4.9 }),
+      makePOI({ id: "low", category: catOf(0), tags: ["art"], rating: 3.0 }),
+      makePOI({ id: "mid", category: catOf(1), tags: ["art"], rating: 4.0 }),
+      makePOI({ id: "high", category: catOf(2), tags: ["art"], rating: 4.9 }),
     ];
     // 池子小于 MIN_ACCEPTABLE，会一路放宽到 all，但 rating 排序应该保持
     const prefs = makePrefs({ special: ["art"] });
@@ -241,7 +244,7 @@ describe("filterCandidates 渐进降级", () => {
 
   it("prefs.special 为空时不按标签过滤（验收任意 POI）", () => {
     const pool = Array.from({ length: 6 }, (_, i) =>
-      makePOI({ id: `x${i}`, tags: ["whatever"] })
+      makePOI({ id: `x${i}`, category: catOf(i), tags: ["whatever"] })
     );
     const prefs = makePrefs({ special: [] });
     const result = filterCandidates(prefs, NOON, pool);
