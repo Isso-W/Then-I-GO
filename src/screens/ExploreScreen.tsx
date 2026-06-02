@@ -475,17 +475,19 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
         </div>
       </div>
 
-      <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-2.5">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/5 text-white ring-1 ring-white/10">
-          <Camera size={20} />
+      <div className="rounded-xl border border-white/5 bg-white/[0.02] p-2.5 space-y-2">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/5 text-white ring-1 ring-white/10">
+            <Camera size={20} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[15px] font-bold text-white line-clamp-2">{displayTitle}</div>
+            <p className="text-[11px] text-white/40 line-clamp-2">{content.desc}</p>
+          </div>
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-[15px] font-bold truncate text-white">{displayTitle}</div>
-          <p className="text-[11px] text-white/40 truncate">{content.desc}</p>
-        </div>
-        <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-lg">
-          <span className="text-[13px] font-bold text-[#FFD166]">{content.reward}</span>
+        <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-lg w-fit">
           <Zap size={12} className="fill-[#FFD166] text-[#FFD166]" />
+          <span className="text-[12px] font-bold text-[#FFD166]">{content.reward}</span>
         </div>
       </div>
 

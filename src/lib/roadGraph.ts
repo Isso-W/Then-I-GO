@@ -167,6 +167,32 @@ export function nearestNode(p: LatLng, g: RoadGraph): number | null {
   return best?.id ?? null;
 }
 
+/** 找点所在的最近路段，返回两端节点 id */
+function nearestEdgeEndpoints(p: LatLng, g: RoadGraph): { a: number; b: number } | null {
+  const px = p.lng * LNG_M, py = p.lat * LAT_M;
+  let bestD = Infinity;
+  let bestA = -1, bestB = -1;
+  for (const e of g.edges) {
+    if (!g.mainComponent.has(e.a) || !g.mainComponent.has(e.b)) continue;
+    const a = g.nodes[e.a], b = g.nodes[e.b];
+    const ax = a.lng * LNG_M, ay = a.lat * LAT_M;
+    const bx = b.lng * LNG_M, by = b.lat * LAT_M;
+    const dx = bx - ax, dy = by - ay;
+    const lenSq = dx * dx + dy * dy;
+    if (lenSq < 1e-9) continue;
+    let t = ((px - ax) * dx + (py - ay) * dy) / lenSq;
+    t = Math.max(0, Math.min(1, t));
+    const cx = ax + t * dx, cy = ay + t * dy;
+    const d = Math.hypot(cx - px, cy - py);
+    if (d < bestD) {
+      bestD = d;
+      bestA = e.a;
+      bestB = e.b;
+    }
+  }
+  return bestA >= 0 ? { a: bestA, b: bestB } : null;
+}
+
 /** Dijkstra 最短路（按米加权），返回节点 id 序列。无路则 null。 */
 function dijkstra(g: RoadGraph, src: number, dst: number): number[] | null {
   if (src === dst) return [src];
@@ -213,14 +239,29 @@ function dijkstra(g: RoadGraph, src: number, dst: number): number[] | null {
 export function shortestPath(from: LatLng, to: LatLng, g: RoadGraph): LatLng[] {
   const snappedFrom = snapToRoad(from, g);
   const snappedTo = snapToRoad(to, g);
-  const srcId = nearestNode(snappedFrom, g);
   const dstId = nearestNode(snappedTo, g);
-  if (srcId === null || dstId === null) {
-    return [snappedFrom, snappedTo];
+  if (dstId === null) return [snappedFrom, snappedTo];
+
+  const srcEdge = nearestEdgeEndpoints(snappedFrom, g);
+  if (!srcEdge) return [snappedFrom, snappedTo];
+
+  let bestPath: number[] | null = null;
+  let bestTotal = Infinity;
+  for (const srcId of [srcEdge.a, srcEdge.b]) {
+    const ids = dijkstra(g, srcId, dstId);
+    if (!ids) continue;
+    let total = distMeters(snappedFrom, g.nodes[srcId]);
+    for (let i = 1; i < ids.length; i++) {
+      total += distMeters(g.nodes[ids[i - 1]], g.nodes[ids[i]]);
+    }
+    if (total < bestTotal) {
+      bestTotal = total;
+      bestPath = ids;
+    }
   }
-  const ids = dijkstra(g, srcId, dstId);
-  if (!ids) return [snappedFrom, snappedTo];
-  const middle = ids.map((id) => ({ lat: g.nodes[id].lat, lng: g.nodes[id].lng }));
+
+  if (!bestPath) return [snappedFrom, snappedTo];
+  const middle = bestPath.map((id) => ({ lat: g.nodes[id].lat, lng: g.nodes[id].lng }));
   return [snappedFrom, ...middle, snappedTo];
 }
 

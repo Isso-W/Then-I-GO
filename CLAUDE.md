@@ -43,7 +43,38 @@ Features still not present in the current prototype:
 - **Social sharing reward** — sharing a generated Vlog to an external platform grants in-app titles or bonus items（目前分享只复制文案到剪贴板，无奖励回写）。
 - **Real GPS LBS** — the proximity check-in is currently *simulated* (see 探索体验 → 接近打卡); true `navigator.geolocation` is still not wired.
 
-Done since this list was written (see **探索体验 — Implemented** / **Vlog 生成 — Implemented**):
+### 待办清单
+
+已完成（✓）：
+- ✓ 隐藏适配路线推荐系统（category cap + POI 多样化）
+- ✓ POI 文本显示不全（TaskCard line-clamp-2 + 奖励分行）
+- ✓ 开始探索栏位缩下去
+- ✓ 地图缩放
+- ✓ poi 调整（删洗衣 + 新增 20 个娱乐/景点/美食 POI）
+- ✓ 隐藏任务优化（完成后不再瞬移回前一站）
+- ✓ 首页删除日志按钮
+- ✓ 故事页面删除拍摄设置按钮
+- ✓ 携带装备清单没了
+- ✓ 我的下侧栏位的小红点删掉
+- ✓ function call 获取当天天气，天气加入今天想怎么走的图图
+- ✓ 修改 MBTI
+- ✓ 路线显示优化
+- ✓ 奖励品类匹配（品类→奖励映射锚定 Gemini 输出）
+- ✓ 导航线回头路修复（shortestPath 双端点选路）
+
+未完成：
+- 系统时间决定白天黑夜模式没成功
+- 自然语言 feedback / 文本框？
+- 别让我思考：隐藏下一站位置，正常思考：包含下一站位置
+- 删除惊喜模式，增加同行人物，加在有没有特别想要
+- 跳过/修改点只通过大语言模型
+- 白天黑夜颜色兼容
+- 导航模式中有一个具体的方向和路线长度
+- 背包-优惠券-领取优惠券：跳转假的彩蛋二维码
+- 能量系统？
+- 请求摄像头
+
+Done since original list was written (see **探索体验 — Implemented** / **Vlog 生成 — Implemented**):
 - ~~Cold-start onboarding screen~~ — done (`OnboardingScreen.tsx` + `UserProfile` + `onboarding` screen).
 - ~~Binary tree route UI~~ — done (`branch_choice` step + `BranchChoiceOverlay` + `RouteBranch`).
 - ~~Multi-player collaborative routing~~ — scoped out for the hackathon.
@@ -106,14 +137,14 @@ best_time                           推荐游玩时段文案
 
 **生成策略**：分 3 批（西北区/东北区/南部区）各生成约 38 个，限定每批坐标范围，避免扎堆。生成后 `snapPOIsToRoads.ts` 把所有 POI 按路段长度加权随机吸附到路网上，保证每个点都在路上、可达可打卡。
 
-**POI 类型覆盖**（20 种）：咖啡厅、餐厅系列（日韩/北京风味/素食）、奶茶甜品、书店、文创小店、美术馆、livehouse、公园绿地、酒吧系列、夜宵烧烤、便利店、花店、健身瑜伽、共享自习室、洗衣生活服务、宠物友好咖啡。
+**POI 类型覆盖**（30 种，121 个）：咖啡厅、餐厅系列（日韩/北京风味/素食/火锅/东北菜/小吃）、奶茶甜品、书店、文创小店、美术馆、livehouse、公园绿地、酒吧系列、夜宵烧烤、便利店、花店、健身瑜伽、共享自习室、宠物友好咖啡、景点/地标、夜店、KTV、电影院、美食城、美食街、台球/棋牌、桌游/密室、运动娱乐。洗衣生活服务已删除（低探索价值）。
 
 ### 路由逻辑 — Implemented（含 ReAct 审查）
 
 `routeAgent.ts` + `poiFilter.ts` + `routeReviewer.ts` 实现的工作流：
 
 ```
-1. poiFilter.filterCandidates：按偏好标签/营业时间/排队时长过滤，渐进降级，取 top 10
+1. poiFilter.filterCandidates：按偏好标签/营业时间/排队时长过滤，渐进降级，每个 base category 最多 2 个（category cap），取 top 10
 2. routeAgent.buildPrompt → Gemini call 1：从候选里选点 + 排序 + 写故事/任务/奖励
 3. routeReviewer.reviewRoute → Gemini call 2（ReAct 审查）：
    - 品类多样性（连续同类型？整体太集中？）
@@ -127,7 +158,7 @@ best_time                           推荐游玩时段文案
 
 **ReAct 模式**（Reason + Act）：生成→审查→修正，最多 1 轮修正。正常路线 2 次 Gemini 调用（~4-6s），需修正时 3 次（~6-10s）。控制台打印 `🔄 ReAct` 或 `✅ 路线审查通过`。
 
-过滤在 `poiFilter.filterCandidates`（strict→no_wait→no_tags→all 渐进降级，有单测）。`poiFilter` 还导出 `getActivityType(category)` 和 `getBaseCategory(category)` 活动类型映射（eating/drinking/browsing/sitting/outdoor/service）。
+过滤在 `poiFilter.filterCandidates`（strict→no_wait→no_tags→all 渐进降级，有单测）。排序后每个 `getBaseCategory` 最多保留 2 个进 top 10（category cap），确保候选池至少 5 种不同品类，防止"两个奶茶一个便利店"现象。`poiFilter` 还导出 `getActivityType(category)` 和 `getBaseCategory(category)` 活动类型映射（eating/drinking/browsing/sitting/outdoor/service/entertainment）。
 
 ## AI Route Generation — Implemented
 
@@ -181,6 +212,7 @@ ExploreScreen（地图界面，动态循环）
 - 要求 Gemini **只返回 JSON**，用正则 `/\{[\s\S]*\}/` 或 `/\[[\s\S]*\]/` 从响应文本中提取，防止 Gemini 在 JSON 前后多说话导致解析失败。
 - **Vertex AI 代理**：前端 agent 不直接调 SDK，统一通过 `src/lib/gemini.ts` 的 `generateContent(model, prompt)` → `POST /api/generate`。Vite 插件 `vite-plugin-gemini-proxy.ts` 在 dev server 的 Node.js 层读 `GOOGLE_APPLICATION_CREDENTIALS`（服务账号 JSON）调 Vertex AI，自动从凭据文件提取 `project_id`。无凭据时回退到 `GEMINI_API_KEY`（AI Studio）。
 - 脚本层通过 `$env:GOOGLE_APPLICATION_CREDENTIALS="..."; npx tsx scripts/xxx.ts` 传入。
+- **奖励品类锚定**：`buildCandidateBlock` 给每个候选 POI 附 `推荐奖励` 字段（由 `CATEGORY_REWARDS` 品类→奖励映射表推导），prompt 要求奖励"必须与地点品类相关，参考推荐奖励字段"。Gemini 仍自由编写文案，但有品类锚点不会乱发（如咖啡厅→咖啡券，书店→购书折扣）。
 
 ### 天气 API
 
@@ -189,6 +221,8 @@ Vite 插件同时提供 `/api/weather` 端点，调 `wttr.in` 获取五道口实
 ### 隐藏任务生成
 
 隐藏任务不再由 Gemini 独立生成，而是从主路线的 selections 中取最后一个 `pop()` 出来。Gemini 一次调用生成 N+1 个站点（多 1 个用于隐藏任务），最后一个的奖励要求更好、任务更有挑战。这保证隐藏任务与主线品类不冲突、坐标真实。
+
+**隐藏任务位置连续性**：完成隐藏任务（`reward_hidden`）后推进到下一步时，`overridePosition` 设为隐藏任务坐标（而非清空），避免 avatar 从隐藏任务位置瞬移回主线前一站。`derivePosition.ts` 的 `branch_choice` 步骤同理——有隐藏任务时用隐藏任务坐标作为当前位置。
 
 ### 路线审查 ReAct
 
@@ -200,7 +234,7 @@ Vite 插件同时提供 `/api/weather` 端点，调 `wttr.in` 获取五道口实
 
 ### 导航系统
 
-- **实时导航线**：`Map.tsx` 用 Dijkstra 从 avatar 到当前目标沿路网寻路，渲染紫色虚线 + 方向箭头
+- **实时导航线**：`Map.tsx` 用 Dijkstra 从 avatar 到当前目标沿路网寻路，渲染紫色虚线 + 方向箭头。`shortestPath` 寻路时会尝试所在路段的两个端点节点，选总距离更短的入口，避免导航线从 avatar 身后出发（回头路问题）
 - **方向指示**：`DirectionPanel` 显示旋转箭头图标（实时指向目标）+ 距离 + ETA，不用文字方向
 - **Heading tracking**：`ExploreScreen` 追踪用户行走方向（>2m 阈值），箭头角度 = 行走方向到目标的相对夹角
 - **动态 waypointIndex**：Map 和 ExploreScreen 都使用 `waypointIndex` prop，支持任意数量站点的导航

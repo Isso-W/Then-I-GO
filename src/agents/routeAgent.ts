@@ -82,13 +82,50 @@ function buildHistorySummary(history: TripRecord[]): string {
   return `\n用户历史探索记录（避免重复推荐不满意的地点）：\n${lines.join("\n")}\n`;
 }
 
+const CATEGORY_REWARDS: Record<string, string> = {
+  咖啡厅: "咖啡券/饮品买一送一",
+  书店: "购书8折券/文创周边",
+  文创小店: "手作体验券/文创折扣",
+  美术馆: "展览纪念明信片/周边折扣",
+  餐厅: "餐饮代金券/招牌菜免费加",
+  奶茶甜品: "奶茶第二杯半价/甜品券",
+  便利店: "零食礼包/满减券",
+  livehouse: "演出折扣券/周边贴纸",
+  公园绿地: "共享单车骑行券/冰饮券",
+  花店: "鲜花折扣券/迷你花束",
+  夜宵烧烤: "烧烤代金券/啤酒畅饮券",
+  酒吧: "特调鸡尾酒券/入场券",
+  宠物友好咖啡: "宠物零食包/饮品券",
+  健身瑜伽: "单次体验课/运动饮料",
+  景点地标: "纪念徽章/打卡明信片",
+  夜店: "入场券/特饮券",
+  KTV: "欢唱时长券/果盘券",
+  电影院: "电影兑换券/爆米花套餐",
+  美食城: "美食代金券/招牌小吃免费尝",
+  美食街: "小吃品尝券/满减优惠",
+  台球棋牌: "免费开台券/饮品券",
+  桌游密室: "密室体验券/桌游时长券",
+  运动娱乐: "体验券/运动饮料",
+};
+
+function rewardHint(category: string): string {
+  for (const [key, hint] of Object.entries(CATEGORY_REWARDS)) {
+    if (category.includes(key) || key.replace("/", "").split("").some(c => category.includes(c) && c.length > 1)) {
+      return hint;
+    }
+  }
+  const base = category.match(/^(餐厅|酒吧)/);
+  if (base) return CATEGORY_REWARDS[base[1]] ?? "探索奖励";
+  return "探索奖励";
+}
+
 function buildCandidateBlock(candidates: POI[]): string {
   return candidates
     .map((p) => {
       const dist = Math.round(
         distanceMeters(ORIGIN, { lat: p.lat, lng: p.lng })
       );
-      return `- ${p.id} | ${p.name}（${p.category}）| 标签:${p.tags.join(",")} | 评分:${p.rating} | 平均停留:${p.avg_stay_minutes}分 | 距起点:${dist}米
+      return `- ${p.id} | ${p.name}（${p.category}）| 标签:${p.tags.join(",")} | 评分:${p.rating} | 平均停留:${p.avg_stay_minutes}分 | 距起点:${dist}米 | 推荐奖励:${rewardHint(p.category)}
   简评:${p.review_summary}`;
     })
     .join("\n");
@@ -185,7 +222,7 @@ ${taskBlock}
       "poi_id": "候选列表里的 id（如 poi_001）",
       "description": "这个地点的故事或氛围描述（30字以内）",
       "task": "到达后的打卡任务提示（20字以内）",
-      "reward": "完成后的奖励（如：美团单车7天卡、餐饮券8折）",
+      "reward": "完成后的奖励（必须与地点品类相关，参考候选的'推荐奖励'字段）",
       "emoji": "一个代表这个地点的 emoji"
     }
   ]${branchJson}

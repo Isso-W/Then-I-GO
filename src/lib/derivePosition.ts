@@ -39,7 +39,10 @@ export function positionFromStep(
   }
 
   if (step === "branch_choice") {
-    const wp = route.waypoints[Math.max(0, waypointIndex - 1)] ?? route.waypoints[0];
+    if (route.hiddenTask) {
+      return { lat: route.hiddenTask.lat, lng: route.hiddenTask.lng };
+    }
+    const wp = route.waypoints[waypointIndex] ?? route.waypoints[0];
     return { lat: wp.lat, lng: wp.lng };
   }
 

@@ -387,7 +387,12 @@ export default function App() {
                 const next = waypointIndex + 1;
                 if (next < (generatedRoute?.waypoints.length ?? 0)) {
                   setWaypointIndex(next);
-                  setOverridePosition(null);
+                  const ht = generatedRoute?.hiddenTask;
+                  if (exploreStep === "reward_hidden" && ht) {
+                    setOverridePosition({ lat: ht.lat, lng: ht.lng });
+                  } else {
+                    setOverridePosition(null);
+                  }
                   setExploreStep("next_objective");
                 } else {
                   setExploreStep("achievement_unlock");
