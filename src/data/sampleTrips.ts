@@ -23,7 +23,7 @@ export const SAMPLE_TRIPS: TripRecord[] = [
     durationMin: 68,
     rewards: ["美团单车7天卡", "咖啡买一赠一券", "探索经验 +30", "隐藏奖励 +50 XP"],
     intensity: "normal",
-    preferences: { mood: "explore", duration: "2h", transport: "walk", special: ["art", "niche"], foodPreference: ["coffee"], intensity: "normal" },
+    preferences: { mood: "explore", duration: "2h", transport: "walk", special: ["art", "niche"], foodPreference: ["coffee"], intensity: "normal", companion: "solo" },
     reaction: "🤩",
   },
   {
@@ -39,7 +39,7 @@ export const SAMPLE_TRIPS: TripRecord[] = [
     durationMin: 42,
     rewards: ["餐饮券8折"],
     intensity: "don't_think",
-    preferences: { mood: "hungry", duration: "1h", transport: "walk", special: ["food", "busy"], foodPreference: ["spicy"], intensity: "don't_think" },
+    preferences: { mood: "hungry", duration: "1h", transport: "walk", special: ["food", "busy"], foodPreference: ["spicy"], intensity: "don't_think", companion: "friends" },
     reaction: "😩",
   },
   {
@@ -55,8 +55,8 @@ export const SAMPLE_TRIPS: TripRecord[] = [
     distanceKm: 1.8,
     durationMin: 55,
     rewards: ["限定徽章", "咖啡券", "隐藏奖励 +50 XP"],
-    intensity: "relaxed",
-    preferences: { mood: "relax", duration: "1h", transport: "walk", special: ["art", "niche"], foodPreference: ["coffee"], intensity: "relaxed" },
+    intensity: "normal",
+    preferences: { mood: "relax", duration: "1h", transport: "walk", special: ["art", "niche"], foodPreference: ["coffee"], intensity: "normal", companion: "couple" },
     reaction: "😎",
   },
 ];

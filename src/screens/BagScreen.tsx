@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { HelpCircle, Utensils, Bike, Car, Coffee, Info, ChevronRight, Star, Gift, Clock, Smartphone, Battery, Umbrella, CreditCard } from "lucide-react";
+import { HelpCircle, Utensils, Bike, Car, Coffee, Info, ChevronRight, Star, Gift, Clock, Smartphone, Battery, Umbrella, CreditCard, X, QrCode } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
 import { BottomNav, PageTitle, TabBar } from "../components/CommonUI";
@@ -168,52 +168,137 @@ export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Scre
   );
 }
 
+function FakeQR({ seed }: { seed: number }) {
+  const S = 21;
+  const M = 10;
+  const grid: boolean[][] = Array.from({ length: S }, () => Array(S).fill(false));
+
+  const drawFinder = (r: number, c: number) => {
+    for (let dr = 0; dr < 7; dr++)
+      for (let dc = 0; dc < 7; dc++) {
+        const border = dr === 0 || dr === 6 || dc === 0 || dc === 6;
+        const inner = dr >= 2 && dr <= 4 && dc >= 2 && dc <= 4;
+        grid[r + dr][c + dc] = border || inner;
+      }
+  };
+  drawFinder(0, 0);
+  drawFinder(0, S - 7);
+  drawFinder(S - 7, 0);
+
+  for (let i = 0; i < S; i++) {
+    if (!grid[6][i]) grid[6][i] = i % 2 === 0;
+    if (!grid[i][6]) grid[i][6] = i % 2 === 0;
+  }
+
+  for (let dr = 0; dr < 5; dr++)
+    for (let dc = 0; dc < 5; dc++) {
+      const border = dr === 0 || dr === 4 || dc === 0 || dc === 4;
+      const center = dr === 2 && dc === 2;
+      grid[S - 9 + dr][S - 9 + dc] = border || center;
+    }
+
+  let h = seed;
+  for (let r = 0; r < S; r++)
+    for (let c = 0; c < S; c++) {
+      if (grid[r][c]) continue;
+      if (r <= 8 && c <= 8) continue;
+      if (r <= 8 && c >= S - 8) continue;
+      if (r >= S - 8 && c <= 8) continue;
+      h = (h * 1103515245 + 12345) & 0x7fffffff;
+      grid[r][c] = h % 3 !== 0;
+    }
+
+  return (
+    <>
+      {grid.map((row, r) =>
+        row.map((on, c) =>
+          on ? <rect key={`${r}-${c}`} x={c * M} y={r * M} width={M} height={M} fill="#000" /> : null
+        )
+      )}
+    </>
+  );
+}
+
 interface CouponCardProps extends Coupon {
   index: number;
   key?: string | number;
 }
 
 function CouponCard({ title, desc, date, amount, icon, color, tag, index }: CouponCardProps) {
+  const [showQR, setShowQR] = useState(false);
   return (
-    <motion.div 
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.05 }}
-      whileTap={{ scale: 0.98 }}
-      className={`relative flex h-[82px] overflow-hidden rounded-xl border border-white/10 bg-gradient-to-r ${color} shadow-lg cursor-pointer`}
-    >
-      <div className="flex w-[64px] items-center justify-center bg-black/20">
-        <div className="text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)]">
-          {icon}
+    <>
+      <motion.div
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: index * 0.05 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => setShowQR(true)}
+        className={`relative flex h-[82px] overflow-hidden rounded-xl border border-white/10 bg-gradient-to-r ${color} shadow-lg cursor-pointer`}
+      >
+        <div className="flex w-[64px] items-center justify-center bg-black/20">
+          <div className="text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)]">
+            {icon}
+          </div>
         </div>
-      </div>
-      
-      <div className="flex flex-1 flex-col justify-center px-3">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[15px] font-bold text-white tracking-tight leading-none">{title}</span>
-          {tag && <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[8px] font-black text-white uppercase tracking-tighter">{tag}</span>}
-        </div>
-        <div className="mt-1 text-[11px] font-medium text-white/80">{desc}</div>
-        <div className="mt-1 flex items-center gap-1 text-[9px] text-white/50">
-          <Clock size={9} />
-          {date} 到期
-        </div>
-      </div>
 
-      <div className="relative flex w-[76px] flex-col items-center justify-center bg-white/5 backdrop-blur-md">
-        <div className="absolute top-1/2 -left-[1px] -translate-y-1/2 flex flex-col gap-0.5 opacity-20">
-           {Array.from({ length: 5 }).map((_, i) => (
-             <div key={i} className="h-1.5 w-0.5 bg-white rounded-full" />
-           ))}
+        <div className="flex flex-1 flex-col justify-center px-3">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[15px] font-bold text-white tracking-tight leading-none">{title}</span>
+            {tag && <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[8px] font-black text-white uppercase tracking-tighter">{tag}</span>}
+          </div>
+          <div className="mt-1 text-[11px] font-medium text-white/80">{desc}</div>
+          <div className="mt-1 flex items-center gap-1 text-[9px] text-white/50">
+            <Clock size={9} />
+            {date} 到期
+          </div>
         </div>
-        <div className="text-[22px] font-black text-white leading-none">{amount}</div>
-        <div className="mt-1 text-[9px] font-bold text-white/60 uppercase tracking-tighter">立即用</div>
-      </div>
 
-      {/* Ticket Punches */}
-      <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-[#0A0A1A] border border-white/5" />
-      <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-[#0A0A1A] border border-white/5" />
-    </motion.div>
+        <div className="relative flex w-[76px] flex-col items-center justify-center bg-white/5 backdrop-blur-md">
+          <div className="absolute top-1/2 -left-[1px] -translate-y-1/2 flex flex-col gap-0.5 opacity-20">
+             {Array.from({ length: 5 }).map((_, i) => (
+               <div key={i} className="h-1.5 w-0.5 bg-white rounded-full" />
+             ))}
+          </div>
+          <div className="text-[22px] font-black text-white leading-none">{amount}</div>
+          <div className="mt-1 text-[9px] font-bold text-white/60 uppercase tracking-tighter">立即用</div>
+        </div>
+
+        <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-[#0A0A1A] border border-white/5" />
+        <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-[#0A0A1A] border border-white/5" />
+      </motion.div>
+
+      <AnimatePresence>
+        {showQR && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-md"
+            onClick={() => setShowQR(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.85, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-[280px] rounded-3xl bg-gradient-to-b from-[#1A1A2E] to-[#0D0D15] p-6 text-center border border-white/10 shadow-2xl"
+            >
+              <button onClick={() => setShowQR(false)} className="absolute top-4 right-4 text-white/40 active:scale-90">
+                <X size={20} />
+              </button>
+              <div className="mb-4">
+                <div className="text-[16px] font-black text-white">{title}</div>
+                <div className="text-[12px] text-white/50 mt-1">{desc}</div>
+              </div>
+              <div className="mx-auto w-[180px] h-[180px] bg-white rounded-2xl p-2 flex items-center justify-center">
+                <svg viewBox="0 0 210 210" className="w-full h-full">
+                  <FakeQR seed={title.length * 7 + desc.length * 13} />
+                </svg>
+              </div>
+              <div className="mt-4 text-[11px] text-white/30">向商家出示此二维码即可使用</div>
+              <div className="mt-1 text-[10px] text-white/20 font-mono">COUPON-{Date.now().toString(36).toUpperCase().slice(-6)}</div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 

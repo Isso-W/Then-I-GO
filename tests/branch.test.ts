@@ -44,6 +44,7 @@ const makePrefs = (overrides: Partial<UserPreferences> = {}): UserPreferences =>
   special: [],
   foodPreference: [],
   intensity: "normal",
+  companion: "solo",
   ...overrides,
 });
 

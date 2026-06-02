@@ -168,6 +168,7 @@ export default function App() {
     special: [],
     foodPreference: [],
     intensity: "normal",
+    companion: "solo",
   };
 
   // 生成路线主流程：从任意入口（直接开始 / 偏好页确认）汇聚到这里
@@ -381,7 +382,7 @@ export default function App() {
               currentPosition={currentPosition}
               onUserDrag={setOverridePosition}
               onBranchChoice={handleBranchChoice}
-              mystery={preferences?.intensity === "relaxed"}
+              mystery={preferences?.intensity === "don't_think"}
               waypointIndex={waypointIndex}
               onAdvanceWaypoint={() => {
                 const next = waypointIndex + 1;

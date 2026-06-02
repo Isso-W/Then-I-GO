@@ -192,6 +192,9 @@ export function ExploreScreen({
       <AnimatePresence>
         {step === "reward_hidden" && (
           <RewardOverlay
+            name={generatedRoute?.hiddenTask?.name}
+            reward={generatedRoute?.hiddenTask?.reward}
+            emoji={generatedRoute?.hiddenTask?.emoji}
             onContinue={() => {
               if (generatedRoute?.branch) {
                 setStep("branch_choice");
@@ -432,8 +435,10 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
   };
 
   const content = getTaskContent();
-  // 惊喜模式：到达（inRange）前藏起目的地名字，到了才揭晓；故事/任务文案仍作预告
-  const displayTitle = mystery && hasTarget && !inRange ? "？？？" : content.title;
+  // 别让我思考：到达（inRange）前藏起目的地名字和奖励，到了才揭晓
+  const hideMystery = mystery && hasTarget && !inRange;
+  const displayTitle = hideMystery ? "？？？" : content.title;
+  const displayReward = hideMystery ? "到达后揭晓" : content.reward;
 
   const handleAction = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -487,7 +492,7 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
         </div>
         <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-lg w-fit">
           <Zap size={12} className="fill-[#FFD166] text-[#FFD166]" />
-          <span className="text-[12px] font-bold text-[#FFD166]">{content.reward}</span>
+          <span className="text-[12px] font-bold text-[#FFD166]">{displayReward}</span>
         </div>
       </div>
 
@@ -829,28 +834,28 @@ const IntroOverlay: React.FC<{ onDirectStart: () => void; onCustomize: () => voi
   );
 }
 
-function RewardOverlay({ onContinue }: { onContinue: () => void }) {
+function RewardOverlay({ onContinue, reward, emoji, name }: { onContinue: () => void; reward?: string; emoji?: string; name?: string }) {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="absolute inset-0 z-[120] flex items-center justify-center p-8 backdrop-blur-xl bg-black/40"
     >
       <div className="w-full max-w-xs rounded-3xl bg-gradient-to-b from-[#1A1A2E] to-[#0D0D15] p-6 text-center border border-white/10 shadow-2xl relative overflow-hidden">
         <div className="absolute inset-0 bg-white/[0.02] pointer-events-none" />
-        
+
         <div className="relative z-10">
-          <motion.div 
+          <motion.div
             initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
             className="mb-6 flex justify-center"
           >
             <div className="relative h-20 w-20 flex items-center justify-center bg-amber-500 rounded-full shadow-[0_0_30px_rgba(245,158,11,0.5)]">
-              <Sparkles size={40} className="text-white" />
+              <span className="text-4xl">{emoji ?? "✨"}</span>
             </div>
           </motion.div>
 
-          <h2 className="text-2xl font-black text-white italic">隐藏记忆解锁！</h2>
-          <p className="mt-2 text-sm text-white/50">你获得了额外的探索奖励</p>
+          <h2 className="text-2xl font-black text-white italic">{name ?? "打卡完成"}</h2>
+          <p className="mt-2 text-sm text-white/50">解锁探索奖励</p>
 
           <div className="my-8 space-y-3">
             <div className="flex items-center justify-between rounded-xl bg-white/5 p-3 border border-white/5">
@@ -866,18 +871,16 @@ function RewardOverlay({ onContinue }: { onContinue: () => void }) {
             <div className="flex items-center justify-between rounded-xl bg-white/5 p-3 border border-white/5 text-left">
                <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-500">
-                     <Bike size={16} />
+                     <Gift size={16} />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-white">美团单车优惠券</div>
-                    <div className="text-[10px] text-white/40">7天畅骑卡</div>
+                    <div className="text-sm font-bold text-white line-clamp-2">{reward ?? "隐藏奖励"}</div>
                   </div>
                </div>
-               <span className="text-lg font-black text-cyan-500">¥3</span>
             </div>
           </div>
 
-          <button 
+          <button
             onClick={onContinue}
             className="w-full rounded-2xl bg-white py-4 text-sm font-black text-black active:scale-95 transition-transform"
           >
@@ -941,6 +944,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
   const [special, setSpecial] = useState<string[]>(["outdoor"]);
   const [foodPreference, setFoodPreference] = useState<string[]>(["coffee"]);
   const [intensity, setIntensity] = useState("don't_think");
+  const [companion, setCompanion] = useState("solo");
 
   const moods = [
     { id: "happy", icon: Smile, label: "开心" },
@@ -983,9 +987,15 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
 
   // 省心 → 冒险 的梯子，每档行为不同（sub 写明区别，就在「程度」问号旁的选择区里）
   const intensities: { id: string; icon: typeof Target; label: string; sub?: string; recommended?: boolean }[] = [
-    { id: "don't_think", icon: Wand2, label: "别让我思考", sub: "不用选·直接带路", recommended: true },
-    { id: "normal", icon: Book, label: "正常探索", sub: "有岔路·你来选" },
-    { id: "relaxed", icon: Sparkles, label: "惊喜模式", sub: "藏目的地·到了揭晓" },
+    { id: "don't_think", icon: Wand2, label: "别让我思考", sub: "隐藏下一站·直接带路", recommended: true },
+    { id: "normal", icon: Book, label: "正常探索", sub: "显示目的地·有岔路" },
+  ];
+
+  const companions = [
+    { id: "solo", icon: Users, label: "独自" },
+    { id: "couple", icon: Users, label: "情侣" },
+    { id: "friends", icon: Users, label: "朋友" },
+    { id: "family", icon: Users, label: "家庭" },
   ];
 
   const toggleList = (list: string[], setList: (l: string[]) => void, id: string) => {
@@ -1109,7 +1119,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
         </div>
 
         <SectionTitle num={3} title="有没有特别想要？" sub="(可多选)" />
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-4">
           {specials.map((s) => (
             <button
               key={s.id}
@@ -1120,6 +1130,22 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
             >
               <s.icon size={11} />
               {s.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="text-[9px] font-bold text-white/30 mb-1.5 ml-0.5">同行人</div>
+        <div className="flex flex-wrap gap-2 mb-6">
+          {companions.map((c) => (
+            <button
+              key={c.id}
+              onClick={() => setCompanion(c.id)}
+              className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-[9px] font-bold transition-all ${
+                companion === c.id ? "bg-[#1A1A2E] border-[#6C5CFF] text-white shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-white/5 border-transparent text-white/40"
+              }`}
+            >
+              <c.icon size={11} />
+              {c.label}
             </button>
           ))}
         </div>
@@ -1145,13 +1171,12 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
           title="今天想被安排什么程度？"
           help={
             <div className="space-y-1.5">
-              <div><span className="font-bold text-white">别让我思考</span>：不用选，直接带你逛</div>
-              <div><span className="font-bold text-white">正常探索</span>：路上有岔路，你来选</div>
-              <div><span className="font-bold text-white">惊喜模式</span>：目的地藏起来，到了才揭晓</div>
+              <div><span className="font-bold text-white">别让我思考</span>：隐藏下一站位置，不用选，直接带你逛</div>
+              <div><span className="font-bold text-white">正常探索</span>：显示下一站位置，路上有岔路，你来选</div>
             </div>
           }
         />
-        <div className="grid grid-cols-3 gap-2 mb-6">
+        <div className="grid grid-cols-2 gap-2 mb-6">
           {intensities.map((i) => (
             <button
               key={i.id}
@@ -1174,7 +1199,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
 
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] p-5 bg-gradient-to-t from-[#05070A] via-[#05070A] to-transparent">
         <button 
-          onClick={() => onConfirm({ mood, duration, transport, special, foodPreference, intensity })}
+          onClick={() => onConfirm({ mood, duration, transport, special, foodPreference, intensity, companion })}
           className="group relative flex w-full items-center justify-center gap-3 rounded-full bg-[#6C5CFF] py-3.5 text-[16px] font-black text-white shadow-[0_15px_40px_rgba(108,92,255,0.4)] active:scale-[0.98] transition-all overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />

@@ -27,7 +27,10 @@ const FOOD_LABELS: Record<string, string> = {
   light: "清淡", spicy: "麻辣", western: "西式", coffee: "甜品咖啡",
 };
 const INTENSITY_LABELS: Record<string, string> = {
-  relaxed: "轻松带路", normal: "正常探索", "don't_think": "别让我思考（全权安排）",
+  normal: "正常探索", "don't_think": "别让我思考（全权安排）",
+};
+const COMPANION_LABELS: Record<string, string> = {
+  solo: "独自一人", couple: "情侣约会", friends: "朋友同行", family: "家庭出游",
 };
 
 // 时长 → 期望打卡点数量
@@ -173,7 +176,7 @@ function buildPrompt(ctx: GenerateContext, revisionNote?: string): string {
     `从候选里挑选 ${totalSelections} 个 poi_id，按推荐游玩顺序排列，注意品类多样性（不要连续选同类型地点）`,
     `给每个挑选的地点写故事氛围、打卡任务、奖励文案、emoji`,
     `写一个 10 字以内有意境的路线标题`,
-    `最后一个地点会被设为"隐藏惊喜站"，所以它的奖励要比其他站更好（限定徽章、隐藏菜单券等稀缺奖励），任务要有趣且有一点小挑战`,
+    `最后一个地点会被设为"隐藏惊喜站"，所以它的奖励要比其他站更好（限定徽章、隐藏菜单券等稀缺奖励），任务要有趣且有一点小挑战。注意：隐藏站的奖励也必须与该地点的品类相关（参考其"推荐奖励"字段），不要给不相关的奖励`,
   ];
   if (branchEnabled) {
     tasks.push(
@@ -207,6 +210,7 @@ ${profileBlock}${historyBlock}${revisionBlock}
 - 偏好标签：${prefs.special.map(s => SPECIAL_LABELS[s] ?? s).join("、") || "无特殊偏好"}
 - 餐饮偏好：${prefs.foodPreference.map(f => FOOD_LABELS[f] ?? f).join("、") || "无特殊偏好"}
 - 安排程度：${INTENSITY_LABELS[prefs.intensity] ?? prefs.intensity}
+- 同行人：${COMPANION_LABELS[prefs.companion] ?? prefs.companion ?? "独自一人"}
 
 候选地点（必须从这里选，不要编造）：
 ${buildCandidateBlock(candidates)}
@@ -227,7 +231,7 @@ ${taskBlock}
     }
   ]${branchJson}
 }
-注意：最后一个 selection 会被设为隐藏惊喜站，它的 reward 应该更好（限定/稀缺奖励），task 应该有趣且有一点小挑战。
+注意：最后一个 selection 会被设为隐藏惊喜站，它的 reward 应该更好（限定/稀缺奖励），task 应该有趣且有一点小挑战。奖励必须与该地点品类相关（参考其"推荐奖励"字段）。
 `;
 }
 

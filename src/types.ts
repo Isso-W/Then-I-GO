@@ -53,6 +53,7 @@ export interface UserPreferences {
   special: string[];
   foodPreference: string[];
   intensity: string;
+  companion: string;
 }
 
 // AI 生成的单个打卡点

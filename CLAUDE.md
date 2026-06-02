@@ -61,16 +61,18 @@ Features still not present in the current prototype:
 - ✓ 路线显示优化
 - ✓ 奖励品类匹配（品类→奖励映射锚定 Gemini 输出）
 - ✓ 导航线回头路修复（shortestPath 双端点选路）
+- ✓ 别让我思考：隐藏下一站位置+奖励，正常探索：显示下一站位置
+- ✓ 删除惊喜模式，增加同行人物选择（独自/情侣/朋友/家庭）
+- ✓ 背包-优惠券-领取优惠券：点击弹出仿真 QR 二维码弹窗
+- ✓ RewardOverlay 读取真实 hiddenTask 数据（名字/奖励/emoji），不再硬编码
+- ✓ 隐藏任务奖励也必须与品类相关（prompt 约束加强）
 
 未完成：
 - 系统时间决定白天黑夜模式没成功
 - 自然语言 feedback / 文本框？
-- 别让我思考：隐藏下一站位置，正常思考：包含下一站位置
-- 删除惊喜模式，增加同行人物，加在有没有特别想要
 - 跳过/修改点只通过大语言模型
 - 白天黑夜颜色兼容
 - 导航模式中有一个具体的方向和路线长度
-- 背包-优惠券-领取优惠券：跳转假的彩蛋二维码
 - 能量系统？
 - 请求摄像头
 
@@ -335,14 +337,16 @@ $env:GEMINI_API_KEY="..."; npx tsx scripts/generateVlogFrames.ts   # 重新生�
 | `ExploreScreen` → `BranchChoiceOverlay` | 抉择浮层；`App.handleBranchChoice` 写回后进 `next_objective`，下游照常读 `waypoints[1]`（无需改） |
 | `Map` | `branch_choice` 时把 A/B 候选画在真坐标上 |
 
-### 安排程度梯子 + 惊喜模式（`intensity`）
-偏好第 5 项「想被安排什么程度？」是一条 省心→冒险 梯子，卡片副标题写明区别，标题旁 `?` hover 出 tooltip：
+### 安排程度梯子（`intensity`，2 档）
+偏好第 5 项「想被安排什么程度？」两档选择，标题旁 `?` hover 出 tooltip：
 
-- **别让我思考**（`don't_think`，默认/推荐）：名字清楚、无岔路、直线
-- **正常探索**（`normal`）：名字清楚 + A/B 岔路
-- **惊喜模式**（`relaxed`）：A/B 岔路 + **目的地名字藏成 `？？？`，到达打卡半径才揭晓**
+- **别让我思考**（`don't_think`，默认/推荐）：**隐藏下一站名字和奖励**（到达才揭晓）、无岔路、直线
+- **正常探索**（`normal`）：显示下一站名字和奖励 + A/B 岔路
 
-`mystery = preferences?.intensity === "relaxed"`（App 计算）下传给 `TaskCard` / `BranchChoiceOverlay` / `HiddenTaskAlert` 做名字遮罩；故事/任务/emoji/距离仍作预告，导航照常。
+惊喜模式（`relaxed`）已删除。`mystery = preferences?.intensity === "don't_think"`（App 计算）下传给 `TaskCard` / `BranchChoiceOverlay` / `HiddenTaskAlert` 做名字+奖励遮罩；故事/任务/emoji/距离仍作预告，导航照常。
+
+### 同行人（`companion`）
+偏好选择第 3 项「有没有特别想要」下方新增同行人单选：独自(`solo`) / 情侣(`couple`) / 朋友(`friends`) / 家庭(`family`)。传入 `routeAgent` prompt 影响选址和文案语气（如情侣偏安静浪漫、朋友偏热闹社交）。`UserPreferences.companion` 字段。
 
 ### 接近打卡（模拟 LBS）
 打卡按钮**不拦截**（路上随手可记录）；走到当前目标 `CHECKIN_RADIUS_M`(30m) 内时卡头亮「✓ 到了 · 可打卡」，否则显示「距目标 Nm」。目标按 step 自动切（`initial`→wp0 / `hidden_active`→hiddenTask / `next_objective`→wp1），用 `distanceMeters(currentPosition, target)` 判定。
