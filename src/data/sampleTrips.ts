@@ -32,7 +32,7 @@ export const SAMPLE_TRIPS: TripRecord[] = [
     waypoints: [
       { name: "韩国烤肉店", emoji: "🥩", lat: 39.993, lng: 116.348, visited: true, reaction: "😎" },
       { name: "五道营小酒馆", emoji: "🍺", lat: 39.993, lng: 116.347, visited: false, reaction: "💀" },
-      { name: "7-Eleven", emoji: "🏪", lat: 39.998, lng: 116.332, visited: false, isHidden: true },
+      { name: "五道口深夜食堂", emoji: "🍢", lat: 39.993, lng: 116.339, visited: false, isHidden: true },
     ],
     chatActions: ["skip_current"],
     distanceKm: 1.3,
