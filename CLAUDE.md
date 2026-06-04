@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Key differentiators**:
 - **Multi-agent route generation**: Multiple AI agents collaborate to produce a route — one agent handles user profiling (MBTI, past exploration history, stated mood/preferences), another sources nearby POIs, another assembles the narrative and task sequence. The Gemini API (`@google/genai`) is the AI backbone.
 - **Personalization inputs**: MBTI personality type, mood at launch time, duration preference, transport mode, interest tags (art / outdoor / food / nightlife / family-friendly / photo spots / niche / budget), food preferences, and "how much do you want to think?" intensity level — all collected in `PreferenceOverlay` before route generation.
-- **Gamified progression**: The route is structured as a sequence of tasks (`ExploreStep` state machine). Completing check-ins (photo/vlog capture) unlocks the next waypoint and awards XP + real merchant coupons (dining, bike-share, ride-hailing).
+- **Gamified progression**: The route is structured as a sequence of tasks (`ExploreStep` state machine). Completing check-ins (photo/vlog capture) unlocks the next waypoint and awards real merchant coupons (¥金额+券名格式，如 ¥20餐饮代金券)。奖励只发优惠券/代金券，不发徽章/XP。
 - **Hidden task layer**: Beyond the main route, the system can surface hidden POI tasks mid-exploration that the user didn't plan for, adding surprise discovery moments.
 - **Vlog auto-generation**: Captured clips from check-ins are fed back to the AI to produce a short auto-edited Vlog of the day's exploration (see `StoryScreen`).
 
@@ -62,16 +62,20 @@ Features still not present in the current prototype:
 - ✓ 奖励品类匹配（品类→奖励映射锚定 Gemini 输出）
 - ✓ 导航线回头路修复（shortestPath 双端点选路）
 - ✓ 别让我思考：隐藏下一站位置+奖励，正常探索：显示下一站位置
-- ✓ 删除惊喜模式，增加同行人物选择（独自/情侣/朋友/家庭）
-- ✓ 背包-优惠券-领取优惠券：点击弹出仿真 QR 二维码弹窗
+- ✓ 删除惊喜模式，增加同行人物选择（独自/情侣/朋友/亲子）
+- ✓ 背包-优惠券-使用优惠券：点击弹出仿真 QR 二维码弹窗
 - ✓ RewardOverlay 读取真实 hiddenTask 数据（名字/奖励/emoji），不再硬编码
 - ✓ 隐藏任务奖励也必须与品类相关（prompt 约束加强）
+- ✓ 偏好按钮白色背景、导航文案"xxx米后左转"格式
+- ✓ 冷启动 onboarding 简化为单步 MBTI（去掉口味偏好步骤）
+- ✓ 奖励统一为优惠券（¥金额格式），去掉徽章/XP
+- ✓ 餐饮品类细分 9 类 + 非餐饮 9 类品类图（18 张，`public/categories/`）
+- ✓ 背包成就徽章系统（连续打卡/隐藏任务/集券等 8 枚）
+- ✓ TabBar 选中态改为白色背景填充
 
 未完成：
-- 系统时间决定白天黑夜模式没成功
 - 自然语言 feedback / 文本框？
 - 跳过/修改点只通过大语言模型
-- 白天黑夜颜色兼容
 - 导航模式中有一个具体的方向和路线长度
 - 能量系统？
 - 请求摄像头
@@ -139,7 +143,17 @@ best_time                           推荐游玩时段文案
 
 **生成策略**：分 3 批（西北区/东北区/南部区）各生成约 38 个，限定每批坐标范围，避免扎堆。生成后 `snapPOIsToRoads.ts` 把所有 POI 按路段长度加权随机吸附到路网上，保证每个点都在路上、可达可打卡。
 
-**POI 类型覆盖**（30 种，121 个）：咖啡厅、餐厅系列（日韩/北京风味/素食/火锅/东北菜/小吃）、奶茶甜品、书店、文创小店、美术馆、livehouse、公园绿地、酒吧系列、夜宵烧烤、便利店、花店、健身瑜伽、共享自习室、宠物友好咖啡、景点/地标、夜店、KTV、电影院、美食城、美食街、台球/棋牌、桌游/密室、运动娱乐。洗衣生活服务已删除（低探索价值）。
+**POI 类型覆盖**（30 种，121 个）：咖啡厅、餐厅系列（日韩/北京风味/素食/火锅/东北菜/小吃）、奶茶甜品、书店、文创小店、美术馆、livehouse、公园绿地、酒吧系列、夜宵烧烤、花店、健身瑜伽、共享自习室、宠物友好咖啡、景点/地标、夜店、KTV、电影院、美食城、美食街、台球/棋牌、桌游/密室、运动娱乐。洗衣/便利店已删除（低探索价值）。
+
+### 品类图片（`public/categories/`，`src/lib/categoryImages.ts`）
+
+18 张品类图，分两组：
+
+**餐饮 9 大品类**：`local-cuisine`（地方菜系）、`hotpot`（火锅）、`bbq`（烧烤烤肉）、`world-cuisine`（异国料理）、`buffet`（自助餐）、`seafood`（鱼鲜海鲜）、`snack`（小吃快餐）、`drinks`（饮品店）、`dessert`（面包蛋糕甜品）
+
+**非餐饮 9 类**：`coffee`（咖啡/自习室）、`bar`（酒吧/livehouse/夜店）、`bookstore`（书店）、`art`（文创/美术馆/花店）、`park`（公园/景点）、`fitness`（健身/运动）、`entertainment`（电影/KTV/桌游/密室）、`bike`（骑行券）、`taxi`（打车券）
+
+`categoryImages.ts` 的 `getCategoryImage(category)` 把 POI category 映射到对应图片路径，用于背包优惠券卡片和隐藏任务图片。
 
 ### 路由逻辑 — Implemented（含 ReAct 审查）
 
@@ -214,7 +228,7 @@ ExploreScreen（地图界面，动态循环）
 - 要求 Gemini **只返回 JSON**，用正则 `/\{[\s\S]*\}/` 或 `/\[[\s\S]*\]/` 从响应文本中提取，防止 Gemini 在 JSON 前后多说话导致解析失败。
 - **Vertex AI 代理**：前端 agent 不直接调 SDK，统一通过 `src/lib/gemini.ts` 的 `generateContent(model, prompt)` → `POST /api/generate`。Vite 插件 `vite-plugin-gemini-proxy.ts` 在 dev server 的 Node.js 层读 `GOOGLE_APPLICATION_CREDENTIALS`（服务账号 JSON）调 Vertex AI，自动从凭据文件提取 `project_id`。无凭据时回退到 `GEMINI_API_KEY`（AI Studio）。
 - 脚本层通过 `$env:GOOGLE_APPLICATION_CREDENTIALS="..."; npx tsx scripts/xxx.ts` 传入。
-- **奖励品类锚定**：`buildCandidateBlock` 给每个候选 POI 附 `推荐奖励` 字段（由 `CATEGORY_REWARDS` 品类→奖励映射表推导），prompt 要求奖励"必须与地点品类相关，参考推荐奖励字段"。Gemini 仍自由编写文案，但有品类锚点不会乱发（如咖啡厅→咖啡券，书店→购书折扣）。
+- **奖励品类锚定**：`buildCandidateBlock` 给每个候选 POI 附 `推荐奖励` 字段（由 `CATEGORY_REWARDS` 品类→奖励映射表推导，含具体金额如 `¥15饮品抵扣券`），prompt 要求奖励格式为"¥金额+券名"，只发优惠券/代金券，不发徽章。Gemini 仍自由编写文案，但有品类锚点和金额参考（如咖啡厅→¥15饮品抵扣券，书店→¥20购书折扣券）。
 
 ### 天气 API
 
@@ -324,7 +338,7 @@ $env:GEMINI_API_KEY="..."; npx tsx scripts/generateVlogFrames.ts   # 重新生�
 把原型从"线性写死流程"做成了真实数据驱动、intensity 分档的可玩闭环。所有数据都来自当前 session（`generatedRoute` / `preferences` / `profile` / localStorage），**无后端**。
 
 ### 冷启动 onboarding（`src/screens/OnboardingScreen.tsx`）
-首启收集 MBTI + 兴趣标签，存 localStorage `userProfile`（`UserProfile`）。`App.tsx` 首启无 profile → `onboarding`，否则直接 `explore`。`routeAgent` 把长期画像（MBTI/兴趣）与当下偏好分两块写进 prompt。
+首启仅收集 MBTI（单步，16 型四列网格），存 localStorage `userProfile`（`UserProfile`）。口味偏好步骤已移除。`App.tsx` 首启无 profile → `onboarding`，否则直接 `explore`。`routeAgent` 把长期画像（MBTI）与当下偏好分两块写进 prompt。
 
 ### 二叉树 A/B 抉择（`branch_choice` step）
 第一站打卡后弹两个**气质相反**的候选第二站 + 一句抉择提示 `axis`，二选一。
@@ -346,7 +360,7 @@ $env:GEMINI_API_KEY="..."; npx tsx scripts/generateVlogFrames.ts   # 重新生�
 惊喜模式（`relaxed`）已删除。`mystery = preferences?.intensity === "don't_think"`（App 计算）下传给 `TaskCard` / `BranchChoiceOverlay` / `HiddenTaskAlert` 做名字+奖励遮罩；故事/任务/emoji/距离仍作预告，导航照常。
 
 ### 同行人（`companion`）
-偏好选择第 3 项「有没有特别想要」下方新增同行人单选：独自(`solo`) / 情侣(`couple`) / 朋友(`friends`) / 家庭(`family`)。传入 `routeAgent` prompt 影响选址和文案语气（如情侣偏安静浪漫、朋友偏热闹社交）。`UserPreferences.companion` 字段。
+偏好选择第 3 项「有没有特别想要」下方新增同行人单选：独自(`solo`) / 情侣(`couple`) / 朋友(`friends`) / 亲子(`family`)。传入 `routeAgent` prompt 影响选址和文案语气（如情侣偏安静浪漫、朋友偏热闹社交）。`UserPreferences.companion` 字段。
 
 ### 接近打卡（模拟 LBS）
 打卡按钮**不拦截**（路上随手可记录）；走到当前目标 `CHECKIN_RADIUS_M`(30m) 内时卡头亮「✓ 到了 · 可打卡」，否则显示「距目标 Nm」。目标按 step 自动切（`initial`→wp0 / `hidden_active`→hiddenTask / `next_objective`→wp1），用 `distanceMeters(currentPosition, target)` 判定。
@@ -426,7 +440,7 @@ intensity, preferences: UserPreferences, reaction?
 
 ### 其它屏幕接真实数据
 - **StoryScreen 今日素材集** ← `generatedRoute` 站点（出发 + waypoints + 隐藏任务），过去日期回退示例
-- **BagScreen 优惠券** ← 今日各站 `reward`（叠在示例钱包上），资产数随之变真
+- **BagScreen 优惠券** ← 今日各站 `reward`（从 POI 店铺名 + ¥金额格式），demo 券也来自真实 POI 店铺；顶部"探索收获"统计替换为成就徽章系统（8 枚，连续打卡/隐藏任务/集券等）
 - **MineScreen** ← profile 的 MBTI 徽章；**铃铛=「通知」**(session 动态事件)、**系统消息=「系统消息」**(常驻公告)，各自弹底部面板
 
 > 测试：`src/lib/*` 与 `poiFilter` 的纯逻辑有 vitest 单测（`tests/`，`npm test`）。UI/屏幕不单测。
@@ -450,6 +464,7 @@ npx tsx scripts/generateTerrain.ts        # 生成地表多边形 → scripts/da
 npx tsx scripts/snapPOIsToRoads.ts        # POI 吸附到路网（覆盖 pois.json）
 npx tsx scripts/visualizeStreetNetwork.ts # 可视化地图 → scripts/data/street-network.html
 npx tsx scripts/generateVlogFrames.ts     # 生成 Vlog 占位 B-roll → public/vlog/*.jpg（gemini-2.5-flash-image + sharp）
+npx tsx scripts/generateCategoryImages.ts # 生成品类图 → public/categories/*.jpg（或手动切割九宫格图）
 ```
 
 Tests live in `tests/` and run with `npm test` (vitest), covering the pure routing/geo logic（`poiFilter`、`roadGraph`、`mapProjection`、`derivePosition`）。

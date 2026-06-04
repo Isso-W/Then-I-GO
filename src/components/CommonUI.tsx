@@ -53,19 +53,19 @@ export function TabBar({ tabs, active = 0, onChange }: { tabs: string[]; active?
   return (
     <div className="flex h-10 items-center rounded-xl border p-1 text-[13px]" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-subtle)", color: "var(--text-muted)" }}>
       {tabs.map((t, i) => (
-        <button 
-          key={t} 
+        <button
+          key={t}
           onClick={() => onChange?.(i)}
-          className={`relative flex-1 rounded-lg py-1.5 text-center transition-colors`}
+          className={`relative flex-1 rounded-lg py-1.5 text-center font-bold transition-colors`}
           style={i === active ? { color: "var(--text-primary)" } : undefined}
         >
-          {t}
           {i === active && (
-            <motion.span 
-              layoutId="tab-underline"
-              className="absolute bottom-0 left-1/2 h-1 w-10 -translate-x-1/2 rounded-full bg-[#6C5CFF]" 
+            <motion.span
+              layoutId="tab-fill"
+              className="absolute inset-0 rounded-lg bg-white dark:bg-white/15 shadow-sm"
             />
           )}
+          <span className="relative z-10">{t}</span>
         </button>
       ))}
     </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Sparkles, Zap, BookOpen, Compass, Gift, Navigation, HelpCircle, Clock, RotateCcw, CheckCircle2, ChevronDown, MapPin, ExternalLink, Camera, X, RefreshCw, Bike, Rocket, Target, Layers, ChevronLeft, Smile, Frown, Meh, Wind, Utensils, Search, Palette, Mountain, Coffee, Book, Users, CameraIcon, Gem, PiggyBank, Flame, Pizza, Wand2, Smartphone, Battery, Umbrella, CreditCard, Info, ChevronRight } from "lucide-react";
+import { Sparkles, Zap, BookOpen, Compass, Gift, Navigation, HelpCircle, RotateCcw, CheckCircle2, ChevronDown, MapPin, ExternalLink, Camera, X, RefreshCw, Bike, Rocket, Target, Layers, ChevronLeft, Smile, Frown, Meh, Wind, Utensils, Search, Palette, Mountain, Coffee, Book, Users, CameraIcon, Gem, PiggyBank, Flame, Pizza, Wand2, Smartphone, Battery, Umbrella, CreditCard, Info, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
 import { BottomNav } from "../components/CommonUI";
@@ -128,8 +128,6 @@ export function ExploreScreen({
       {isGameStarted && !isCapturing && <ProgressPanel step={step} />}
       {isGameStarted && !isCapturing && <DirectionPanel distToTarget={distToTarget} inRange={inRange} navSteps={navSteps} />}
       {isGameStarted && !isCapturing && <FloatingActions onAction={(a) => a === 'event' && onNavigate('event')} />}
-      {isGameStarted && !isCapturing && <Legend step={step} />}
-      
       <AnimatePresence>
         {step === "intro" && (
           <IntroOverlay
@@ -294,7 +292,7 @@ function ExploreHeader() {
 
 function liveDistLabel(meters: number): string {
   if (meters < 1) return "已到达";
-  if (meters < 1000) return `${Math.round(meters)} 米`;
+  if (meters < 1000) return `${Math.round(meters)}米`;
   return `${(meters / 1000).toFixed(1)} km`;
 }
 
@@ -345,8 +343,9 @@ function DirectionPanel({ distToTarget, inRange, navSteps }: {
               {turnIcon}
             </div>
             <div>
-              <div className="text-[14px] font-black" style={{ color: "var(--text-primary)" }}>{turnLabel}</div>
-              <div className="text-[12px] font-bold text-[#6C5CFF]">{liveDistLabel(distToTurn)}</div>
+              <div className="text-[14px] font-black" style={{ color: "var(--text-primary)" }}>
+                {nextTurn ? `${liveDistLabel(distToTurn)}后${turnLabel}` : "直行"}
+              </div>
             </div>
           </div>
           <div className="mt-2 text-[10px]" style={{ color: "var(--text-muted)" }}>
@@ -397,17 +396,6 @@ function FloatingActions({ onAction }: { onAction: (a: string) => void }) {
   );
 }
 
-function Legend({ step }: { step?: ExploreStep }) {
-  return (
-    <div className="absolute right-5 bottom-[40%] z-30 flex flex-col gap-3">
-      {[HelpCircle, Target, Layers].map((Icon, i) => (
-        <button key={i} className="flex h-10 w-10 items-center justify-center rounded-xl border shadow-lg backdrop-blur-md active:scale-95" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-card)", color: "var(--text-muted)" }}>
-          <Icon size={20} />
-        </button>
-      ))}
-    </div>
-  );
-}
 
 function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex = 0, inRange, hasTarget, rangeLabel, mystery }: {
   step: ExploreStep;
@@ -436,21 +424,21 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
       title: currentWp?.name ?? "前往第一站",
       desc: currentWp?.task ?? "前方直走100m|预计6min到达",
       detail: currentWp?.description ?? "目的地在地下，那里夏凉冬不凉",
-      reward: currentWp?.reward ?? "+10 XP",
+      reward: currentWp?.reward ?? "¥15探索优惠券",
       color: "#6C5CFF",
     };
     if (isHiddenActive) return {
       title: hidden?.name ? `秘密：${hidden.name}` : "隐藏坐标",
       desc: hidden?.task ?? "开启特殊的视频打卡",
       detail: hidden?.description ?? "附近藏着一个未公开的坐标，去发现它，完成一次特别打卡。",
-      reward: hidden?.reward ?? "+50 XP",
+      reward: hidden?.reward ?? "¥50隐藏限定优惠券",
       color: "#F59E0B",
     };
     if (isNext) return {
       title: currentWp?.name ?? "前往下一站",
       desc: currentWp?.task ?? "继续前进",
       detail: currentWp?.description ?? "新的目的地在等着你",
-      reward: currentWp?.reward ?? "+20 XP",
+      reward: currentWp?.reward ?? "¥20探索优惠券",
       color: "#0066FF",
     };
     return { title: "任务完成", desc: "点击查看后续", detail: "", reward: "+0", color: "#10B981" };
@@ -489,22 +477,19 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 text-[16px] font-mono font-bold" style={{ color: "var(--text-secondary)" }}>
-          <Clock size={14} />
-          <span>{isInitial ? "01:45" : isNext ? "12:00" : "∞"}</span>
-          <motion.div
-            animate={{ rotate: isExpanded ? 180 : 0 }}
-            className="ml-1 opacity-40"
-          >
-            <ChevronDown size={16} />
-          </motion.div>
-        </div>
+        <motion.div
+          animate={{ rotate: isExpanded ? 180 : 0 }}
+          className="opacity-40"
+          style={{ color: "var(--text-secondary)" }}
+        >
+          <ChevronDown size={16} />
+        </motion.div>
       </div>
 
       <div className="rounded-xl border p-2.5 space-y-2" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-input)" }}>
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full ring-1" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-secondary)", ringColor: "var(--border-subtle)" }}>
-            <Camera size={20} />
+            <Navigation size={20} />
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-[15px] font-bold line-clamp-2" style={{ color: "var(--text-primary)" }}>{displayTitle}</div>
@@ -532,10 +517,9 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
 
               <button
                 onClick={handleAction}
-                className="w-full rounded-xl py-3 text-[14px] font-bold text-white shadow-lg active:scale-[0.98] transition-transform"
-                style={{ backgroundImage: `linear-gradient(to right, ${content.color}, #5B21B6)` }}
+                className="w-full rounded-xl py-3 text-[14px] font-bold text-white shadow-[0_8px_24px_rgba(108,92,255,0.4)] active:scale-[0.98] transition-transform bg-[#6C5CFF]"
               >
-                开启打卡 / 记录 VLOG
+                开启打卡 / 记录
               </button>
             </div>
           </motion.div>
@@ -960,24 +944,14 @@ function RewardOverlay({ onContinue, reward, emoji, name }: { onContinue: () => 
           <h2 className="text-2xl font-black italic" style={{ color: "var(--text-primary)" }}>{name ?? "打卡完成"}</h2>
           <p className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>解锁探索奖励</p>
 
-          <div className="my-8 space-y-3">
-            <div className="flex items-center justify-between rounded-xl p-3 border" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-subtle)" }}>
-               <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/20 text-amber-500">
-                     <Zap size={16} fill="currentColor" />
-                  </div>
-                  <span className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>经验值</span>
-               </div>
-               <span className="text-lg font-black text-amber-500">+50 XP</span>
-            </div>
-
+          <div className="my-8">
             <div className="flex items-center justify-between rounded-xl p-3 border text-left" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-subtle)" }}>
                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-500">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#6C5CFF]/20 text-[#6C5CFF]">
                      <Gift size={16} />
                   </div>
                   <div>
-                    <div className="text-sm font-bold line-clamp-2" style={{ color: "var(--text-primary)" }}>{reward ?? "隐藏奖励"}</div>
+                    <div className="text-sm font-bold line-clamp-2" style={{ color: "var(--text-primary)" }}>{reward ?? "优惠券"}</div>
                   </div>
                </div>
             </div>
@@ -1097,7 +1071,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
     { id: "solo", icon: Users, label: "独自" },
     { id: "couple", icon: Users, label: "情侣" },
     { id: "friends", icon: Users, label: "朋友" },
-    { id: "family", icon: Users, label: "家庭" },
+    { id: "family", icon: Users, label: "亲子" },
   ];
 
   const toggleList = (list: string[], setList: (l: string[]) => void, id: string) => {
@@ -1135,33 +1109,37 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
           )}
           <div className="absolute inset-0 bg-gradient-to-t dark:from-[#0F172A] dark:via-[#0F172A]/60 from-white/80 via-white/40 to-transparent" />
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#6C5CFF]/10 blur-[60px] rounded-full" />
-          <div className="flex justify-between items-start relative z-10">
-            <div>
+          <div className="flex items-start gap-4 relative z-10">
+            <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold w-fit" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-subtle)", color: "var(--text-secondary)" }}>
                 <MapPin size={10} /> 五道口
               </div>
-              <div className="mt-3 flex items-center gap-2">
+              <div className="mt-2 flex items-center gap-2">
                 <span className="text-3xl">{weather ? weatherEmoji(weather.icon) : "⏳"}</span>
                 <div>
                   <div className="text-3xl font-black" style={{ color: "var(--text-primary)" }}>{weather?.temp ?? "--"}°C</div>
-                  <div className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>{weather?.desc ?? "加载中"}</div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>{weather?.desc ?? "加载中"}</span>
+                    {weather && (
+                      <span className="rounded-full bg-[#6C5CFF]/15 border border-[#6C5CFF]/30 px-2 py-0.5 text-[9px] font-bold text-[#6C5CFF]">
+                        {weatherAdvice(weather).tag}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className="mt-2 rounded-full bg-[#6C5CFF]/15 border border-[#6C5CFF]/30 px-3 py-0.5 text-[10px] font-bold text-[#6C5CFF] w-fit">
-                {weather ? weatherAdvice(weather).tag : "..."}
-              </div>
             </div>
-            <div className="text-right">
+            <div className="text-right mt-3 shrink-0">
               <div className="text-[12px] font-bold mb-1" style={{ color: "var(--text-primary)" }}>
                 {weather ? `体感 ${weather.feelsLike}°C` : ""}
               </div>
-              <p className="text-[10px] leading-tight max-w-[130px]" style={{ color: "var(--text-muted)" }}>
+              <p className="text-[10px] leading-tight max-w-[120px]" style={{ color: "var(--text-muted)" }}>
                 {weather ? weatherAdvice(weather).tip : "正在获取天气..."}
               </p>
               {weather && (
-                <div className="mt-2 flex justify-end gap-3 text-[10px]" style={{ color: "var(--text-muted)" }}>
-                  <span>💧 {weather.humidity}%</span>
-                  <span>💨 {weather.windSpeed}km/h</span>
+                <div className="mt-1.5 flex justify-end gap-2.5 text-[10px]" style={{ color: "var(--text-muted)" }}>
+                  <span>💧{weather.humidity}%</span>
+                  <span>💨{weather.windSpeed}km/h</span>
                 </div>
               )}
             </div>
@@ -1175,7 +1153,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
               key={m.id}
               onClick={() => setMood(m.id)}
               className={`flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl border transition-all ${
-                mood === m.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
+                mood === m.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF]" : "bg-white/90 dark:bg-white/10 border-transparent text-[var(--text-muted)]"
               }`}
             >
               <m.icon size={18} strokeWidth={mood === m.id ? 2.5 : 2} />
@@ -1193,7 +1171,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
                   key={d.id}
                   onClick={() => setDuration(d.id)}
                   className={`py-2 px-1 rounded-xl border text-[9px] font-bold transition-all ${
-                    duration === d.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_15px_rgba(108,92,255,0.15)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-faint)]"
+                    duration === d.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_15px_rgba(108,92,255,0.15)]" : "bg-white/90 dark:bg-white/10 border-transparent text-[var(--text-faint)]"
                   }`}
                 >
                   {d.label}
@@ -1209,7 +1187,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
                    key={t.id}
                    onClick={() => setTransport(t.id)}
                    className={`flex items-center justify-center gap-2 py-2 rounded-xl border text-[9px] font-bold transition-all ${
-                     transport === t.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_15px_rgba(108,92,255,0.15)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-faint)]"
+                     transport === t.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_15px_rgba(108,92,255,0.15)]" : "bg-white/90 dark:bg-white/10 border-transparent text-[var(--text-faint)]"
                    }`}
                  >
                    <t.icon size={12} />
@@ -1228,7 +1206,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
               key={s.id}
               onClick={() => toggleList(special, setSpecial, s.id)}
               className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-[9px] font-bold transition-all ${
-                special.includes(s.id) ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_15px_rgba(108,92,255,0.15)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
+                special.includes(s.id) ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_15px_rgba(108,92,255,0.15)]" : "bg-white/90 dark:bg-white/10 border-transparent text-[var(--text-muted)]"
               }`}
             >
               <s.icon size={11} />
@@ -1244,7 +1222,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
               key={c.id}
               onClick={() => setCompanion(c.id)}
               className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-[9px] font-bold transition-all ${
-                companion === c.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_15px_rgba(108,92,255,0.15)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
+                companion === c.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_15px_rgba(108,92,255,0.15)]" : "bg-white/90 dark:bg-white/10 border-transparent text-[var(--text-muted)]"
               }`}
             >
               <c.icon size={11} />
@@ -1260,7 +1238,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
               key={f.id}
               onClick={() => toggleList(foodPreference, setFoodPreference, f.id)}
               className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-[9px] font-bold transition-all ${
-                foodPreference.includes(f.id) ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_15px_rgba(108,92,255,0.15)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
+                foodPreference.includes(f.id) ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_15px_rgba(108,92,255,0.15)]" : "bg-white/90 dark:bg-white/10 border-transparent text-[var(--text-muted)]"
               }`}
             >
               <f.icon size={11} />
@@ -1285,7 +1263,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
               key={i.id}
               onClick={() => setIntensity(i.id)}
               className={`relative flex flex-col items-center text-center gap-1 p-1 py-2.5 rounded-xl border transition-all ${
-                intensity === i.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_20px_rgba(108,92,255,0.2)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
+                intensity === i.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_20px_rgba(108,92,255,0.2)]" : "bg-white/90 dark:bg-white/10 border-transparent text-[var(--text-muted)]"
               }`}
             >
               {i.recommended && (

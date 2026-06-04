@@ -86,29 +86,29 @@ function buildHistorySummary(history: TripRecord[]): string {
 }
 
 const CATEGORY_REWARDS: Record<string, string> = {
-  咖啡厅: "咖啡券/饮品买一送一",
-  书店: "购书8折券/文创周边",
-  文创小店: "手作体验券/文创折扣",
-  美术馆: "展览纪念明信片/周边折扣",
-  餐厅: "餐饮代金券/招牌菜免费加",
-  奶茶甜品: "奶茶第二杯半价/甜品券",
-  电竞网咖: "上机时长券/饮品券",
-  livehouse: "演出折扣券/周边贴纸",
-  公园绿地: "共享单车骑行券/冰饮券",
-  花店: "鲜花折扣券/迷你花束",
-  夜宵烧烤: "烧烤代金券/啤酒畅饮券",
-  酒吧: "特调鸡尾酒券/入场券",
-  宠物友好咖啡: "宠物零食包/饮品券",
-  健身瑜伽: "单次体验课/运动饮料",
-  景点地标: "纪念徽章/打卡明信片",
-  夜店: "入场券/特饮券",
-  KTV: "欢唱时长券/果盘券",
-  电影院: "电影兑换券/爆米花套餐",
-  美食城: "美食代金券/招牌小吃免费尝",
-  美食街: "小吃品尝券/满减优惠",
-  台球棋牌: "免费开台券/饮品券",
-  桌游密室: "密室体验券/桌游时长券",
-  运动娱乐: "体验券/运动饮料",
+  咖啡厅: "¥15饮品抵扣券",
+  书店: "¥20购书折扣券",
+  文创小店: "¥10手作体验券",
+  美术馆: "¥15展览折扣券",
+  餐厅: "¥20餐饮代金券",
+  奶茶甜品: "¥8奶茶抵扣券",
+  电竞网咖: "¥15上机时长券",
+  livehouse: "¥30演出折扣券",
+  公园绿地: "¥5骑行体验券",
+  花店: "¥15鲜花折扣券",
+  夜宵烧烤: "¥25烧烤代金券",
+  酒吧: "¥20特调鸡尾酒券",
+  宠物友好咖啡: "¥12饮品抵扣券",
+  健身瑜伽: "¥30单次体验券",
+  景点地标: "¥10纪念品折扣券",
+  夜店: "¥50入场优惠券",
+  KTV: "¥30欢唱时长券",
+  电影院: "¥25电影兑换券",
+  美食城: "¥15美食代金券",
+  美食街: "¥10小吃品尝券",
+  台球棋牌: "¥20免费开台券",
+  桌游密室: "¥35密室体验券",
+  运动娱乐: "¥25运动体验券",
 };
 
 function rewardHint(category: string): string {
@@ -118,8 +118,8 @@ function rewardHint(category: string): string {
     }
   }
   const base = category.match(/^(餐厅|酒吧)/);
-  if (base) return CATEGORY_REWARDS[base[1]] ?? "探索奖励";
-  return "探索奖励";
+  if (base) return CATEGORY_REWARDS[base[1]] ?? "探索优惠券";
+  return "探索优惠券";
 }
 
 function buildCandidateBlock(candidates: POI[]): string {
@@ -175,9 +175,9 @@ function buildPrompt(ctx: GenerateContext, revisionNote?: string): string {
   const totalSelections = selectionCount + 1; // +1 for hidden task (will be extracted from last selection)
   const tasks = [
     `从候选里挑选 ${totalSelections} 个 poi_id，按推荐游玩顺序排列，注意品类多样性（不要连续选同类型地点）`,
-    `给每个挑选的地点写故事氛围、打卡任务、奖励文案、emoji`,
+    `给每个挑选的地点写故事氛围、打卡任务、奖励文案（格式"¥金额+券名"如"¥20餐饮代金券"，参考推荐奖励字段的金额；不发徽章）、emoji`,
     `写一个 10 字以内有意境的路线标题`,
-    `最后一个地点会被设为"隐藏惊喜站"，所以它的奖励要比其他站更好（限定徽章、隐藏菜单券等稀缺奖励），任务要有趣且有一点小挑战。注意：隐藏站的奖励也必须与该地点的品类相关（参考其"推荐奖励"字段），不要给不相关的奖励`,
+    `最后一个地点会被设为"隐藏惊喜站"，所以它的奖励要比其他站更好（隐藏菜单券、限定折扣等稀缺优惠券），任务要有趣且有一点小挑战。注意：隐藏站的奖励也必须与该地点的品类相关（参考其"推荐奖励"字段），不要给不相关的奖励`,
   ];
   if (branchEnabled) {
     tasks.push(
@@ -227,12 +227,12 @@ ${taskBlock}
       "poi_id": "候选列表里的 id（如 poi_001）",
       "description": "这个地点的故事或氛围描述（30字以内）",
       "task": "到达后的打卡任务提示（20字以内）",
-      "reward": "完成后的奖励（必须与地点品类相关，参考候选的'推荐奖励'字段）",
+      "reward": "¥金额+券名（如¥20餐饮代金券；参考候选的'推荐奖励'字段的金额和类型，不发徽章）",
       "emoji": "一个代表这个地点的 emoji"
     }
   ]${branchJson}
 }
-注意：最后一个 selection 会被设为隐藏惊喜站，它的 reward 应该更好（限定/稀缺奖励），task 应该有趣且有一点小挑战。奖励必须与该地点品类相关（参考其"推荐奖励"字段）。
+注意：最后一个 selection 会被设为隐藏惊喜站，它的 reward 应该更好（限定折扣/稀缺优惠券），task 应该有趣且有一点小挑战。奖励只发优惠券/代金券，不发徽章。奖励必须与该地点品类相关（参考其"推荐奖励"字段）。
 `;
 }
 
@@ -259,7 +259,7 @@ function parseAndHydrate(
       usedIds.add(poi.id);
       waypoints.push({
         name: poi.name, description: poi.review_summary,
-        task: "到达后打个卡吧", reward: "探索经验 +10", emoji: "📍",
+        task: "到达后打个卡吧", reward: "¥15探索优惠券", emoji: "📍",
         distanceText: walkingTimeText(distanceMeters(ORIGIN, { lat: poi.lat, lng: poi.lng })),
         lat: poi.lat, lng: poi.lng, category: poi.category,
       });
@@ -282,7 +282,7 @@ function parseAndHydrate(
       if (pair) {
         const mk = (poi: POI): Waypoint => ({
           name: poi.name, description: poi.review_summary,
-          task: "到这儿打个卡", reward: "探索经验 +20", emoji: "📍",
+          task: "到这儿打个卡", reward: "¥20探索优惠券", emoji: "📍",
           distanceText: walkingTimeText(distanceMeters(ORIGIN, { lat: poi.lat, lng: poi.lng })),
           lat: poi.lat, lng: poi.lng,
         });
@@ -301,7 +301,7 @@ function parseAndHydrate(
     if (leftover) {
       hiddenTask = {
         name: leftover.name, description: leftover.review_summary,
-        task: "找到这个隐藏坐标，完成一次特别打卡", reward: "隐藏奖励 +50 XP", emoji: "✨",
+        task: "找到这个隐藏坐标，完成一次特别打卡", reward: "¥50隐藏限定优惠券", emoji: "✨",
         distanceText: walkingTimeText(distanceMeters(ORIGIN, { lat: leftover.lat, lng: leftover.lng })),
         lat: leftover.lat, lng: leftover.lng,
       };

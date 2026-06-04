@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Utensils, Bike, Car, Gift, Star, Clock, Smartphone, Battery, Umbrella, CreditCard, X, ChevronRight, Trophy } from "lucide-react";
+import qrcode from "qrcode-generator";
+import { Gift, Star, Clock, Smartphone, Battery, Umbrella, CreditCard, X, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { AppLayout } from "../components/Layout";
 import { BottomNav, PageTitle, TabBar } from "../components/CommonUI";
@@ -44,34 +45,39 @@ export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Scre
 
   const demoCoupons: (Coupon & { filterTag: string })[] = [
     {
-      title: "6.9元牛肉面套餐", desc: "三杯牛肉面馆 · 招牌套餐", date: "06.15", amount: "¥6.9",
-      icon: <Utensils size={18} />, color: "from-[#B46B08] to-[#654010]", tag: "限时",
-      image: "/categories/noodles.jpg", filterTag: "美食",
+      title: "¥15饮品抵扣券", desc: "未名咖啡", date: "06.15", amount: "¥15",
+      icon: <Gift size={18} />, color: "from-[#7C3AED] to-[#3B0F73]",
+      image: "/categories/coffee.jpg", filterTag: "美食",
     },
     {
-      title: "餐饮优惠券", desc: "满60减20 · 全场通用", date: "06.10", amount: "¥20",
-      icon: <Utensils size={18} />, color: "from-[#B46B08] to-[#654010]", tag: "限时",
-      image: "/categories/food.jpg", filterTag: "美食",
+      title: "¥25烧烤代金券", desc: "串串香", date: "06.12", amount: "¥25",
+      icon: <Gift size={18} />, color: "from-[#7C3AED] to-[#3B0F73]",
+      image: "/categories/bbq.jpg", filterTag: "美食",
     },
     {
-      title: "单车骑行卡", desc: "7天畅骑卡 · 不限次", date: "06.08", amount: "¥3",
-      icon: <Bike size={18} />, color: "from-[#00A99D] to-[#07566A]",
-      image: "/categories/bike.jpg", filterTag: "出行",
+      title: "¥20餐饮代金券", desc: "京味儿炸酱面", date: "06.10", amount: "¥20",
+      icon: <Gift size={18} />, color: "from-[#7C3AED] to-[#3B0F73]",
+      image: "/categories/local-cuisine.jpg", filterTag: "美食",
     },
     {
-      title: "打车优惠券", desc: "满30减10 · 全城可用", date: "06.12", amount: "¥10",
-      icon: <Car size={18} />, color: "from-[#006CDC] to-[#073B8C]",
-      image: "/categories/taxi.jpg", filterTag: "出行",
+      title: "¥30演出折扣券", desc: "五道口 Livehouse", date: "06.08", amount: "¥30",
+      icon: <Gift size={18} />, color: "from-[#7C3AED] to-[#3B0F73]",
+      image: "/categories/bar.jpg", filterTag: "娱乐",
     },
   ];
+
+  const extractPrice = (reward: string): string => {
+    const m = reward.match(/¥(\d+)/);
+    return m ? `¥${m[1]}` : "¥0";
+  };
 
   const earnedCoupons: (Coupon & { filterTag: string })[] = generatedRoute
     ? [
         ...generatedRoute.waypoints.map((wp) => ({
           title: wp.reward,
-          desc: `来自「${wp.name}」`,
+          desc: wp.name,
           date: "本周",
-          amount: "领",
+          amount: extractPrice(wp.reward),
           icon: <Gift size={18} />,
           color: "from-[#7C3AED] to-[#3B0F73]",
           tag: "今日",
@@ -81,9 +87,9 @@ export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Scre
         ...(generatedRoute.hiddenTask
           ? [{
               title: generatedRoute.hiddenTask.reward,
-              desc: `隐藏任务：${generatedRoute.hiddenTask.name}`,
+              desc: generatedRoute.hiddenTask.name,
               date: "本周",
-              amount: "领",
+              amount: extractPrice(generatedRoute.hiddenTask.reward),
               icon: <Star size={18} />,
               color: "from-[#B45309] to-[#7C2D12]",
               tag: "隐藏",
@@ -100,8 +106,19 @@ export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Scre
     : allCoupons.filter((c) => c.filterTag === couponFilter);
 
   const totalDays = tripHistory.length || 1;
-  const totalRewards = allCoupons.length;
+  const hasHidden = earnedCoupons.some((c) => c.tag === "隐藏") || tripHistory.some(t => t.waypoints.some(w => w.isHidden && w.visited));
   const totalStops = tripHistory.reduce((s, t) => s + t.waypoints.filter((w) => w.visited).length, 0) || 3;
+
+  const badges = [
+    { icon: "🔥", label: "首次探索", done: totalDays >= 1 },
+    { icon: "⚡", label: "连续3天", done: totalDays >= 3 },
+    { icon: "👑", label: "连续7天", done: totalDays >= 7 },
+    { icon: "🗺️", label: "打卡10站", done: totalStops >= 10 },
+    { icon: "🔮", label: "隐藏任务", done: hasHidden },
+    { icon: "🎯", label: "集齐5券", done: allCoupons.length >= 5 },
+    { icon: "🌟", label: "探索达人", done: totalDays >= 14 },
+    { icon: "💎", label: "全品类通关", done: false },
+  ];
 
   const items = [
     { title: "能量棒", desc: "恢复 20 能量", count: 3, icon: "🧀", rarity: "普通" },
@@ -127,39 +144,23 @@ export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Scre
       />
 
       <main className="absolute inset-x-0 top-[100px] bottom-[104px] overflow-y-auto no-scrollbar px-4 pb-6">
-        {/* 探索收获 */}
+        {/* 成就徽章 */}
         <div className="rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
-            <div>
-              <h3 className="text-[15px] font-black text-[var(--text-primary)]">探索收获</h3>
-              <p className="text-[11px] text-[var(--text-muted)] mt-0.5">每一次出发，都会遇见惊喜</p>
-            </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10">
-              <Trophy size={20} className="text-amber-500" />
-            </div>
+            <h3 className="text-[15px] font-black text-[var(--text-primary)]">成就徽章</h3>
+            <span className="text-[11px] font-bold text-[var(--text-muted)]">{badges.filter(b => b.done).length}/{badges.length}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <StatChip icon="📅" value={`${totalDays}天`} />
-            <StatChip icon="📍" value={`${totalStops}站`} />
-            <StatChip icon="🎁" value={`${totalRewards}券`} />
-            <StatChip icon="⭐" value="Lv.1" />
-          </div>
-          <div className="flex items-center gap-2 mt-3">
-            {[
-              { label: "每站奖励", done: true },
-              { label: "隐藏奖励", done: earnedCoupons.some((c) => c.tag === "隐藏") },
-              { label: "首单奖励", done: false },
-              { label: "连续探索", done: totalDays >= 3 },
-            ].map((b) => (
-              <div
-                key={b.label}
-                className={`flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold ${
-                  b.done
-                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
-                    : "bg-[var(--bg-input)] text-[var(--text-faint)]"
-                }`}
-              >
-                {b.done ? "✓" : "○"} {b.label}
+          <div className="grid grid-cols-4 gap-2">
+            {badges.map((b) => (
+              <div key={b.label} className="flex flex-col items-center gap-1.5">
+                <div className={`flex h-12 w-12 items-center justify-center rounded-2xl text-[22px] ${
+                  b.done ? "bg-amber-500/15 shadow-[0_0_12px_rgba(245,158,11,0.2)]" : "bg-[var(--bg-input)] grayscale opacity-40"
+                }`}>
+                  {b.icon}
+                </div>
+                <span className={`text-[9px] font-bold text-center leading-tight ${
+                  b.done ? "text-[var(--text-primary)]" : "text-[var(--text-faint)]"
+                }`}>{b.label}</span>
               </div>
             ))}
           </div>
@@ -278,63 +279,52 @@ export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Scre
   );
 }
 
-function StatChip({ icon, value }: { icon: string; value: string }) {
-  return (
-    <div className="flex items-center gap-1 rounded-lg bg-[var(--bg-input)] px-2.5 py-1.5">
-      <span className="text-[13px]">{icon}</span>
-      <span className="text-[12px] font-bold text-[var(--text-secondary)]">{value}</span>
-    </div>
-  );
+
+const LUCKY_MESSAGES = [
+  "扫到的人今年暴富！💰",
+  "恭喜你发现了彩蛋🥚 今天出门捡钱",
+  "评委老师辛苦了！给您磕一个 🙇",
+  "这张券价值一个亿，信不信由你",
+  "你已被「那我走」系统标记为：天选之人 ✨",
+  "本券可兑换：一段美好回忆（不可退换）",
+  "扫码成功！你的魅力值 +999",
+  "恭喜触发隐藏成就：二维码鉴赏家 🏆",
+  "据说扫到这个码的人，下次出门必遇好事",
+  "你好呀！我是一张有梦想的优惠券 🎫",
+  "系统提示：检测到一位宝藏评委 💎",
+  "这不是bug，这是feature（确信）",
+];
+
+function pickMessage(seed: number): string {
+  return LUCKY_MESSAGES[Math.abs(seed) % LUCKY_MESSAGES.length];
 }
 
-function FakeQR({ seed }: { seed: number }) {
-  const S = 21;
+function toUTF8Bytes(str: string): string {
+  const bytes = new TextEncoder().encode(str);
+  return Array.from(bytes).map((b) => String.fromCharCode(b)).join("");
+}
+
+function RealQR({ text }: { text: string }) {
+  const cells = React.useMemo(() => {
+    const qr = qrcode(0, "M");
+    qr.addData(toUTF8Bytes(text), "Byte");
+    qr.make();
+    const count = qr.getModuleCount();
+    const result: { r: number; c: number }[] = [];
+    for (let r = 0; r < count; r++)
+      for (let c = 0; c < count; c++)
+        if (qr.isDark(r, c)) result.push({ r, c });
+    return { count, dark: result };
+  }, [text]);
+
   const M = 10;
-  const grid: boolean[][] = Array.from({ length: S }, () => Array(S).fill(false));
-
-  const drawFinder = (r: number, c: number) => {
-    for (let dr = 0; dr < 7; dr++)
-      for (let dc = 0; dc < 7; dc++) {
-        const border = dr === 0 || dr === 6 || dc === 0 || dc === 6;
-        const inner = dr >= 2 && dr <= 4 && dc >= 2 && dc <= 4;
-        grid[r + dr][c + dc] = border || inner;
-      }
-  };
-  drawFinder(0, 0);
-  drawFinder(0, S - 7);
-  drawFinder(S - 7, 0);
-
-  for (let i = 0; i < S; i++) {
-    if (!grid[6][i]) grid[6][i] = i % 2 === 0;
-    if (!grid[i][6]) grid[i][6] = i % 2 === 0;
-  }
-
-  for (let dr = 0; dr < 5; dr++)
-    for (let dc = 0; dc < 5; dc++) {
-      const border = dr === 0 || dr === 4 || dc === 0 || dc === 4;
-      const center = dr === 2 && dc === 2;
-      grid[S - 9 + dr][S - 9 + dc] = border || center;
-    }
-
-  let h = seed;
-  for (let r = 0; r < S; r++)
-    for (let c = 0; c < S; c++) {
-      if (grid[r][c]) continue;
-      if (r <= 8 && c <= 8) continue;
-      if (r <= 8 && c >= S - 8) continue;
-      if (r >= S - 8 && c <= 8) continue;
-      h = (h * 1103515245 + 12345) & 0x7fffffff;
-      grid[r][c] = h % 3 !== 0;
-    }
-
+  const size = cells.count * M;
   return (
-    <>
-      {grid.map((row, r) =>
-        row.map((on, c) =>
-          on ? <rect key={`${r}-${c}`} x={c * M} y={r * M} width={M} height={M} fill="#000" /> : null
-        )
-      )}
-    </>
+    <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-full">
+      {cells.dark.map(({ r, c }) => (
+        <rect key={`${r}-${c}`} x={c * M} y={r * M} width={M} height={M} rx={1} fill="#000" />
+      ))}
+    </svg>
   );
 }
 
@@ -365,7 +355,7 @@ function CouponCard({ title, desc, date, amount, icon, color, tag, image, index 
         {/* 中间内容 */}
         <div className="flex flex-1 flex-col justify-center px-3 py-3 min-w-0">
           <div className="flex items-center gap-1.5">
-            <span className="text-[14px] font-black text-[var(--text-primary)] leading-tight truncate">{title}</span>
+            <span className="text-[14px] font-black text-[var(--text-primary)] leading-tight truncate">{title.replace(/^¥\d+/, "")}</span>
             {tag && (
               <span className="shrink-0 rounded bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-black text-amber-600 dark:text-amber-400">
                 {tag}
@@ -383,7 +373,7 @@ function CouponCard({ title, desc, date, amount, icon, color, tag, image, index 
         <div className="flex w-[72px] shrink-0 flex-col items-center justify-center border-l border-dashed border-[var(--border-subtle)] px-2">
           <span className="text-[20px] font-black text-[#6C5CFF]">{amount}</span>
           <span className="mt-1 rounded-full bg-[#6C5CFF] px-2.5 py-1 text-[9px] font-bold text-white">
-            {amount === "领" ? "领取" : "使用"}
+            使用
           </span>
         </div>
       </motion.div>
@@ -408,12 +398,10 @@ function CouponCard({ title, desc, date, amount, icon, color, tag, image, index 
                 <div className="text-[16px] font-black" style={{ color: "var(--text-primary)" }}>{title}</div>
                 <div className="text-[12px] text-[var(--text-muted)] mt-1">{desc}</div>
               </div>
-              <div className="mx-auto w-[180px] h-[180px] bg-white rounded-2xl p-2 flex items-center justify-center">
-                <svg viewBox="0 0 210 210" className="w-full h-full">
-                  <FakeQR seed={title.length * 7 + desc.length * 13} />
-                </svg>
+              <div className="mx-auto w-[180px] h-[180px] bg-white rounded-2xl p-3 flex items-center justify-center">
+                <RealQR text={pickMessage(title.length * 7 + desc.length * 13)} />
               </div>
-              <div className="mt-4 text-[11px]" style={{ color: "var(--text-faint)" }}>向商家出示此二维码即可使用</div>
+              <div className="mt-4 text-[11px]" style={{ color: "var(--text-faint)" }}>扫一扫，也许有惊喜</div>
               <div className="mt-1 text-[10px] font-mono opacity-50" style={{ color: "var(--text-faint)" }}>COUPON-{Date.now().toString(36).toUpperCase().slice(-6)}</div>
             </motion.div>
           </motion.div>
