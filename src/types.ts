@@ -8,6 +8,7 @@ export interface UserProfile {
   mbti: string | null;
   interests: string[];
   completedAt: number;
+  avatar?: string;
 }
 
 export type ExploreStep =

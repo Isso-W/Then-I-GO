@@ -55,19 +55,22 @@ function loadProfile(): UserProfile | null {
 }
 
 export default function App() {
-  // 主题：暗色(dark) / 浅色(light)。优先读 localStorage，无则按时间（6:00-18:00 日间）
-  const [theme, setTheme] = useState<"dark" | "light">(() => {
+  type ThemeMode = "dark" | "light" | "auto";
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
     try {
-      const saved = localStorage.getItem(THEME_KEY) as "dark" | "light" | null;
-      if (saved) return saved;
+      const saved = localStorage.getItem(THEME_KEY) as ThemeMode | null;
+      if (saved === "dark" || saved === "light" || saved === "auto") return saved;
     } catch {}
-    const hour = new Date().getHours();
-    return hour >= 6 && hour < 18 ? "light" : "dark";
+    return "auto";
   });
-  const toggleTheme = () => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    try { localStorage.setItem(THEME_KEY, next); } catch {}
+  const autoTheme = (): "dark" | "light" => {
+    const h = new Date().getHours();
+    return h >= 6 && h < 18 ? "light" : "dark";
+  };
+  const theme: "dark" | "light" = themeMode === "auto" ? autoTheme() : themeMode;
+  const setThemeChoice = (mode: ThemeMode) => {
+    setThemeMode(mode);
+    try { localStorage.setItem(THEME_KEY, mode); } catch {}
   };
 
   // 首启时从 localStorage 读取 profile，缺失则进 onboarding；否则直接 explore
@@ -210,7 +213,8 @@ export default function App() {
 
   // intro → 直接开始
   const handleDirectStart = () => {
-    runGeneration(DEFAULT_PREFERENCES);
+    setPreferences(DEFAULT_PREFERENCES);
+    setExploreStep("gear_confirmation");
   };
 
   // 偏好页确认 → 先进装备确认
@@ -420,9 +424,9 @@ export default function App() {
             />
           )}
           {screen === "bag" && <BagScreen onNavigate={navigate} generatedRoute={generatedRoute} />}
-          {screen === "mine" && <MineScreen onNavigate={navigate} profile={profile} generatedRoute={generatedRoute} tripHistory={tripHistory} />}
+          {screen === "mine" && <MineScreen onNavigate={navigate} profile={profile} generatedRoute={generatedRoute} tripHistory={tripHistory} onUpdateProfile={setProfile} />}
           {screen === "event" && <EventDetailScreen onBack={() => navigate("explore")} />}
-          {screen === "settings" && <SettingsScreen onBack={() => navigate("mine")} theme={theme} onToggleTheme={toggleTheme} profile={profile} onUpdateProfile={setProfile} />}
+          {screen === "settings" && <SettingsScreen onBack={() => navigate("mine")} themeMode={themeMode} onThemeChange={setThemeChoice} profile={profile} onUpdateProfile={setProfile} />}
         </motion.div>
       </AnimatePresence>
     </div>

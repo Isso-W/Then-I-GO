@@ -67,7 +67,7 @@ export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Scre
       <PageTitle 
         title="背包" 
         right={
-          <button className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] font-medium text-white/80">
+          <button className="rounded-full border px-3 py-1.5 text-[11px] font-medium" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-input)", color: "var(--text-secondary)" }}>
             兑换记录
           </button>
         } 
@@ -86,13 +86,13 @@ export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Scre
             >
               <Glass className="mt-5 flex items-center justify-between p-4 border-l-4 border-l-[#FFD166] relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-2 opacity-5">
-                  <Star size={60} className="fill-white" />
+                  <Star size={60} style={{ fill: "var(--text-primary)" }} />
                 </div>
                 <div className="relative z-10">
-                  <p className="text-[11px] font-bold uppercase tracking-widest text-white/30">可用资产</p>
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-[var(--text-muted)]">可用资产</p>
                   <div className="mt-1 flex items-baseline gap-1.5">
                     <span className="text-[28px] font-black text-[#FFD166]">{coupons.length}</span>
-                    <span className="text-[13px] font-bold text-white/50">张优惠券</span>
+                    <span className="text-[13px] font-bold text-[var(--text-muted)]">张优惠券</span>
                   </div>
                 </div>
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FFD166]/10 text-[#FFD166]">
@@ -136,14 +136,14 @@ export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Scre
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: idx * 0.1 }}
-                        className="flex items-center gap-4 rounded-2xl border border-white/5 bg-white/[0.03] p-4"
+                        className="flex items-center gap-4 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-input)] p-4"
                       >
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#6C5CFF]/20 text-[#6C5CFF]">
                           <item.icon size={24} />
                         </div>
                         <div className="flex-1">
-                          <div className="text-[15px] font-black text-white">{item.label}</div>
-                          <div className="text-[11px] text-white/40">{item.desc}</div>
+                          <div className="text-[15px] font-black" style={{ color: "var(--text-primary)" }}>{item.label}</div>
+                          <div className="text-[11px] text-[var(--text-muted)]">{item.desc}</div>
                         </div>
                         <div className="rounded-full bg-green-500/20 px-2 py-0.5 text-[9px] font-bold text-green-500">已就绪</div>
                       </motion.div>
@@ -151,11 +151,11 @@ export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Scre
                   })}
                 </div>
               ) : (
-                <div className="mt-20 flex flex-col items-center justify-center text-center opacity-40 px-10">
-                  <div className="h-20 w-20 rounded-full bg-white/5 flex items-center justify-center mb-4">
+                <div className="mt-20 flex flex-col items-center justify-center text-center px-10" style={{ color: "var(--text-muted)" }}>
+                  <div className="h-20 w-20 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: "var(--bg-input)" }}>
                     <Battery size={32} />
                   </div>
-                  <h3 className="text-[16px] font-bold">暂无装备</h3>
+                  <h3 className="text-[16px] font-bold" style={{ color: "var(--text-secondary)" }}>暂无装备</h3>
                   <p className="mt-2 text-[12px]">开始今日路线前确认装备，确保持续探索</p>
                 </div>
               )}
@@ -234,7 +234,7 @@ function CouponCard({ title, desc, date, amount, icon, color, tag, index }: Coup
         transition={{ delay: index * 0.05 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => setShowQR(true)}
-        className={`relative flex h-[82px] overflow-hidden rounded-xl border border-white/10 bg-gradient-to-r ${color} shadow-lg cursor-pointer`}
+        className={`relative flex h-[82px] overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-gradient-to-r ${color} shadow-lg cursor-pointer`}
       >
         <div className="flex w-[64px] items-center justify-center bg-black/20">
           <div className="text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)]">
@@ -254,7 +254,7 @@ function CouponCard({ title, desc, date, amount, icon, color, tag, index }: Coup
           </div>
         </div>
 
-        <div className="relative flex w-[76px] flex-col items-center justify-center bg-white/5 backdrop-blur-md">
+        <div className="relative flex w-[76px] flex-col items-center justify-center bg-black/10 backdrop-blur-md">
           <div className="absolute top-1/2 -left-[1px] -translate-y-1/2 flex flex-col gap-0.5 opacity-20">
              {Array.from({ length: 5 }).map((_, i) => (
                <div key={i} className="h-1.5 w-0.5 bg-white rounded-full" />
@@ -264,8 +264,8 @@ function CouponCard({ title, desc, date, amount, icon, color, tag, index }: Coup
           <div className="mt-1 text-[9px] font-bold text-white/60 uppercase tracking-tighter">立即用</div>
         </div>
 
-        <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-[#0A0A1A] border border-white/5" />
-        <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-[#0A0A1A] border border-white/5" />
+        <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full border" style={{ backgroundColor: "var(--bg-base)", borderColor: "var(--border-subtle)" }} />
+        <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 h-3 w-3 rounded-full border" style={{ backgroundColor: "var(--bg-base)", borderColor: "var(--border-subtle)" }} />
       </motion.div>
 
       <AnimatePresence>
@@ -278,22 +278,22 @@ function CouponCard({ title, desc, date, amount, icon, color, tag, index }: Coup
             <motion.div
               initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.85, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-[280px] rounded-3xl bg-gradient-to-b from-[#1A1A2E] to-[#0D0D15] p-6 text-center border border-white/10 shadow-2xl"
+              className="w-[280px] rounded-3xl bg-gradient-to-b from-[#1A1A2E] to-[#0D0D15] p-6 text-center border border-[var(--border-subtle)] shadow-2xl"
             >
-              <button onClick={() => setShowQR(false)} className="absolute top-4 right-4 text-white/40 active:scale-90">
+              <button onClick={() => setShowQR(false)} className="absolute top-4 right-4 text-[var(--text-muted)] active:scale-90">
                 <X size={20} />
               </button>
               <div className="mb-4">
                 <div className="text-[16px] font-black text-white">{title}</div>
-                <div className="text-[12px] text-white/50 mt-1">{desc}</div>
+                <div className="text-[12px] text-[var(--text-muted)] mt-1">{desc}</div>
               </div>
               <div className="mx-auto w-[180px] h-[180px] bg-white rounded-2xl p-2 flex items-center justify-center">
                 <svg viewBox="0 0 210 210" className="w-full h-full">
                   <FakeQR seed={title.length * 7 + desc.length * 13} />
                 </svg>
               </div>
-              <div className="mt-4 text-[11px] text-white/30">向商家出示此二维码即可使用</div>
-              <div className="mt-1 text-[10px] text-white/20 font-mono">COUPON-{Date.now().toString(36).toUpperCase().slice(-6)}</div>
+              <div className="mt-4 text-[11px] text-[var(--text-muted)]">向商家出示此二维码即可使用</div>
+              <div className="mt-1 text-[10px] text-[var(--text-faint)] font-mono">COUPON-{Date.now().toString(36).toUpperCase().slice(-6)}</div>
             </motion.div>
           </motion.div>
         )}
@@ -321,12 +321,12 @@ function ItemCard({ title, desc, count, icon, rarity, index }: ItemCardProps) {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: index * 0.05 }}
       whileTap={{ scale: 0.95 }}
-      className={`flex flex-col rounded-2xl border ${isRare ? 'border-[#FFD166]/30 bg-[#FFD166]/5' : 'border-white/10 bg-white/[0.03]'} p-3.5 relative overflow-hidden group transition-all cursor-pointer`}
+      className={`flex flex-col rounded-2xl border ${isRare ? 'border-[#FFD166]/30 bg-[#FFD166]/5' : 'border-[var(--border-subtle)] bg-[var(--bg-input)]'} p-3.5 relative overflow-hidden group transition-all cursor-pointer`}
     >
-      <div className="absolute -top-6 -right-6 h-12 w-12 rounded-full bg-white/5 blur-xl group-hover:bg-[#6C5CFF]/20 transition-colors" />
+      <div className="absolute -top-6 -right-6 h-12 w-12 rounded-full bg-[var(--bg-input)] blur-xl group-hover:bg-[#6C5CFF]/20 transition-colors" />
       
       <div className={`text-[9px] font-black uppercase tracking-tighter self-start px-2 py-0.5 rounded-full mb-3 ${
-        isRare ? 'bg-[#FFD166] text-black' : 'bg-white/10 text-white/40'
+        isRare ? 'bg-[#FFD166] text-black' : 'bg-[var(--bg-input)] text-[var(--text-muted)]'
       }`}>
         {rarity}
       </div>
@@ -334,14 +334,14 @@ function ItemCard({ title, desc, count, icon, rarity, index }: ItemCardProps) {
       <div className="text-4xl my-2 flex justify-center drop-shadow-lg group-hover:scale-110 transition-transform">{icon}</div>
       
       <div className="mt-1">
-        <div className="text-[15px] font-black text-white/90 truncate">{title}</div>
-        <p className="mt-0.5 text-[10px] text-white/40 leading-tight line-clamp-2 h-6">{desc}</p>
+        <div className="text-[15px] font-black text-[var(--text-primary)] truncate">{title}</div>
+        <p className="mt-0.5 text-[10px] text-[var(--text-muted)] leading-tight line-clamp-2 h-6">{desc}</p>
       </div>
       
       <div className="mt-3 flex items-center justify-between">
-        <span className="text-[11px] font-bold text-white/30 tracking-tight">存量 {count}</span>
+        <span className="text-[11px] font-bold text-[var(--text-muted)] tracking-tight">存量 {count}</span>
         <div className={`h-6 w-6 rounded-lg flex items-center justify-center transition-colors ${
-          isRare ? 'bg-[#FFD166]/20 text-[#FFD166]' : 'bg-white/5 text-white/40'
+          isRare ? 'bg-[#FFD166]/20 text-[#FFD166]' : 'text-[var(--text-muted)]'
         }`}>
           <ChevronRight size={14} />
         </div>

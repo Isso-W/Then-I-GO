@@ -10,6 +10,12 @@ import { ChatBubble, ChatPanel, type ChatMessage } from "../components/ChatPanel
 import { TripFeedbackOverlay } from "../components/TripFeedbackOverlay";
 import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute, Waypoint, RouteBranch } from "../types";
 import { useWeather, weatherEmoji, weatherAdvice } from "../lib/useWeather";
+import { buildNavSteps, type NavStep } from "../lib/turnByTurn";
+import { buildGraph, routePolyline, type Street } from "../lib/roadGraph";
+import streetNetwork from "../../scripts/data/street-network.json";
+import type { BBox } from "../components/mapProjection";
+
+const NAV_GRAPH = buildGraph((streetNetwork as { streets: Street[] }).streets);
 
 export function ExploreScreen({
   onNavigate,
@@ -105,15 +111,21 @@ export function ExploreScreen({
   const inRange = !activeTarget || distToTarget <= CHECKIN_RADIUS_M;
   const rangeLabel = activeTarget && !inRange ? `${Math.round(distToTarget)}m` : null;
 
+  const navSteps = React.useMemo(() => {
+    if (!activeTarget) return [];
+    const poly = routePolyline([currentPosition, { lat: activeTarget.lat, lng: activeTarget.lng }], NAV_GRAPH);
+    return buildNavSteps(poly);
+  }, [currentPosition, activeTarget]);
+
   return (
     <AppLayout>
-      <div className="absolute inset-0 z-0 overflow-hidden bg-[#07101d]">
+      <div className="absolute inset-0 z-0 overflow-hidden" style={{ backgroundColor: "var(--bg-base)" }}>
         <Map route={generatedRoute} currentPosition={currentPosition} onUserDrag={onUserDrag} step={step} waypointIndex={waypointIndex} />
       </div>
       <FogLayer />
       {(step === "intro" || (isGameStarted && !isCapturing)) && <ExploreHeader />}
       {isGameStarted && !isCapturing && <ProgressPanel step={step} />}
-      {isGameStarted && !isCapturing && <DirectionPanel distToTarget={distToTarget} inRange={inRange} heading={headingRef.current} currentPosition={currentPosition} target={activeTarget} />}
+      {isGameStarted && !isCapturing && <DirectionPanel distToTarget={distToTarget} inRange={inRange} navSteps={navSteps} />}
       {isGameStarted && !isCapturing && <FloatingActions onAction={(a) => a === 'event' && onNavigate('event')} />}
       {isGameStarted && !isCapturing && <Legend step={step} />}
       
@@ -258,7 +270,7 @@ function FogLayer() {
       />
       <div className="absolute left-[10%] bottom-[30%] h-40 w-80 rounded-full bg-slate-300/24 blur-3xl" />
       <div className="absolute right-[-10%] bottom-[20%] h-48 w-80 rounded-full bg-slate-300/18 blur-3xl" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_52%_58%,transparent_0%,transparent_24%,rgba(10,10,26,0.18)_45%,rgba(10,10,26,0.72)_100%)]" />
+      <div className="absolute inset-0" style={{ background: `radial-gradient(circle at 52% 58%, transparent 0%, transparent 24%, var(--fog-color) 100%)` }} />
     </div>
   );
 }
@@ -273,7 +285,7 @@ function ExploreHeader() {
         <h1 className="flex items-center gap-2 text-[24px] font-bold leading-none text-white drop-shadow-lg">
           那我走 <Sparkles size={14} className="text-[#FFD166]" />
         </h1>
-        <p className="mt-1.5 text-[12px] text-[#D7D7E8]/80 font-medium">你只管出门，剩下由系统决定</p>
+        <p className="mt-1.5 text-[12px] text-[#D7D7E8]/80 font-medium">不知道去哪？跟我走</p>
       </motion.div>
     </header>
   );
@@ -301,45 +313,53 @@ function computeBearing(from: LatLng, to: { lat: number; lng: number }): number 
   return Math.atan2(to.lng - from.lng, to.lat - from.lat) * (180 / Math.PI);
 }
 
-function DirectionPanel({ distToTarget, inRange, heading, currentPosition, target }: {
-  distToTarget: number; inRange: boolean; heading: number; currentPosition: LatLng; target?: { lat: number; lng: number }
+function DirectionPanel({ distToTarget, inRange, navSteps }: {
+  distToTarget: number; inRange: boolean; navSteps: NavStep[];
 }) {
-  const angle = target ? relativeTurnAngle(heading, computeBearing(currentPosition, target)) : 0;
+  const nextTurn = navSteps.find((s) => s.instruction.includes("转") || s.instruction.includes("掉头"));
+  const distToTurn = nextTurn
+    ? navSteps.slice(0, navSteps.indexOf(nextTurn)).reduce((sum, s) => sum + s.distanceM, 0)
+    : distToTarget;
+
+  let turnIcon: React.ReactNode = <Navigation size={28} className="text-[#A98BFF]" />;
+  let turnLabel = "直行";
+  if (nextTurn) {
+    turnLabel = nextTurn.instruction;
+    if (turnLabel.includes("右")) turnIcon = <ChevronRight size={28} />;
+    else if (turnLabel.includes("左")) turnIcon = <ChevronLeft size={28} />;
+    else if (turnLabel.includes("掉头")) turnIcon = <RotateCcw size={24} />;
+  }
+
   return (
-    <Glass className="absolute right-4 top-[56px] z-20 w-[130px] p-3 text-white">
-      <div className="text-[9px] font-bold text-[#A98BFF]">下一目标</div>
+    <Glass className="absolute right-4 top-[56px] z-20 w-[140px] p-3">
       {inRange ? (
-        <div className="mt-2 flex items-center gap-1.5">
-          <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
-          <span className="text-[13px] font-black text-emerald-400">已到达</span>
+        <div className="flex items-center gap-2">
+          <CheckCircle2 size={20} className="text-emerald-400 shrink-0" />
+          <span className="text-[14px] font-black text-emerald-400">已到达</span>
         </div>
       ) : (
-        <div className="mt-2 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#6C5CFF]/20">
-            <Navigation
-              size={22}
-              className="text-[#A98BFF] fill-[#A98BFF]/30 transition-transform duration-300"
-              style={{ transform: `rotate(${angle - 45}deg)` }}
-            />
+        <>
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#6C5CFF]/20 text-[#A98BFF]">
+              {turnIcon}
+            </div>
+            <div>
+              <div className="text-[14px] font-black" style={{ color: "var(--text-primary)" }}>{turnLabel}</div>
+              <div className="text-[12px] font-bold text-[#6C5CFF]">{liveDistLabel(distToTurn)}</div>
+            </div>
           </div>
-          <div>
-            <div className="text-[14px] font-black leading-tight">{liveDistLabel(distToTarget)}</div>
-            <div className="text-[10px] text-white/40">{liveEta(distToTarget)}</div>
+          <div className="mt-2 text-[10px]" style={{ color: "var(--text-muted)" }}>
+            总距离 {liveDistLabel(distToTarget)} · {liveEta(distToTarget)}
           </div>
-        </div>
+        </>
       )}
-      <div className="mt-3 border-t border-white/5 pt-2 space-y-1.5 text-[8px] text-white/40">
-        <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#6C5CFF]" />打卡点</div>
-        <div className="flex items-center gap-1.5"><span className="h-2 w-2 rotate-45 border border-[#FFD166] bg-transparent" />下一目标</div>
-        <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" />已完成</div>
-      </div>
     </Glass>
   );
 }
 
 function ProgressPanel({ step }: { step: ExploreStep }) {
   return (
-    <Glass className="absolute left-4 top-[120px] z-20 w-[115px] p-2.5 text-white bg-[#0F172A]/80">
+    <Glass className="absolute left-4 top-[120px] z-20 w-[115px] p-2.5">
       <div className="flex items-center justify-between text-[10px]">
         <div className="flex items-center gap-1.5 opacity-60 font-medium">
           <Zap size={12} className="fill-[#FFD166] text-[#FFD166]" />
@@ -354,13 +374,13 @@ function ProgressPanel({ step }: { step: ExploreStep }) {
 function FloatingActions({ onAction }: { onAction: (a: string) => void }) {
   return (
     <div className="absolute left-5 bottom-[115px] z-30 flex flex-col gap-2">
-      <button className="flex h-12 w-12 flex-col items-center justify-center rounded-full border border-white/10 bg-[#10142c]/60 text-white shadow-lg backdrop-blur-md active:scale-90 overflow-hidden">
+      <button className="flex h-12 w-12 flex-col items-center justify-center rounded-full border border-white/10 bg-[#10142c]/80 text-white shadow-lg backdrop-blur-md active:scale-90 overflow-hidden">
         <Compass size={18} className="text-[#A98BFF]" />
         <span className="mt-0.5 text-[8px] opacity-70">重置</span>
       </button>
       <button 
         onClick={() => onAction('event')}
-        className="relative flex h-12 w-12 flex-col items-center justify-center rounded-full border border-white/10 bg-[#10142c]/60 text-white shadow-lg backdrop-blur-md active:scale-95"
+        className="relative flex h-12 w-12 flex-col items-center justify-center rounded-full border border-white/10 bg-[#10142c]/80 text-white shadow-lg backdrop-blur-md active:scale-95"
       >
         <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-[#FF4D64] text-[9px] font-bold">2</span>
         <Gift size={20} className="fill-[#FFD166] text-[#FFD166]" />
@@ -374,13 +394,13 @@ function Legend({ step }: { step?: ExploreStep }) {
   const isIntro = step === "intro";
   return (
     <div className="absolute right-5 bottom-[40%] z-30 flex flex-col gap-3">
-      <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1A1A2E]/80 border border-white/10 text-white/40 shadow-lg active:scale-95">
+      <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1A1A2E]/90 border border-white/10 text-white/40 shadow-lg active:scale-95">
         <HelpCircle size={20} />
       </button>
-      <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1A1A2E]/80 border border-white/10 text-white shadow-lg active:scale-95">
+      <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1A1A2E]/90 border border-white/10 text-white shadow-lg active:scale-95">
         <Target size={20} />
       </button>
-      <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1A1A2E]/80 border border-white/10 text-white shadow-lg active:scale-95">
+      <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1A1A2E]/90 border border-white/10 text-white shadow-lg active:scale-95">
         <Layers size={20} />
       </button>
     </div>
@@ -446,9 +466,9 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
   };
 
   return (
-    <Glass 
+    <Glass
       onClick={() => setIsExpanded(!isExpanded)}
-      className={`relative w-full z-40 p-6 text-white overflow-hidden transition-all duration-300 cursor-pointer rounded-[32px] bg-[#0F172A]/90 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]`}
+      className="relative w-full z-40 p-6 overflow-hidden transition-all duration-300 cursor-pointer rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.15)]"
     >
       <div className={`absolute inset-0 bg-gradient-to-br from-[${content.color}]/10 to-transparent pointer-events-none`} />
       
@@ -461,14 +481,15 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
           {hasTarget && (
             <span
               className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
-                inRange ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-white/45"
+                inRange ? "bg-emerald-500/20 text-emerald-300" : ""
               }`}
+              style={inRange ? undefined : { backgroundColor: "var(--bg-input)", color: "var(--text-muted)" }}
             >
               {inRange ? "✓ 到了 · 可打卡" : `距目标 ${rangeLabel}`}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5 text-[16px] font-mono font-bold text-white/80">
+        <div className="flex items-center gap-1.5 text-[16px] font-mono font-bold" style={{ color: "var(--text-secondary)" }}>
           <Clock size={14} />
           <span>{isInitial ? "01:45" : isNext ? "12:00" : "∞"}</span>
           <motion.div
@@ -480,17 +501,17 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
         </div>
       </div>
 
-      <div className="rounded-xl border border-white/5 bg-white/[0.02] p-2.5 space-y-2">
+      <div className="rounded-xl border p-2.5 space-y-2" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-input)" }}>
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/5 text-white ring-1 ring-white/10">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full ring-1" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-primary)", ringColor: "var(--border-subtle)" }}>
             <Camera size={20} />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[15px] font-bold text-white line-clamp-2">{displayTitle}</div>
-            <p className="text-[11px] text-white/40 line-clamp-2">{content.desc}</p>
+            <div className="text-[15px] font-bold line-clamp-2" style={{ color: "var(--text-primary)" }}>{displayTitle}</div>
+            <p className="text-[11px] line-clamp-2" style={{ color: "var(--text-muted)" }}>{content.desc}</p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 bg-white/5 px-2 py-1 rounded-lg w-fit">
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg w-fit" style={{ backgroundColor: "var(--bg-input)" }}>
           <Zap size={12} className="fill-[#FFD166] text-[#FFD166]" />
           <span className="text-[12px] font-bold text-[#FFD166]">{displayReward}</span>
         </div>
@@ -505,7 +526,7 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
             className="overflow-hidden"
           >
             <div className="mt-4 space-y-3 pt-1">
-              <p className="text-[12px] leading-relaxed text-white/50">
+              <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
                 {content.detail}
               </p>
               
@@ -532,7 +553,7 @@ function HiddenTaskAlert({ hiddenTask, onAccept, mystery }: { hiddenTask?: Waypo
       exit={{ opacity: 0 }}
       className="absolute inset-0 z-50 flex items-center justify-center p-8 backdrop-blur-md bg-black/20"
     >
-      <div className="relative w-full max-w-sm rounded-[32px] border border-amber-500/30 bg-[#0a0a1a]/90 p-6 text-center shadow-[0_0_50px_rgba(251,191,36,0.3)]">
+      <div className="relative w-full max-w-sm rounded-[32px] border border-amber-500/30 bg-[#0a0a1a]/90 p-6 text-center shadow-[0_0_50px_rgba(251,191,36,0.3)]" style={{ color: "#fff" }}>
         <div className="absolute -top-12 left-1/2 -translate-x-1/2">
           <motion.div 
             animate={{ rotate: 360 }}
@@ -583,7 +604,7 @@ function BranchChoiceOverlay({ branch, onPick, mystery }: { branch?: RouteBranch
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-50 flex flex-col items-center justify-center p-6 backdrop-blur-md bg-black/30"
+      className="absolute inset-0 z-50 flex flex-col items-center justify-center p-6 backdrop-blur-md bg-black/30" style={{ color: "#fff" }}
     >
       <motion.h2
         initial={{ y: -10, opacity: 0 }}
@@ -619,6 +640,42 @@ function BranchChoiceOverlay({ branch, onPick, mystery }: { branch?: RouteBranch
 function CameraInterface({ onCapture, onClose }: { onCapture: () => void, onClose: () => void }) {
   const [isRecording, setIsRecording] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
+  const [cameraReady, setCameraReady] = useState(false);
+  const [cameraError, setCameraError] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  const startCamera = async (facing: "environment" | "user") => {
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    setCameraReady(false);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+      }
+      setCameraReady(true);
+      setCameraError(false);
+    } catch {
+      setCameraError(true);
+    }
+  };
+
+  useEffect(() => {
+    startCamera(facingMode);
+    return () => { streamRef.current?.getTracks().forEach((t) => t.stop()); };
+  }, []);
+
+  const switchCamera = () => {
+    const next = facingMode === "environment" ? "user" : "environment";
+    setFacingMode(next);
+    startCamera(next);
+  };
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -638,19 +695,36 @@ function CameraInterface({ onCapture, onClose }: { onCapture: () => void, onClos
   }, [isRecording, onCapture]);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
       className="absolute inset-0 z-[100] bg-black"
     >
-      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1541167760496-162955ed8a9f?auto=format&fit=crop&q=80&w=1200')] bg-cover bg-center opacity-80" />
-      <div className="absolute inset-0 bg-black/40" />
-      
+      {/* Camera feed or fallback */}
+      {cameraError ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#0A0A1A]">
+          <div className="text-center px-8">
+            <Camera size={48} className="mx-auto text-white/20 mb-4" />
+            <p className="text-[14px] text-white/50">无法访问摄像头</p>
+            <p className="text-[11px] text-white/30 mt-1">请在浏览器设置中允许摄像头权限</p>
+          </div>
+        </div>
+      ) : (
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className={`absolute inset-0 h-full w-full object-cover ${facingMode === "user" ? "scale-x-[-1]" : ""}`}
+        />
+      )}
+      <div className="absolute inset-0 bg-black/20" />
+
       <div className="relative flex h-full flex-col justify-between p-6 pt-16 pb-12">
         <div className="flex items-center justify-between">
-          <button onClick={onClose} className="rounded-full bg-black/40 p-2 text-white">
+          <button onClick={onClose} className="rounded-full bg-black/40 p-2 text-white backdrop-blur-md">
             <X size={24} />
           </button>
           <div className="flex items-center gap-1 rounded-full bg-red-600 px-3 py-1">
@@ -658,7 +732,7 @@ function CameraInterface({ onCapture, onClose }: { onCapture: () => void, onClos
             <span className="text-[12px] font-bold text-white tracking-widest">REC</span>
           </div>
         </div>
-        
+
         <div className="flex-1 flex items-center justify-center">
           <div className="relative h-[260px] w-[260px]">
             <div className="absolute inset-0 border-2 border-white/20 rounded-3xl" />
@@ -666,11 +740,9 @@ function CameraInterface({ onCapture, onClose }: { onCapture: () => void, onClos
             <div className="absolute -right-2 -top-2 h-6 w-6 border-r-4 border-t-4 border-white/80" />
             <div className="absolute -left-2 -bottom-2 h-6 w-6 border-l-4 border-b-4 border-white/80" />
             <div className="absolute -right-2 -bottom-2 h-6 w-6 border-r-4 border-b-4 border-white/80" />
-            
-            <div className="absolute inset-4 overflow-hidden rounded-xl bg-white/5 backdrop-blur-sm" />
           </div>
         </div>
-        
+
         <div className="space-y-8">
           <div className="text-center">
             <p className="text-[12px] font-bold text-white tracking-[0.2em] uppercase">
@@ -678,18 +750,20 @@ function CameraInterface({ onCapture, onClose }: { onCapture: () => void, onClos
             </p>
             {isRecording && (
               <div className="mx-auto mt-3 h-1.5 w-48 rounded-full bg-white/20 overflow-hidden">
-                <motion.div 
-                  className="h-full bg-red-600" 
+                <motion.div
+                  className="h-full bg-red-600"
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
                 />
               </div>
             )}
           </div>
-          
+
           <div className="flex items-center justify-center gap-12">
-            <RefreshCw size={24} className="text-white/60" />
-            <button 
+            <button onClick={switchCamera} className="active:scale-90 transition-transform">
+              <RefreshCw size={24} className="text-white/60" />
+            </button>
+            <button
               onMouseDown={() => setIsRecording(true)}
               onMouseUp={() => !progress && setIsRecording(false)}
               onTouchStart={() => setIsRecording(true)}
@@ -698,17 +772,9 @@ function CameraInterface({ onCapture, onClose }: { onCapture: () => void, onClos
             >
               <div className={`h-full w-full rounded-full bg-white transition-all duration-300 ${isRecording ? "scale-90 rounded-lg bg-red-600 shadow-[0_0_20px_red]" : "scale-100"}`} />
             </button>
-            <div className="h-8 w-8 overflow-hidden rounded-lg border-2 border-white/40 bg-white/10" />
+            <div className="h-8 w-8" />
           </div>
         </div>
-      </div>
-      
-      <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-10">
-        <motion.div 
-          animate={{ y: ["-100%", "100%"] }}
-          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          className="h-[10%] w-full bg-gradient-to-b from-transparent via-white to-transparent"
-        />
       </div>
     </motion.div>
   );
@@ -720,6 +786,7 @@ function VlogSuccessOverlay({ onContinue }: { onContinue: () => void }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="absolute inset-0 z-[110] flex items-center justify-center bg-[#07101d] p-8"
+      style={{ color: "#fff" }}
     >
       <div className="text-center">
         <motion.div 
@@ -772,23 +839,23 @@ const IntroOverlay: React.FC<{ onDirectStart: () => void; onCustomize: () => voi
         transition={{ type: "spring", damping: 25, stiffness: 120 }}
         className="w-full max-w-sm mx-auto"
       >
-        <div className="rounded-[32px] bg-[#0F172A]/90 border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] backdrop-blur-xl overflow-hidden">
+        <div className="rounded-[32px] border shadow-[0_20px_50px_rgba(0,0,0,0.15)] backdrop-blur-xl overflow-hidden" style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)" }}>
           {/* Toggle bar — always visible */}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="w-full flex items-center justify-between px-6 py-3 active:bg-white/5 transition-colors"
+            className="w-full flex items-center justify-between px-6 py-3 transition-colors"
           >
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-white/50">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-muted)" }}>
                 <Compass size={18} />
               </div>
-              <span className="text-[15px] font-black text-white italic tracking-tight">当前位置</span>
+              <span className="text-[15px] font-black italic tracking-tight" style={{ color: "var(--text-primary)" }}>当前位置</span>
               <div className="flex items-center gap-1.5 rounded-full bg-[#FFD166]/10 border border-[#FFD166]/20 px-2.5 py-0.5">
                 <span className="text-[10px] font-bold text-[#FFD166] uppercase tracking-wider">五道口 · 北京</span>
               </div>
             </div>
             <motion.div animate={{ rotate: collapsed ? 180 : 0 }} transition={{ duration: 0.2 }}>
-              <ChevronDown size={18} className="text-white/40" />
+              <ChevronDown size={18} style={{ color: "var(--text-muted)" }} />
             </motion.div>
           </button>
 
@@ -802,7 +869,7 @@ const IntroOverlay: React.FC<{ onDirectStart: () => void; onCustomize: () => voi
                 className="overflow-hidden"
               >
                 <div className="px-6 pb-6">
-                  <p className="text-[13px] font-medium text-white/50 leading-relaxed mb-5 px-1">
+                  <p className="text-[13px] font-medium leading-relaxed mb-5 px-1" style={{ color: "var(--text-muted)" }}>
                     迷雾中隐藏着未知的惊喜，踏出第一步，解锁你的故事
                   </p>
 
@@ -818,7 +885,8 @@ const IntroOverlay: React.FC<{ onDirectStart: () => void; onCustomize: () => voi
 
                     <button
                       onClick={onCustomize}
-                      className="w-full flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 py-3 text-[14px] font-bold text-white/60 active:scale-[0.98] transition-all"
+                      className="w-full flex items-center justify-center gap-2 rounded-full border py-3 text-[14px] font-bold active:scale-[0.98] transition-all"
+                      style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-input)", color: "var(--text-muted)" }}
                     >
                       <Target size={14} className="opacity-60" />
                       <span>自定义偏好</span>
@@ -841,9 +909,7 @@ function RewardOverlay({ onContinue, reward, emoji, name }: { onContinue: () => 
       animate={{ opacity: 1 }}
       className="absolute inset-0 z-[120] flex items-center justify-center p-8 backdrop-blur-xl bg-black/40"
     >
-      <div className="w-full max-w-xs rounded-3xl bg-gradient-to-b from-[#1A1A2E] to-[#0D0D15] p-6 text-center border border-white/10 shadow-2xl relative overflow-hidden">
-        <div className="absolute inset-0 bg-white/[0.02] pointer-events-none" />
-
+      <div className="w-full max-w-xs rounded-3xl p-6 text-center border shadow-2xl relative overflow-hidden" style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)", color: "var(--text-primary)" }}>
         <div className="relative z-10">
           <motion.div
             initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
@@ -854,27 +920,27 @@ function RewardOverlay({ onContinue, reward, emoji, name }: { onContinue: () => 
             </div>
           </motion.div>
 
-          <h2 className="text-2xl font-black text-white italic">{name ?? "打卡完成"}</h2>
-          <p className="mt-2 text-sm text-white/50">解锁探索奖励</p>
+          <h2 className="text-2xl font-black italic" style={{ color: "var(--text-primary)" }}>{name ?? "打卡完成"}</h2>
+          <p className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>解锁探索奖励</p>
 
           <div className="my-8 space-y-3">
-            <div className="flex items-center justify-between rounded-xl bg-white/5 p-3 border border-white/5">
+            <div className="flex items-center justify-between rounded-xl p-3 border" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-subtle)" }}>
                <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/20 text-amber-500">
                      <Zap size={16} fill="currentColor" />
                   </div>
-                  <span className="text-sm font-bold text-white">经验值</span>
+                  <span className="text-sm font-bold" style={{ color: "var(--text-primary)" }}>经验值</span>
                </div>
                <span className="text-lg font-black text-amber-500">+50 XP</span>
             </div>
 
-            <div className="flex items-center justify-between rounded-xl bg-white/5 p-3 border border-white/5 text-left">
+            <div className="flex items-center justify-between rounded-xl p-3 border text-left" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-subtle)" }}>
                <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cyan-500/20 text-cyan-500">
                      <Gift size={16} />
                   </div>
                   <div>
-                    <div className="text-sm font-bold text-white line-clamp-2">{reward ?? "隐藏奖励"}</div>
+                    <div className="text-sm font-bold line-clamp-2" style={{ color: "var(--text-primary)" }}>{reward ?? "隐藏奖励"}</div>
                   </div>
                </div>
             </div>
@@ -882,7 +948,7 @@ function RewardOverlay({ onContinue, reward, emoji, name }: { onContinue: () => 
 
           <button
             onClick={onContinue}
-            className="w-full rounded-2xl bg-white py-4 text-sm font-black text-black active:scale-95 transition-transform"
+            className="w-full rounded-2xl bg-[#6C5CFF] py-4 text-sm font-black text-white active:scale-95 transition-transform"
           >
             查收并前往下一站
           </button>
@@ -899,36 +965,36 @@ function AchievementOverlay({ onContinue }: { onContinue: () => void }) {
       animate={{ opacity: 1 }}
       className="absolute inset-0 z-[130] flex items-center justify-center p-8 backdrop-blur-2xl bg-black/60"
     >
-      <div className="w-full max-w-sm rounded-[40px] bg-[#0F172A] p-8 text-center border-2 border-white/10 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(108,92,255,0.2),transparent_70%)]" />
-        
+      <div className="w-full max-w-sm rounded-[40px] p-8 text-center border-2 relative overflow-hidden" style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)", color: "var(--text-primary)" }}>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(108,92,255,0.15),transparent_70%)]" />
+
         <div className="relative z-10">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.5, opacity: 0, rotate: -180 }}
             animate={{ scale: 1, opacity: 1, rotate: 0 }}
             transition={{ type: "spring", damping: 12 }}
             className="mb-8 flex justify-center"
           >
             <div className="h-32 w-32 rounded-full bg-gradient-to-tr from-[#6C5CFF] to-[#A855F7] p-1 shadow-[0_0_50px_rgba(108,92,255,0.6)]">
-              <div className="h-full w-full rounded-full bg-[#0F172A] flex items-center justify-center">
-                 <Compass size={60} className="text-white" />
+              <div className="h-full w-full rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--bg-base)" }}>
+                 <Compass size={60} className="text-[#6C5CFF]" />
               </div>
             </div>
           </motion.div>
           <h3 className="text-[14px] font-black uppercase tracking-[0.3em] text-[#A855F7]">成就解锁</h3>
-          <h2 className="mt-2 text-4xl font-black italic text-white">城市开拓者</h2>
-          <p className="mt-4 text-sm text-white/50 leading-relaxed">
+          <h2 className="mt-2 text-4xl font-black italic" style={{ color: "var(--text-primary)" }}>城市开拓者</h2>
+          <p className="mt-4 text-sm leading-relaxed" style={{ color: "var(--text-muted)" }}>
             你完成了今日所有的探索计划，并用镜头记录下了这个城市鲜为人知的瞬间。
           </p>
 
           <div className="mt-10 flex flex-col gap-3">
-            <button 
+            <button
               onClick={onContinue}
-              className="w-full rounded-2xl bg-white py-4 text-[16px] font-black text-black active:scale-[0.98] transition-all"
+              className="w-full rounded-2xl bg-[#6C5CFF] py-4 text-[16px] font-black text-white active:scale-[0.98] transition-all"
             >
               完成探索
             </button>
-            <p className="text-[11px] text-white/20 uppercase tracking-widest italic">已录入世界探索名录</p>
+            <p className="text-[11px] uppercase tracking-widest italic" style={{ color: "var(--text-faint)" }}>已录入世界探索名录</p>
           </div>
         </div>
       </div>
@@ -1011,17 +1077,17 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
       initial={{ opacity: 0, scale: 1.05 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-[100] flex flex-col bg-[#05070A]"
+      className="absolute inset-0 z-[100] flex flex-col" style={{ backgroundColor: "var(--bg-base)" }}
     >
       <div className="flex items-center px-4 py-4 mt-12">
-        <button onClick={onBack} className="p-2 text-white/80 active:scale-90 bg-white/5 rounded-full">
+        <button onClick={onBack} className="p-2 active:scale-90 rounded-full" style={{ color: "var(--text-secondary)", backgroundColor: "var(--bg-input)" }}>
           <ChevronLeft size={24} />
         </button>
         <div className="flex-1 text-center pr-10">
-          <h2 className="flex items-center justify-center gap-2 text-xl font-black text-white italic tracking-tight">
+          <h2 className="flex items-center justify-center gap-2 text-xl font-black italic tracking-tight" style={{ color: "var(--text-primary)" }}>
              <Sparkles size={20} className="text-[#6C5CFF]" /> 今天想怎么走？ <Sparkles size={20} className="text-[#6C5CFF]" />
           </h2>
-          <p className="mt-1 text-[11px] text-white/40 font-medium">系统会结合你的偏好、天气和历史反馈生成路线</p>
+          <p className="mt-1 text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>系统会结合你的偏好、天气和历史反馈生成路线</p>
         </div>
       </div>
 
@@ -1072,7 +1138,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
               key={m.id}
               onClick={() => setMood(m.id)}
               className={`flex flex-col items-center gap-1.5 py-3 px-1 rounded-xl border transition-all ${
-                mood === m.id ? "bg-[#1A1A2E] border-[#6C5CFF] text-[#6C5CFF]" : "bg-white/5 border-transparent text-white/40"
+                mood === m.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
               }`}
             >
               <m.icon size={18} strokeWidth={mood === m.id ? 2.5 : 2} />
@@ -1090,7 +1156,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
                   key={d.id}
                   onClick={() => setDuration(d.id)}
                   className={`py-2 px-1 rounded-xl border text-[9px] font-bold transition-all ${
-                    duration === d.id ? "bg-[#1A1A2E] border-[#6C5CFF] text-white shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-white/5 border-transparent text-white/30"
+                    duration === d.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
                   }`}
                 >
                   {d.label}
@@ -1106,7 +1172,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
                    key={t.id}
                    onClick={() => setTransport(t.id)}
                    className={`flex items-center justify-center gap-2 py-2 rounded-xl border text-[9px] font-bold transition-all ${
-                     transport === t.id ? "bg-[#1A1A2E] border-[#6C5CFF] text-white shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-white/5 border-transparent text-white/30"
+                     transport === t.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
                    }`}
                  >
                    <t.icon size={12} />
@@ -1125,7 +1191,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
               key={s.id}
               onClick={() => toggleList(special, setSpecial, s.id)}
               className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-[9px] font-bold transition-all ${
-                special.includes(s.id) ? "bg-[#1A1A2E] border-[#6C5CFF] text-white shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-white/5 border-transparent text-white/40"
+                special.includes(s.id) ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
               }`}
             >
               <s.icon size={11} />
@@ -1141,7 +1207,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
               key={c.id}
               onClick={() => setCompanion(c.id)}
               className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-[9px] font-bold transition-all ${
-                companion === c.id ? "bg-[#1A1A2E] border-[#6C5CFF] text-white shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-white/5 border-transparent text-white/40"
+                companion === c.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
               }`}
             >
               <c.icon size={11} />
@@ -1157,7 +1223,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
               key={f.id}
               onClick={() => toggleList(foodPreference, setFoodPreference, f.id)}
               className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-[9px] font-bold transition-all ${
-                foodPreference.includes(f.id) ? "bg-[#1A1A2E] border-[#6C5CFF] text-white shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-white/5 border-transparent text-white/40"
+                foodPreference.includes(f.id) ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
               }`}
             >
               <f.icon size={11} />
@@ -1182,7 +1248,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
               key={i.id}
               onClick={() => setIntensity(i.id)}
               className={`relative flex flex-col items-center text-center gap-1 p-1 py-2.5 rounded-xl border transition-all ${
-                intensity === i.id ? "bg-[#1A1A2E] border-[#6C5CFF] text-white shadow-[0_0_20px_rgba(108,92,255,0.3)]" : "bg-white/5 border-transparent text-white/30"
+                intensity === i.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] shadow-[0_0_20px_rgba(108,92,255,0.3)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
               }`}
             >
               {i.recommended && (
@@ -1197,8 +1263,8 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] p-5 bg-gradient-to-t from-[#05070A] via-[#05070A] to-transparent">
-        <button 
+      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] p-5" style={{ background: `linear-gradient(to top, var(--bg-base), var(--bg-base) 60%, transparent)` }}>
+        <button
           onClick={() => onConfirm({ mood, duration, transport, special, foodPreference, intensity, companion })}
           className="group relative flex w-full items-center justify-center gap-3 rounded-full bg-[#6C5CFF] py-3.5 text-[16px] font-black text-white shadow-[0_15px_40px_rgba(108,92,255,0.4)] active:scale-[0.98] transition-all overflow-hidden"
         >
@@ -1206,7 +1272,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
           <Sparkles size={18} className="fill-white" />
           <span>生成今日剧情</span>
         </button>
-        <div className="mt-3 flex items-center justify-center gap-1.5 text-[10px] text-white/20">
+        <div className="mt-3 flex items-center justify-center gap-1.5 text-[10px]" style={{ color: "var(--text-faint)" }}>
           <X size={10} /> 目的地点将在途中逐步解锁
         </div>
       </div>
@@ -1218,12 +1284,12 @@ function SectionTitle({ num, title, sub, help }: { num: number | string; title: 
   return (
     <div className="flex items-center gap-2 mb-3">
       {num !== "" && <span className="text-base font-black text-[#6C5CFF]">{num}.</span>}
-      <h3 className="text-[13px] font-black text-white tracking-wide">{title}</h3>
-      {sub && <span className="text-[10px] text-white/20 font-medium">{sub}</span>}
+      <h3 className="text-[13px] font-black tracking-wide" style={{ color: "var(--text-primary)" }}>{title}</h3>
+      {sub && <span className="text-[10px] font-medium" style={{ color: "var(--text-faint)" }}>{sub}</span>}
       {help && (
         <span className="group relative inline-flex">
-          <HelpCircle size={12} className="text-white/30 hover:text-white/70 cursor-help transition-colors" />
-          <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full z-50 mt-2 w-56 rounded-xl border border-white/10 bg-[#14142B] p-3 text-left text-[11px] leading-relaxed text-white/70 opacity-0 shadow-[0_12px_30px_rgba(0,0,0,0.55)] transition-opacity duration-150 group-hover:opacity-100">
+          <HelpCircle size={12} className="cursor-help transition-colors" style={{ color: "var(--text-muted)" }} />
+          <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full z-50 mt-2 w-56 rounded-xl border p-3 text-left text-[11px] leading-relaxed opacity-0 shadow-[0_12px_30px_rgba(0,0,0,0.55)] transition-opacity duration-150 group-hover:opacity-100" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-card)", color: "var(--text-secondary)" }}>
             {help}
           </span>
         </span>
@@ -1260,17 +1326,17 @@ function GearConfirmationOverlay({ onConfirm, onBack }: { onConfirm: () => void;
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
-      className="absolute inset-0 z-[100] flex flex-col bg-[#05070A]"
+      className="absolute inset-0 z-[100] flex flex-col" style={{ backgroundColor: "var(--bg-base)" }}
     >
       <div className="flex items-center px-4 py-4 mt-12">
-        <button onClick={onBack} className="p-2 text-white/80 active:scale-90 bg-white/5 rounded-full">
+        <button onClick={onBack} className="p-2 active:scale-90 rounded-full" style={{ color: "var(--text-secondary)", backgroundColor: "var(--bg-input)" }}>
           <ChevronLeft size={24} />
         </button>
         <div className="flex-1 text-center pr-10">
-          <h2 className="flex items-center justify-center gap-2 text-xl font-black text-white italic tracking-tight">
+          <h2 className="flex items-center justify-center gap-2 text-xl font-black italic tracking-tight" style={{ color: "var(--text-primary)" }}>
              装备确认 <Rocket size={20} className="text-[#6C5CFF]" />
           </h2>
-          <p className="mt-1 text-[11px] text-white/40 font-medium">带上这些，让探索更从容</p>
+          <p className="mt-1 text-[11px] font-medium" style={{ color: "var(--text-muted)" }}>带上这些，让探索更从容</p>
         </div>
       </div>
 
@@ -1281,33 +1347,34 @@ function GearConfirmationOverlay({ onConfirm, onBack }: { onConfirm: () => void;
               key={item.id}
               onClick={() => toggleGear(item.id)}
               className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${
-                confirmed.includes(item.id) 
-                  ? "bg-[#1A1A2E] border-[#6C5CFF] shadow-[0_8px_20px_rgba(108,92,255,0.15)]" 
-                  : "bg-white/5 border-white/5"
+                confirmed.includes(item.id)
+                  ? "bg-[#6C5CFF]/15 border-[#6C5CFF] shadow-[0_8px_20px_rgba(108,92,255,0.15)]"
+                  : ""
               }`}
+              style={confirmed.includes(item.id) ? undefined : { backgroundColor: "var(--bg-input)", borderColor: "var(--border-subtle)" }}
             >
-              <div className={`p-2 rounded-xl ${confirmed.includes(item.id) ? "bg-[#6C5CFF] text-white" : "bg-white/5 text-white/20"}`}>
+              <div className={`p-2 rounded-xl ${confirmed.includes(item.id) ? "bg-[#6C5CFF] text-white" : ""}`} style={confirmed.includes(item.id) ? undefined : { backgroundColor: "var(--bg-input)", color: "var(--text-faint)" }}>
                 <item.icon size={20} />
               </div>
               <div className="flex-1 text-left">
-                <div className={`text-[14px] font-black ${confirmed.includes(item.id) ? "text-white" : "text-white/20"}`}>{item.label}</div>
-                <div className={`text-[10px] ${confirmed.includes(item.id) ? "text-white/40" : "text-white/10"}`}>{item.desc}</div>
+                <div className="text-[14px] font-black" style={{ color: confirmed.includes(item.id) ? "var(--text-primary)" : "var(--text-faint)" }}>{item.label}</div>
+                <div className="text-[10px]" style={{ color: confirmed.includes(item.id) ? "var(--text-muted)" : "var(--text-faint)" }}>{item.desc}</div>
               </div>
               <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                confirmed.includes(item.id) ? "border-[#6C5CFF] bg-[#6C5CFF]" : "border-white/10"
-              }`}>
+                confirmed.includes(item.id) ? "border-[#6C5CFF] bg-[#6C5CFF]" : ""
+              }`} style={confirmed.includes(item.id) ? undefined : { borderColor: "var(--border-subtle)" }}>
                 {confirmed.includes(item.id) && <CheckCircle2 size={12} className="text-white" />}
               </div>
             </button>
           ))}
         </div>
-        
+
         <div className="mt-6 p-4 rounded-2xl bg-[#6C5CFF]/10 border border-[#6C5CFF]/20">
           <div className="flex items-start gap-2.5">
             <Info size={16} className="text-[#6C5CFF] mt-0.5" />
             <div>
-              <div className="text-[13px] font-bold text-white">温馨提示</div>
-              <p className="mt-1 text-[11px] text-white/40 leading-relaxed">
+              <div className="text-[13px] font-bold" style={{ color: "var(--text-primary)" }}>温馨提示</div>
+              <p className="mt-1 text-[11px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
                 部分探索点可能需要手机 NFC 或 4G 网络，请确保网络通畅并开启定位服务。
               </p>
             </div>
@@ -1315,7 +1382,7 @@ function GearConfirmationOverlay({ onConfirm, onBack }: { onConfirm: () => void;
         </div>
       </div>
 
-      <div className="p-5 pb-10 bg-gradient-to-t from-[#05070A] via-[#05070A] to-transparent">
+      <div className="p-5 pb-10" style={{ background: `linear-gradient(to top, var(--bg-base), var(--bg-base) 60%, transparent)` }}>
         <button 
           onClick={handleConfirm}
           className="group relative flex w-full items-center justify-center gap-3 rounded-full bg-[#6C5CFF] py-3.5 text-[16px] font-black text-white shadow-[0_15px_40px_rgba(108,92,255,0.4)] active:scale-[0.98] transition-all overflow-hidden"

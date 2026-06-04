@@ -25,14 +25,20 @@ interface TerrainPolygon {
   points: LatLng[];
 }
 const terrain = terrainRaw as { polygons: TerrainPolygon[] };
-const TERRAIN_STYLE: Record<TerrainPolygon["type"], { fill: string; opacity: number }> = {
+const TERRAIN_DARK: Record<TerrainPolygon["type"], { fill: string; opacity: number }> = {
   campus: { fill: "#1F1B47", opacity: 0.55 },
   park: { fill: "#0F3A24", opacity: 0.55 },
   water: { fill: "#0E3B47", opacity: 0.7 },
   commercial: { fill: "#3D3013", opacity: 0.45 },
 };
+const TERRAIN_LIGHT: Record<TerrainPolygon["type"], { fill: string; opacity: number }> = {
+  campus: { fill: "#F3EEFF", opacity: 0.5 },
+  park: { fill: "#E6F9E8", opacity: 0.55 },
+  water: { fill: "#E0F4FF", opacity: 0.6 },
+  commercial: { fill: "#FFF9EB", opacity: 0.5 },
+};
 
-const HIGHWAY_STYLE: Record<string, { stroke: string; width: number; dash?: string }> = {
+const HIGHWAY_DARK: Record<string, { stroke: string; width: number; dash?: string }> = {
   primary: { stroke: "#6C5CFF", width: 2.5 },
   secondary: { stroke: "#4B40A8", width: 2 },
   tertiary: { stroke: "#3A327D", width: 1.5 },
@@ -41,7 +47,32 @@ const HIGHWAY_STYLE: Record<string, { stroke: string; width: number; dash?: stri
   footway: { stroke: "#3F368B", width: 1, dash: "3 3" },
   pedestrian: { stroke: "#3F368B", width: 1.2, dash: "4 3" },
 };
-const DEFAULT_STYLE = { stroke: "#2A2358", width: 1 };
+const HIGHWAY_LIGHT: Record<string, { stroke: string; width: number; dash?: string }> = {
+  primary: { stroke: "#6C5CFF", width: 3 },
+  secondary: { stroke: "#8578E0", width: 2.5 },
+  tertiary: { stroke: "#9B90D0", width: 2 },
+  residential: { stroke: "#B0A8C8", width: 1.5 },
+  service: { stroke: "#B0A8C8", width: 1.2 },
+  footway: { stroke: "#A69EC0", width: 1.2, dash: "3 3" },
+  pedestrian: { stroke: "#A69EC0", width: 1.5, dash: "4 3" },
+};
+const DEFAULT_DARK = { stroke: "#2A2358", width: 1 };
+const DEFAULT_LIGHT = { stroke: "#B0A8C8", width: 1.2 };
+
+function useIsLight() {
+  const [light, setLight] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      const el = document.querySelector("[data-theme]");
+      setLight(el?.getAttribute("data-theme") === "light");
+    };
+    check();
+    const obs = new MutationObserver(check);
+    obs.observe(document.body, { subtree: true, attributes: true, attributeFilter: ["data-theme"] });
+    return () => obs.disconnect();
+  }, []);
+  return light;
+}
 
 function pointsToPath(points: LatLng[], bbox: BBox): string {
   if (points.length === 0) return "";
@@ -78,6 +109,11 @@ export function Map({
   step?: ExploreStep;
   waypointIndex?: number;
 }) {
+  const isLight = useIsLight();
+  const TERRAIN_STYLE = isLight ? TERRAIN_LIGHT : TERRAIN_DARK;
+  const HIGHWAY_STYLE = isLight ? HIGHWAY_LIGHT : HIGHWAY_DARK;
+  const DEFAULT_STYLE = isLight ? DEFAULT_LIGHT : DEFAULT_DARK;
+
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragMovedRef = useRef(false);
@@ -125,7 +161,7 @@ export function Map({
       d: pointsToPath(s.points, viewBox),
       style: HIGHWAY_STYLE[s.highway] ?? DEFAULT_STYLE,
     }));
-  }, [viewBox]);
+  }, [viewBox, isLight]);
 
   const terrainShapes = useMemo(() => {
     return terrain.polygons.map((poly, idx) => ({
@@ -133,7 +169,7 @@ export function Map({
       pts: polygonPointsAttr(poly.points, viewBox),
       style: TERRAIN_STYLE[poly.type],
     }));
-  }, [viewBox]);
+  }, [viewBox, isLight]);
 
   const gameActive = step && !["intro", "preference_selection", "gear_confirmation", "achievement_unlock"].includes(step);
 
@@ -180,19 +216,26 @@ export function Map({
     : step === "next_objective" || step === "checkin_next" ? route?.waypoints[waypointIndex]
     : undefined;
   const nextWpPos = nextWp ? projectLatLng({ lat: nextWp.lat, lng: nextWp.lng }, viewBox) : null;
-  const dirAngle = nextWpPos
-    ? Math.atan2(nextWpPos.x - currentPos.x, -(nextWpPos.y - currentPos.y)) * (180 / Math.PI)
-    : 0;
 
-  // Live navigation path: Dijkstra from avatar to next waypoint
-  const navPath = useMemo(() => {
+  const navPolyline = useMemo(() => {
     if (!nextWp) return null;
-    const poly = routePolyline(
+    return routePolyline(
       [currentPosition, { lat: nextWp.lat, lng: nextWp.lng }],
       ROAD_GRAPH
     );
-    return pointsToPath(poly, viewBox);
-  }, [currentPosition, nextWp, viewBox]);
+  }, [currentPosition, nextWp]);
+
+  const navPath = useMemo(() => {
+    if (!navPolyline) return null;
+    return pointsToPath(navPolyline, viewBox);
+  }, [navPolyline, viewBox]);
+
+  const dirAngle = useMemo(() => {
+    if (!nextWpPos) return 0;
+    const dx = nextWpPos.x - currentPos.x;
+    const dy = nextWpPos.y - currentPos.y;
+    return Math.atan2(dx, -dy) * (180 / Math.PI);
+  }, [nextWpPos, currentPos]);
 
   function clientToLatLng(clientX: number, clientY: number): LatLng | null {
     const svg = svgRef.current;
@@ -262,7 +305,7 @@ export function Map({
       </g>
 
       {/* Road network */}
-      <g opacity={0.65}>
+      <g opacity={isLight ? 0.85 : 0.65}>
         {streetPaths.map((s) => (
           <path
             key={s.key} d={s.d} fill="none" stroke={s.style.stroke}
@@ -334,17 +377,18 @@ export function Map({
       >
         <g transform={`scale(${markerScale})`}>
           <circle r={28} fill="transparent" />
+          {/* Pulse rings */}
           <circle r={20} fill="#6C5CFF" opacity={0.08}>
-            <animate attributeName="r" values="18;26;18" dur="3s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.12;0.04;0.12" dur="3s" repeatCount="indefinite" />
+            <animate attributeName="r" values="18;28;18" dur="3s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.15;0.02;0.15" dur="3s" repeatCount="indefinite" />
           </circle>
-          <circle r={14} fill="#6C5CFF" opacity={0.15}>
-            <animate attributeName="r" values="13;17;13" dur="2.4s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="0.2;0.08;0.2" dur="2.4s" repeatCount="indefinite" />
+          <circle r={14} fill="#6C5CFF" opacity={0.12}>
+            <animate attributeName="r" values="13;18;13" dur="2.4s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.18;0.05;0.18" dur="2.4s" repeatCount="indefinite" />
           </circle>
-          <circle r={10} fill="#6C5CFF" stroke="#A98BFF" strokeWidth={1.5} />
-          <circle cx={0} cy={-3} r={3} fill="white" />
-          <path d="M-4,5 Q-4,0 0,0 Q4,0 4,5" fill="white" opacity={0.9} />
+          {/* Avatar circle */}
+          <circle r={14} fill="#6C5CFF" stroke="#A98BFF" strokeWidth={2} />
+          <text textAnchor="middle" dominantBaseline="central" fontSize={16}>{(() => { try { return JSON.parse(localStorage.getItem("userProfile") ?? "{}").avatar ?? "🧑🏻"; } catch { return "🧑🏻"; } })()}</text>
         </g>
       </motion.g>
     </svg>

@@ -57,18 +57,18 @@ export function OnboardingScreen({ onComplete }: { onComplete: (profile: UserPro
 
   return (
     <AppLayout>
-      <div className="absolute inset-0 z-0 bg-[#05070A]">
+      <div className="absolute inset-0 z-0" style={{ backgroundColor: "var(--bg-base)" }}>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(108,92,255,0.18),transparent_60%)]" />
       </div>
 
       <div className="absolute inset-x-0 top-0 z-10 px-5 pt-14 pb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className={`h-1.5 w-8 rounded-full transition-all ${step >= 0 ? "bg-[#6C5CFF]" : "bg-white/10"}`} />
-          <div className={`h-1.5 w-8 rounded-full transition-all ${step >= 1 ? "bg-[#6C5CFF]" : "bg-white/10"}`} />
+          <div className={`h-1.5 w-8 rounded-full transition-all ${step >= 0 ? "bg-[#6C5CFF]" : "bg-[var(--bg-input)]"}`} />
+          <div className={`h-1.5 w-8 rounded-full transition-all ${step >= 1 ? "bg-[#6C5CFF]" : "bg-[var(--bg-input)]"}`} />
         </div>
         <button
           onClick={() => finish({ mbti: null, interests: [] })}
-          className="text-[12px] font-bold text-white/40 active:scale-95 transition-all"
+          className="text-[12px] font-bold text-[var(--text-muted)] active:scale-95 transition-all"
         >
           全部跳过
         </button>
@@ -89,7 +89,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: (profile: UserPro
                 <Sparkles size={11} /> 第 1 步 / 共 2 步
               </div>
               <h1 className="text-2xl font-black italic text-white">你是哪一型？</h1>
-              <p className="mt-1.5 text-[12px] text-white/40 font-medium">用 MBTI 帮 AI 写更对你胃口的探索故事</p>
+              <p className="mt-1.5 text-[12px] text-[var(--text-muted)] font-medium">用 MBTI 帮 AI 写更对你胃口的探索故事</p>
             </div>
 
             <div className="flex-1 overflow-y-auto scrollbar-hide">
@@ -101,13 +101,13 @@ export function OnboardingScreen({ onComplete }: { onComplete: (profile: UserPro
                     className={`flex flex-col items-center justify-center gap-0.5 py-3 px-1 rounded-2xl border-2 transition-all active:scale-95 ${
                       mbti === t.code
                         ? "bg-[#6C5CFF]/20 border-[#6C5CFF] shadow-[0_0_20px_rgba(108,92,255,0.3)]"
-                        : "bg-white/5 border-transparent"
+                        : "bg-[var(--bg-input)] border-transparent"
                     }`}
                   >
-                    <span className={`text-[13px] font-black tracking-wider ${mbti === t.code ? "text-[#A98BFF]" : "text-white/80"}`}>
+                    <span className={`text-[13px] font-black tracking-wider ${mbti === t.code ? "text-[#A98BFF]" : "text-[var(--text-secondary)]"}`}>
                       {t.code}
                     </span>
-                    <span className={`text-[10px] ${mbti === t.code ? "text-[#A98BFF]/80" : "text-white/30"}`}>
+                    <span className={`text-[10px] ${mbti === t.code ? "text-[#A98BFF]/80" : "text-[var(--text-muted)]"}`}>
                       {t.label}
                     </span>
                   </button>
@@ -131,7 +131,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: (profile: UserPro
                 <Sparkles size={11} /> 第 2 步 / 共 2 步
               </div>
               <h1 className="text-2xl font-black italic text-white">你的口味偏好</h1>
-              <p className="mt-1.5 text-[12px] text-white/40 font-medium">挑 3~5 个，AI 会优先推荐相关地点</p>
+              <p className="mt-1.5 text-[12px] text-[var(--text-muted)] font-medium">挑 3~5 个，AI 会优先推荐相关地点</p>
             </div>
 
             <div className="flex-1 overflow-y-auto scrollbar-hide">
@@ -146,17 +146,17 @@ export function OnboardingScreen({ onComplete }: { onComplete: (profile: UserPro
                       className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl border-2 transition-all active:scale-[0.97] ${
                         on
                           ? "bg-[#6C5CFF]/20 border-[#6C5CFF] shadow-[0_0_18px_rgba(108,92,255,0.25)]"
-                          : "bg-white/5 border-transparent"
+                          : "bg-[var(--bg-input)] border-transparent"
                       }`}
                     >
-                      <Icon size={20} className={on ? "text-[#A98BFF]" : "text-white/40"} />
-                      <span className={`text-[14px] font-bold ${on ? "text-white" : "text-white/60"}`}>{it.label}</span>
+                      <Icon size={20} className={on ? "text-[#A98BFF]" : "text-[var(--text-muted)]"} />
+                      <span className={`text-[14px] font-bold ${on ? "text-white" : "text-[var(--text-muted)]"}`}>{it.label}</span>
                     </button>
                   );
                 })}
               </div>
               {interests.length > 0 && (
-                <p className="mt-4 text-center text-[11px] text-white/30">已选 {interests.length} 个</p>
+                <p className="mt-4 text-center text-[11px] text-[var(--text-muted)]">已选 {interests.length} 个</p>
               )}
             </div>
           </motion.div>
@@ -175,7 +175,8 @@ export function OnboardingScreen({ onComplete }: { onComplete: (profile: UserPro
                 finish({ interests: [] });
               }
             }}
-            className="flex-1 rounded-full border border-white/10 bg-white/5 py-3.5 text-[14px] font-bold text-white/60 active:scale-[0.98] transition-all"
+            className="flex-1 rounded-full border py-3.5 text-[14px] font-bold text-[var(--text-muted)] active:scale-[0.98] transition-all"
+            style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-input)" }}
           >
             跳过
           </button>

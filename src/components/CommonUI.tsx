@@ -20,13 +20,14 @@ export function BottomNav({ active, onNavigate }: { active: ScreenType; onNaviga
           className="relative flex h-full flex-1 flex-col items-center justify-center gap-1"
         >
           {i > 0 && <span className="absolute left-0 h-9 w-px" style={{ backgroundColor: "var(--border-subtle)" }} />}
-          <motion.div 
+          <motion.div
             whileTap={{ scale: 0.9 }}
-            className={active === it.key ? "text-[#A98BFF] drop-shadow-[0_0_14px_rgba(108,92,255,.95)]" : "text-[#C7BCE7]/65"}
+            className={active === it.key ? "text-[#6C5CFF] drop-shadow-[0_0_14px_rgba(108,92,255,.95)]" : ""}
+            style={active !== it.key ? { color: "var(--text-muted)" } : undefined}
           >
             {it.icon}
           </motion.div>
-          <span className={`text-[12px] ${active === it.key ? "text-[#A98BFF]" : "text-[#C7BCE7]/65"}`}>{it.name}</span>
+          <span className={`text-[12px] ${active === it.key ? "text-[#6C5CFF] font-bold" : ""}`} style={active !== it.key ? { color: "var(--text-muted)" } : undefined}>{it.name}</span>
           {active === it.key && (
             <motion.div 
               layoutId="nav-glow"

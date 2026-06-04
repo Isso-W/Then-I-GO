@@ -24,7 +24,7 @@ export function EventDetailScreen({ onBack }: { onBack: () => void }) {
       </div>
 
       <header className="absolute left-0 right-0 top-[60px] z-30 flex items-center justify-between px-6">
-        <button onClick={onBack} className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white backdrop-blur-md active:scale-90">
+        <button onClick={onBack} className="flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur-md active:scale-90" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-input)", color: "var(--text-primary)" }}>
           <X size={20} />
         </button>
         <div className="flex items-center gap-2 rounded-full border border-[#FFD166]/30 bg-[#FFD166]/10 px-3 py-1.5 text-[#FFD166]">

@@ -21,8 +21,10 @@ const TERRAIN_FILL_LIGHT: Record<string, string> = {
 
 interface SysMessage { icon: React.ReactNode; title: string; desc: string; time: string }
 
-export function MineScreen({ onNavigate, profile, generatedRoute, tripHistory = [] }: { onNavigate: (s: ScreenType) => void; profile?: UserProfile | null; generatedRoute?: GeneratedRoute | null; tripHistory?: TripRecord[] }) {
-  const [panel, setPanel] = useState<null | "notif" | "sys">(null);
+const AVATAR_OPTIONS = ["🧑🏻", "👩🏻", "👨🏻", "🧒🏻", "👧🏻", "🐱", "🐶", "🦊", "🐼", "🐨", "🦁", "🐯", "🐸", "🐙", "👻", "🤖"];
+
+export function MineScreen({ onNavigate, profile, generatedRoute, tripHistory = [], onUpdateProfile }: { onNavigate: (s: ScreenType) => void; profile?: UserProfile | null; generatedRoute?: GeneratedRoute | null; tripHistory?: TripRecord[]; onUpdateProfile?: (p: UserProfile) => void }) {
+  const [panel, setPanel] = useState<null | "notif" | "sys" | "avatar">(null);
   const [notifRead, setNotifRead] = useState(false);
   const [sysRead, setSysRead] = useState(false);
 
@@ -71,7 +73,10 @@ export function MineScreen({ onNavigate, profile, generatedRoute, tripHistory = 
       
       <main className="absolute inset-x-5 top-[100px] bottom-[104px] overflow-y-auto no-scrollbar pb-6">
         <div className="flex items-center gap-4 mt-2">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#6C5CFF]/60 bg-gradient-to-br from-[#FFD7BD] to-[#7B4B3A] text-4xl shadow-lg ring-4 ring-[#6C5CFF]/10">🧑🏻</div>
+          <button onClick={() => setPanel("avatar")} className="relative flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#6C5CFF]/60 bg-gradient-to-br from-[#FFD7BD] to-[#7B4B3A] text-4xl shadow-lg ring-4 ring-[#6C5CFF]/10 active:scale-95 transition-transform">
+            {profile?.avatar ?? "🧑🏻"}
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#6C5CFF] text-[10px] text-white shadow">✎</span>
+          </button>
           <div>
             <div className="flex items-center gap-2">
               <div className="text-[20px] font-bold">那我走</div>
@@ -83,7 +88,7 @@ export function MineScreen({ onNavigate, profile, generatedRoute, tripHistory = 
             </div>
             <div className="mt-1 flex items-center gap-2">
                <span className="text-[12px] text-[#A98BFF] font-black uppercase">LV.12</span>
-               <div className="h-1.5 w-[100px] rounded-full bg-white/10">
+               <div className="h-1.5 w-[100px] rounded-full" style={{ backgroundColor: "var(--bg-input)" }}>
                  <motion.div initial={{ width: 0 }} animate={{ width: "62%" }} className="h-full rounded-full bg-[#6C5CFF]" />
                </div>
             </div>
@@ -110,12 +115,58 @@ export function MineScreen({ onNavigate, profile, generatedRoute, tripHistory = 
       <BottomNav active="mine" onNavigate={onNavigate} />
 
       <AnimatePresence>
-        {panel && (
+        {(panel === "notif" || panel === "sys") && (
           <NotificationsOverlay
             title={panel === "notif" ? "通知" : "系统消息"}
             messages={panel === "notif" ? notifications : systemMessages}
             onClose={() => setPanel(null)}
           />
+        )}
+        {panel === "avatar" && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setPanel(null)}
+            className="absolute inset-0 z-[120] flex flex-col justify-end bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 26, stiffness: 240 }}
+              onClick={(e) => e.stopPropagation()}
+              className="rounded-t-[28px] border-t p-5 pb-8"
+              style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)" }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-[18px] font-black" style={{ color: "var(--text-primary)" }}>选择头像</h2>
+                <button onClick={() => setPanel(null)} className="rounded-full p-1.5 active:scale-90" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-muted)" }}>
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="grid grid-cols-8 gap-2">
+                {AVATAR_OPTIONS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => {
+                      if (!profile) return;
+                      const updated = { ...profile, avatar: emoji };
+                      try { localStorage.setItem("userProfile", JSON.stringify(updated)); } catch {}
+                      onUpdateProfile?.(updated);
+                      setPanel(null);
+                    }}
+                    className={`flex h-11 w-11 items-center justify-center rounded-xl text-2xl active:scale-90 transition-transform ${
+                      (profile?.avatar ?? "🧑🏻") === emoji ? "bg-[#6C5CFF]/20 ring-2 ring-[#6C5CFF]" : ""
+                    }`}
+                    style={(profile?.avatar ?? "🧑🏻") !== emoji ? { backgroundColor: "var(--bg-input)" } : undefined}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </AppLayout>
@@ -137,32 +188,33 @@ function NotificationsOverlay({ title, messages, onClose }: { title: string; mes
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 26, stiffness: 240 }}
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[70%] overflow-y-auto no-scrollbar rounded-t-[28px] border-t border-white/10 bg-[#0F172A] p-5 pb-8 shadow-[0_-20px_60px_rgba(0,0,0,0.6)]"
+        className="max-h-[70%] overflow-y-auto no-scrollbar rounded-t-[28px] border-t p-5 pb-8 shadow-[0_-20px_60px_rgba(0,0,0,0.3)]"
+        style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)" }}
       >
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Mail size={18} className="text-[#A98BFF]" />
-            <h2 className="text-[17px] font-bold text-white">{title}</h2>
+            <h2 className="text-[17px] font-bold" style={{ color: "var(--text-primary)" }}>{title}</h2>
           </div>
-          <button onClick={onClose} className="rounded-full bg-white/5 p-1.5 text-white/50 active:scale-90">
+          <button onClick={onClose} className="rounded-full p-1.5 active:scale-90" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-muted)" }}>
             <X size={18} />
           </button>
         </div>
         <div className="space-y-2.5">
           {messages.length === 0 && (
-            <div className="py-10 text-center text-[13px] text-white/30">暂无消息</div>
+            <div className="py-10 text-center text-[13px]" style={{ color: "var(--text-muted)" }}>暂无消息</div>
           )}
           {messages.map((m, i) => (
-            <div key={i} className="flex gap-3 rounded-2xl border border-white/5 bg-white/[0.03] p-3.5">
+            <div key={i} className="flex gap-3 rounded-2xl border p-3.5" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-input)" }}>
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#6C5CFF]/15 text-[#A98BFF]">
                 {m.icon}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[14px] font-bold text-white truncate">{m.title}</span>
-                  <span className="shrink-0 text-[10px] text-white/30">{m.time}</span>
+                  <span className="text-[14px] font-bold truncate" style={{ color: "var(--text-primary)" }}>{m.title}</span>
+                  <span className="shrink-0 text-[10px]" style={{ color: "var(--text-faint)" }}>{m.time}</span>
                 </div>
-                <p className="mt-0.5 text-[12px] leading-relaxed text-white/45">{m.desc}</p>
+                <p className="mt-0.5 text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{m.desc}</p>
               </div>
             </div>
           ))}
@@ -308,8 +360,8 @@ function FootprintMap({ tripHistory }: { tripHistory: TripRecord[] }) {
           <FootprintMapContent mapW={MINI_W} mapH={MINI_H} uniquePoints={uniquePoints} toPixel={makeProjection(MINI_W, MINI_H)} />
           <button
             onClick={() => setExpanded(true)}
-            className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-md px-4 py-2 text-[12px] font-bold border active:scale-95 transition-transform shadow-lg"
-            style={{ color: "var(--text-secondary)", borderColor: "var(--border-subtle)" }}
+            className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full backdrop-blur-md px-4 py-2 text-[12px] font-bold border active:scale-95 transition-transform shadow-lg"
+            style={{ color: "var(--text-secondary)", borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-card)" }}
           >
             查看全貌 <ChevronRight size={14} />
           </button>
@@ -366,9 +418,9 @@ function FootprintMap({ tripHistory }: { tripHistory: TripRecord[] }) {
 
 function StatCard({ num, label }: { num: string; label: string }) {
   return (
-    <div className="rounded-xl bg-white/[0.03] p-2 text-center border border-white/5">
-      <div className="text-[17px] font-black font-mono text-[#DADAF0] leading-none">{num}</div>
-      <div className="mt-1 text-[9px] text-white/30 uppercase tracking-tighter scale-90 font-bold">{label}</div>
+    <div className="rounded-xl p-2 text-center border" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-subtle)" }}>
+      <div className="text-[17px] font-black font-mono leading-none" style={{ color: "var(--text-primary)" }}>{num}</div>
+      <div className="mt-1 text-[9px] uppercase tracking-tighter scale-90 font-bold" style={{ color: "var(--text-muted)" }}>{label}</div>
     </div>
   );
 }
@@ -376,20 +428,20 @@ function StatCard({ num, label }: { num: string; label: string }) {
 function Badge({ icon, label, color }: { icon: React.ReactNode; label: string; color: string }) {
   return (
     <div className="flex flex-col items-center gap-2 group cursor-pointer w-14">
-      <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${color} shadow-lg border border-white/10 group-hover:scale-110 transition-transform`}>
+      <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${color} shadow-lg border group-hover:scale-110 transition-transform`} style={{ borderColor: "var(--border-subtle)" }}>
         <div className="filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">{icon}</div>
       </div>
-      <span className="text-[10px] text-white/50 text-center leading-tight h-8 px-1">{label}</span>
+      <span className="text-[10px] text-center leading-tight h-8 px-1" style={{ color: "var(--text-muted)" }}>{label}</span>
     </div>
   );
 }
 
 function MenuRow({ icon, label, count, onClick }: { icon: React.ReactNode; label: string; count?: number; onClick?: () => void }) {
   return (
-    <div onClick={onClick} className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] transition-colors cursor-pointer group">
+    <div onClick={onClick} className="flex items-center justify-between p-4 rounded-2xl transition-colors cursor-pointer group" style={{ backgroundColor: "var(--bg-input)" }}>
       <div className="flex items-center gap-4">
-        <div className="text-white/40 group-hover:text-[#A98BFF] transition-colors">{icon}</div>
-        <span className="text-[17px] font-medium text-white/80">{label}</span>
+        <div className="group-hover:text-[#A98BFF] transition-colors" style={{ color: "var(--text-muted)" }}>{icon}</div>
+        <span className="text-[17px] font-medium" style={{ color: "var(--text-secondary)" }}>{label}</span>
       </div>
       <div className="flex items-center gap-3">
         {count && (
@@ -397,7 +449,7 @@ function MenuRow({ icon, label, count, onClick }: { icon: React.ReactNode; label
             {count}
           </span>
         )}
-        <ChevronRight size={18} className="text-white/20 group-hover:text-white/40 transition-colors" />
+        <ChevronRight size={18} className="transition-colors" style={{ color: "var(--text-faint)" }} />
       </div>
     </div>
   );

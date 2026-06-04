@@ -30,7 +30,7 @@
   --text-secondary: rgba(26, 26, 46, 0.8);
   --text-muted: rgba(26, 26, 46, 0.45);
   --text-faint: rgba(26, 26, 46, 0.2);
-  --fog-color: rgba(200, 200, 220, 0.88);
+  --fog-color: rgba(255, 248, 225, 0.5);
 }
 
 @layer base {

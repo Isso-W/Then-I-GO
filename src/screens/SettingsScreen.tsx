@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ArrowLeft, User, Bell, Shield, Smartphone, HelpCircle, LogOut, ChevronRight, Moon, X } from "lucide-react";
+import { ArrowLeft, User, Bell, Shield, Smartphone, HelpCircle, LogOut, ChevronRight, Moon, Sun, Monitor, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
 import type { UserProfile } from "../types";
@@ -25,10 +25,12 @@ const MBTI_TYPES: { code: string; label: string }[] = [
   { code: "ESFP", label: "表演者" },
 ];
 
-export function SettingsScreen({ onBack, theme, onToggleTheme, profile, onUpdateProfile }: {
+type ThemeMode = "dark" | "light" | "auto";
+
+export function SettingsScreen({ onBack, themeMode, onThemeChange, profile, onUpdateProfile }: {
   onBack: () => void;
-  theme?: "dark" | "light";
-  onToggleTheme?: () => void;
+  themeMode?: ThemeMode;
+  onThemeChange?: (mode: ThemeMode) => void;
   profile?: UserProfile | null;
   onUpdateProfile?: (p: UserProfile) => void;
 }) {
@@ -62,9 +64,9 @@ export function SettingsScreen({ onBack, theme, onToggleTheme, profile, onUpdate
           <h2 className="mb-3 px-1 text-[12px] font-bold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>个人信息</h2>
           <Glass className="overflow-hidden">
             <SettingItem icon={<User size={18} />} label="个人资料" detail="那我走" />
-            <div className="mx-4 h-px bg-white/5" />
+            <div className="mx-4 h-px bg-[var(--border-subtle)]" />
             <SettingItem icon={<Smartphone size={18} />} label="绑定手机" detail="138****8888" />
-            <div className="mx-4 h-px bg-white/5" />
+            <div className="mx-4 h-px bg-[var(--border-subtle)]" />
             <SettingItem
               icon={<span className="text-[16px]">🧠</span>}
               label="MBTI 人格"
@@ -78,8 +80,34 @@ export function SettingsScreen({ onBack, theme, onToggleTheme, profile, onUpdate
           <h2 className="mb-3 px-1 text-[12px] font-bold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>应用设置</h2>
           <Glass className="overflow-hidden">
             <SettingItemWithToggle icon={<Bell size={18} />} label="消息推送" defaultChecked />
-            <div className="mx-4 h-px bg-white/5" />
-            <SettingItemWithToggle icon={<Moon size={18} />} label="夜间模式" checked={theme !== "light"} onChange={onToggleTheme} />
+            <div className="mx-4 h-px bg-[var(--border-subtle)]" />
+            <div className="p-5">
+              <div className="flex items-center gap-4 mb-3">
+                <div style={{ color: "var(--text-muted)" }}><Moon size={18} /></div>
+                <span className="text-[17px] font-medium" style={{ color: "var(--text-secondary)" }}>主题模式</span>
+              </div>
+              <div className="flex gap-2">
+                {([
+                  { mode: "light" as ThemeMode, icon: <Sun size={15} />, label: "白天" },
+                  { mode: "dark" as ThemeMode, icon: <Moon size={15} />, label: "黑夜" },
+                  { mode: "auto" as ThemeMode, icon: <Monitor size={15} />, label: "跟随时间" },
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.mode}
+                    onClick={() => onThemeChange?.(opt.mode)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-[13px] font-bold transition-all ${
+                      themeMode === opt.mode
+                        ? "bg-[#6C5CFF] text-white shadow-[0_4px_12px_rgba(108,92,255,0.3)]"
+                        : ""
+                    }`}
+                    style={themeMode !== opt.mode ? { backgroundColor: "var(--bg-input)", color: "var(--text-muted)" } : undefined}
+                  >
+                    {opt.icon}
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </Glass>
         </section>
 
@@ -87,7 +115,7 @@ export function SettingsScreen({ onBack, theme, onToggleTheme, profile, onUpdate
           <h2 className="mb-3 px-1 text-[12px] font-bold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>其他</h2>
           <Glass className="overflow-hidden">
             <SettingItem icon={<Shield size={18} />} label="隐私中心" />
-            <div className="mx-4 h-px bg-white/5" />
+            <div className="mx-4 h-px bg-[var(--border-subtle)]" />
             <SettingItem icon={<HelpCircle size={18} />} label="关于应用" detail="v1.2.0" />
           </Glass>
         </section>
