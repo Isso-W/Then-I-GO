@@ -51,8 +51,7 @@ export function getActivityType(category: string): ActivityType {
   if (/书店|美术馆|文创|花店/.test(category)) return "browsing";
   if (/公园|绿地|景点|地标/.test(category)) return "outdoor";
   if (/健身|瑜伽|运动|溜冰/.test(category)) return "outdoor";
-  if (/便利店/.test(category)) return "service";
-  if (/电影院|KTV|台球|棋牌|桌游|密室/.test(category)) return "entertainment";
+  if (/电影院|KTV|台球|棋牌|桌游|密室|电竞|网咖/.test(category)) return "entertainment";
   return "sitting";
 }
 
