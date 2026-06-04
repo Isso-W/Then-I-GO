@@ -25,54 +25,23 @@ interface TerrainPolygon {
   points: LatLng[];
 }
 const terrain = terrainRaw as { polygons: TerrainPolygon[] };
-const TERRAIN_DARK: Record<TerrainPolygon["type"], { fill: string; opacity: number }> = {
-  campus: { fill: "#1F1B47", opacity: 0.55 },
-  park: { fill: "#0F3A24", opacity: 0.55 },
-  water: { fill: "#0E3B47", opacity: 0.7 },
-  commercial: { fill: "#3D3013", opacity: 0.45 },
-};
-const TERRAIN_LIGHT: Record<TerrainPolygon["type"], { fill: string; opacity: number }> = {
-  campus: { fill: "#F3EEFF", opacity: 0.5 },
-  park: { fill: "#E6F9E8", opacity: 0.55 },
-  water: { fill: "#E0F4FF", opacity: 0.6 },
-  commercial: { fill: "#FFF9EB", opacity: 0.5 },
+const TERRAIN_VAR: Record<TerrainPolygon["type"], { var: string; opacity: number }> = {
+  campus: { var: "--terrain-campus", opacity: 0.55 },
+  park: { var: "--terrain-park", opacity: 0.55 },
+  water: { var: "--terrain-water", opacity: 0.7 },
+  commercial: { var: "--terrain-commercial", opacity: 0.45 },
 };
 
-const HIGHWAY_DARK: Record<string, { stroke: string; width: number; dash?: string }> = {
-  primary: { stroke: "#6C5CFF", width: 2.5 },
-  secondary: { stroke: "#4B40A8", width: 2 },
-  tertiary: { stroke: "#3A327D", width: 1.5 },
-  residential: { stroke: "#2A2358", width: 1.2 },
-  service: { stroke: "#2A2358", width: 1 },
-  footway: { stroke: "#3F368B", width: 1, dash: "3 3" },
-  pedestrian: { stroke: "#3F368B", width: 1.2, dash: "4 3" },
+const HIGHWAY_VAR: Record<string, { var: string; width: number; dash?: string }> = {
+  primary: { var: "--road-primary", width: 2.5 },
+  secondary: { var: "--road-secondary", width: 2 },
+  tertiary: { var: "--road-tertiary", width: 1.5 },
+  residential: { var: "--road-default", width: 1.2 },
+  service: { var: "--road-default", width: 1 },
+  footway: { var: "--road-footway", width: 1, dash: "3 3" },
+  pedestrian: { var: "--road-footway", width: 1.2, dash: "4 3" },
 };
-const HIGHWAY_LIGHT: Record<string, { stroke: string; width: number; dash?: string }> = {
-  primary: { stroke: "#6C5CFF", width: 3 },
-  secondary: { stroke: "#8578E0", width: 2.5 },
-  tertiary: { stroke: "#9B90D0", width: 2 },
-  residential: { stroke: "#B0A8C8", width: 1.5 },
-  service: { stroke: "#B0A8C8", width: 1.2 },
-  footway: { stroke: "#A69EC0", width: 1.2, dash: "3 3" },
-  pedestrian: { stroke: "#A69EC0", width: 1.5, dash: "4 3" },
-};
-const DEFAULT_DARK = { stroke: "#2A2358", width: 1 };
-const DEFAULT_LIGHT = { stroke: "#B0A8C8", width: 1.2 };
-
-function useIsLight() {
-  const [light, setLight] = useState(false);
-  useEffect(() => {
-    const check = () => {
-      const el = document.querySelector("[data-theme]");
-      setLight(el?.getAttribute("data-theme") === "light");
-    };
-    check();
-    const obs = new MutationObserver(check);
-    obs.observe(document.body, { subtree: true, attributes: true, attributeFilter: ["data-theme"] });
-    return () => obs.disconnect();
-  }, []);
-  return light;
-}
+const DEFAULT_ROAD_VAR = { var: "--road-default", width: 1 };
 
 function pointsToPath(points: LatLng[], bbox: BBox): string {
   if (points.length === 0) return "";
@@ -109,10 +78,7 @@ export function Map({
   step?: ExploreStep;
   waypointIndex?: number;
 }) {
-  const isLight = useIsLight();
-  const TERRAIN_STYLE = isLight ? TERRAIN_LIGHT : TERRAIN_DARK;
-  const HIGHWAY_STYLE = isLight ? HIGHWAY_LIGHT : HIGHWAY_DARK;
-  const DEFAULT_STYLE = isLight ? DEFAULT_LIGHT : DEFAULT_DARK;
+  /* theme is handled via CSS variables — no JS toggle needed */
 
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -159,17 +125,17 @@ export function Map({
     return network.streets.map((s, idx) => ({
       key: `${idx}-${s.name}`,
       d: pointsToPath(s.points, viewBox),
-      style: HIGHWAY_STYLE[s.highway] ?? DEFAULT_STYLE,
+      style: HIGHWAY_VAR[s.highway] ?? DEFAULT_ROAD_VAR,
     }));
-  }, [viewBox, isLight]);
+  }, [viewBox]);
 
   const terrainShapes = useMemo(() => {
     return terrain.polygons.map((poly, idx) => ({
       key: `terrain-${idx}-${poly.name}`,
       pts: polygonPointsAttr(poly.points, viewBox),
-      style: TERRAIN_STYLE[poly.type],
+      style: TERRAIN_VAR[poly.type],
     }));
-  }, [viewBox, isLight]);
+  }, [viewBox]);
 
   const gameActive = step && !["intro", "preference_selection", "gear_confirmation", "achievement_unlock"].includes(step);
 
@@ -297,18 +263,21 @@ export function Map({
       style={{ cursor: onUserDrag ? "pointer" : "default" }}
       onClick={handleMapClick}
     >
+      {/* Map background */}
+      <rect x={0} y={0} width={width} height={height} style={{ fill: "var(--map-bg)" }} />
+
       {/* Terrain */}
       <g>
         {terrainShapes.map((t) => (
-          <polygon key={t.key} points={t.pts} fill={t.style.fill} opacity={t.style.opacity} stroke="none" />
+          <polygon key={t.key} points={t.pts} style={{ fill: `var(${t.style.var})` }} opacity={t.style.opacity} stroke="none" />
         ))}
       </g>
 
       {/* Road network */}
-      <g opacity={isLight ? 0.85 : 0.65}>
+      <g style={{ opacity: "var(--road-opacity)" } as any}>
         {streetPaths.map((s) => (
           <path
-            key={s.key} d={s.d} fill="none" stroke={s.style.stroke}
+            key={s.key} d={s.d} fill="none" style={{ stroke: `var(${s.style.var})` }}
             strokeWidth={s.style.width} strokeDasharray={s.style.dash}
             strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke"
           />
@@ -323,7 +292,7 @@ export function Map({
           <text textAnchor="middle" dominantBaseline="central" fontSize={20}>{wp.emoji}</text>
           <g transform="translate(14, -14)">
             <circle r={8} fill="#FFD166" />
-            <text textAnchor="middle" dominantBaseline="central" fontSize={10} fontWeight={800} fill="#0A0A1A">{i + 1}</text>
+            <text textAnchor="middle" dominantBaseline="central" fontSize={10} fontWeight={800} fill="#2C2925">{i + 1}</text>
           </g>
         </g>
       ))}

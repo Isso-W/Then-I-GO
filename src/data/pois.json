@@ -3,8 +3,7 @@
     "name": "未名咖啡",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
-      "niche",
+      "art",
       "photo"
     ],
     "area": "五道口",
@@ -74,8 +73,8 @@
     "category": "文创小店",
     "tags": [
       "art",
-      "niche",
-      "photo"
+      "photo",
+      "niche"
     ],
     "area": "五道口",
     "address": "清华园路XX号",
@@ -108,9 +107,8 @@
     "name": "五道营小酒馆",
     "category": "酒吧",
     "tags": [
-      "food",
       "busy",
-      "photo"
+      "niche"
     ],
     "area": "五道口",
     "address": "成府路XX号",
@@ -145,7 +143,7 @@
     "tags": [
       "art",
       "photo",
-      "explore"
+      "budget"
     ],
     "area": "五道口",
     "address": "清华大学内",
@@ -178,9 +176,8 @@
     "name": "小确幸咖啡",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
-      "relax",
-      "niche"
+      "art",
+      "photo"
     ],
     "area": "五道口",
     "address": "双清路西段XX号",
@@ -215,7 +212,7 @@
     "tags": [
       "art",
       "niche",
-      "explore"
+      "photo"
     ],
     "area": "五道口",
     "address": "清华园路XX号",
@@ -249,8 +246,8 @@
     "category": "文创小店",
     "tags": [
       "art",
-      "niche",
-      "photo"
+      "photo",
+      "niche"
     ],
     "area": "五道口",
     "address": "成府路XX号",
@@ -284,7 +281,6 @@
     "category": "餐厅",
     "tags": [
       "food",
-      "hungry",
       "busy"
     ],
     "area": "五道口",
@@ -318,8 +314,7 @@
     "name": "绿野仙踪咖啡",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
-      "relax",
+      "art",
       "photo"
     ],
     "area": "五道口",
@@ -353,9 +348,8 @@
     "name": "思想的角落",
     "category": "书店",
     "tags": [
-      "niche",
       "art",
-      "explore"
+      "niche"
     ],
     "area": "五道口",
     "address": "双清路西段XX号",
@@ -389,8 +383,8 @@
     "category": "文创小店",
     "tags": [
       "art",
-      "niche",
-      "photo"
+      "photo",
+      "niche"
     ],
     "area": "五道口",
     "address": "成府路XX号",
@@ -424,7 +418,6 @@
     "category": "餐厅",
     "tags": [
       "food",
-      "happy",
       "busy"
     ],
     "area": "五道口",
@@ -458,8 +451,8 @@
     "name": "清华园咖啡",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
-      "relax",
+      "art",
+      "photo",
       "budget"
     ],
     "area": "五道口",
@@ -529,8 +522,8 @@
     "category": "文创小店",
     "tags": [
       "art",
-      "niche",
-      "photo"
+      "photo",
+      "niche"
     ],
     "area": "五道口",
     "address": "清华园路XX号",
@@ -564,8 +557,7 @@
     "category": "餐厅",
     "tags": [
       "food",
-      "budget",
-      "hungry"
+      "budget"
     ],
     "area": "五道口",
     "address": "成府路XX号",
@@ -598,9 +590,8 @@
     "name": "清风徐来咖啡",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
-      "relax",
-      "niche"
+      "art",
+      "photo"
     ],
     "area": "五道口",
     "address": "双清路西段XX号",
@@ -634,8 +625,8 @@
     "category": "美术馆",
     "tags": [
       "art",
-      "explore",
-      "photo"
+      "photo",
+      "budget"
     ],
     "area": "五道口",
     "address": "成府路XX号",
@@ -668,8 +659,7 @@
     "name": "午后时光咖啡",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
-      "relax",
+      "art",
       "photo"
     ],
     "area": "五道口",
@@ -703,9 +693,9 @@
     "name": "时光书屋",
     "category": "书店",
     "tags": [
-      "niche",
       "art",
-      "explore"
+      "niche",
+      "photo"
     ],
     "area": "五道口",
     "address": "成府路XX号",
@@ -739,8 +729,8 @@
     "category": "文创小店",
     "tags": [
       "art",
-      "niche",
-      "photo"
+      "photo",
+      "niche"
     ],
     "area": "五道口",
     "address": "清华园路XX号",
@@ -774,7 +764,6 @@
     "category": "餐厅",
     "tags": [
       "food",
-      "hungry",
       "busy"
     ],
     "area": "五道口",
@@ -809,8 +798,7 @@
     "category": "书店",
     "tags": [
       "art",
-      "niche",
-      "explore"
+      "niche"
     ],
     "area": "五道口",
     "address": "清华园路XX号",
@@ -843,9 +831,9 @@
     "name": "文具杂货铺",
     "category": "文创小店",
     "tags": [
-      "niche",
       "art",
-      "photo"
+      "photo",
+      "niche"
     ],
     "area": "五道口",
     "address": "成府路XX号",
@@ -878,9 +866,7 @@
     "name": "意式餐厅",
     "category": "餐厅",
     "tags": [
-      "food",
-      "hungry",
-      "relax"
+      "food"
     ],
     "area": "五道口",
     "address": "成府路XX号",
@@ -913,9 +899,9 @@
     "name": "独立书吧",
     "category": "书店",
     "tags": [
-      "niche",
       "art",
-      "explore"
+      "niche",
+      "photo"
     ],
     "area": "五道口",
     "address": "双清路西段XX号",
@@ -949,8 +935,8 @@
     "category": "文创小店",
     "tags": [
       "art",
-      "niche",
-      "photo"
+      "photo",
+      "niche"
     ],
     "area": "五道口",
     "address": "清华园路XX号",
@@ -984,7 +970,6 @@
     "category": "餐厅",
     "tags": [
       "food",
-      "hungry",
       "busy"
     ],
     "area": "五道口",
@@ -1018,9 +1003,8 @@
     "name": "咖啡时光",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
-      "relax",
-      "niche"
+      "art",
+      "photo"
     ],
     "area": "五道口",
     "address": "清华园路XX号",
@@ -1055,7 +1039,7 @@
     "tags": [
       "art",
       "photo",
-      "explore"
+      "budget"
     ],
     "area": "五道口",
     "address": "成府路XX号",
@@ -1088,9 +1072,8 @@
     "name": "小酒馆",
     "category": "酒吧",
     "tags": [
-      "food",
       "busy",
-      "photo"
+      "niche"
     ],
     "area": "五道口",
     "address": "成府路XX号",
@@ -1124,8 +1107,7 @@
     "category": "餐厅-日韩料理",
     "tags": [
       "food",
-      "busy",
-      "photo"
+      "busy"
     ],
     "area": "五道口",
     "address": "海淀区五道口购物中心1层",
@@ -1158,9 +1140,7 @@
     "name": "味千拉面",
     "category": "餐厅-日韩料理",
     "tags": [
-      "food",
-      "budget",
-      "busy"
+      "food"
     ],
     "area": "五道口",
     "address": "海淀区五道口购物中心2层",
@@ -1193,9 +1173,7 @@
     "name": "石二锅",
     "category": "餐厅-日韩料理",
     "tags": [
-      "food",
-      "budget",
-      "busy"
+      "food"
     ],
     "area": "五道口",
     "address": "海淀区五道口购物中心B1层",
@@ -1228,9 +1206,7 @@
     "name": "大户屋",
     "category": "餐厅-日韩料理",
     "tags": [
-      "food",
-      "relax",
-      "photo"
+      "food"
     ],
     "area": "五道口",
     "address": "海淀区成府路29号五道口购物中心3层",
@@ -1300,8 +1276,7 @@
     "category": "餐厅-日韩料理",
     "tags": [
       "food",
-      "budget",
-      "busy"
+      "budget"
     ],
     "area": "五道口",
     "address": "海淀区五道口购物中心B1层",
@@ -1335,8 +1310,7 @@
     "category": "餐厅-日韩料理",
     "tags": [
       "food",
-      "niche",
-      "relax"
+      "niche"
     ],
     "area": "五道口",
     "address": "海淀区王庄路XX号",
@@ -1370,8 +1344,7 @@
     "category": "餐厅-日韩料理",
     "tags": [
       "food",
-      "photo",
-      "busy"
+      "photo"
     ],
     "area": "五道口",
     "address": "海淀区成府路XX号",
@@ -1405,9 +1378,9 @@
     "name": "星巴克（五道口店）",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
-      "busy",
-      "relax"
+      "art",
+      "photo",
+      "busy"
     ],
     "area": "五道口",
     "address": "海淀区成府路29号五道口购物中心1层",
@@ -1441,9 +1414,9 @@
     "name": "瑞幸咖啡（清华东路店）",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
-      "budget",
-      "busy"
+      "art",
+      "photo",
+      "budget"
     ],
     "area": "五道口",
     "address": "海淀区清华东路XX号",
@@ -1477,9 +1450,8 @@
     "name": "Seesaw Coffee",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
       "art",
-      "relax"
+      "photo"
     ],
     "area": "五道口",
     "address": "海淀区成府路XX号",
@@ -1513,9 +1485,8 @@
     "name": "Tims咖啡",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
-      "busy",
-      "budget"
+      "art",
+      "photo"
     ],
     "area": "五道口",
     "address": "海淀区五道口购物中心1层",
@@ -1549,9 +1520,8 @@
     "name": "M Stand",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
-      "photo",
-      "niche"
+      "art",
+      "photo"
     ],
     "area": "五道口",
     "address": "海淀区成府路XX号",
@@ -1585,8 +1555,7 @@
     "name": "Peet's Coffee",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
-      "relax",
+      "art",
       "photo"
     ],
     "area": "五道口",
@@ -1622,8 +1591,7 @@
     "category": "奶茶甜品",
     "tags": [
       "food",
-      "budget",
-      "relax"
+      "photo"
     ],
     "area": "五道口",
     "address": "海淀区五道口购物中心B1层",
@@ -1658,8 +1626,8 @@
     "category": "奶茶甜品",
     "tags": [
       "food",
-      "budget",
-      "busy"
+      "photo",
+      "budget"
     ],
     "area": "五道口",
     "address": "海淀区成府路XX号",
@@ -1694,8 +1662,8 @@
     "category": "奶茶甜品",
     "tags": [
       "food",
-      "budget",
-      "busy"
+      "photo",
+      "budget"
     ],
     "area": "五道口",
     "address": "海淀区成府路XX号",
@@ -1766,7 +1734,6 @@
     "category": "奶茶甜品",
     "tags": [
       "food",
-      "niche",
       "photo"
     ],
     "area": "五道口",
@@ -1801,9 +1768,7 @@
     "name": "Keep健身房",
     "category": "健身/瑜伽",
     "tags": [
-      "outdoor",
-      "busy",
-      "explore"
+      "outdoor"
     ],
     "area": "五道口",
     "address": "海淀区成府路XX号",
@@ -1837,8 +1802,8 @@
     "name": "Space瑜伽",
     "category": "健身/瑜伽",
     "tags": [
-      "art",
-      "relax",
+      "outdoor",
+      "photo",
       "niche"
     ],
     "area": "五道口",
@@ -1873,9 +1838,7 @@
     "name": "热练营",
     "category": "健身/瑜伽",
     "tags": [
-      "busy",
-      "outdoor",
-      "explore"
+      "outdoor"
     ],
     "area": "五道口",
     "address": "海淀区王庄路XX号",
@@ -1910,8 +1873,7 @@
     "category": "健身/瑜伽",
     "tags": [
       "outdoor",
-      "busy",
-      "explore"
+      "photo"
     ],
     "area": "五道口",
     "address": "海淀区学院路XX号",
@@ -1946,7 +1908,6 @@
     "category": "公园绿地",
     "tags": [
       "outdoor",
-      "relax",
       "photo"
     ],
     "area": "五道口",
@@ -1982,7 +1943,6 @@
     "category": "公园绿地",
     "tags": [
       "outdoor",
-      "relax",
       "photo"
     ],
     "area": "五道口",
@@ -2018,8 +1978,8 @@
     "category": "公园绿地",
     "tags": [
       "outdoor",
-      "relax",
-      "photo"
+      "photo",
+      "niche"
     ],
     "area": "五道口",
     "address": "北京林业大学内",
@@ -2054,8 +2014,8 @@
     "category": "公园绿地",
     "tags": [
       "outdoor",
-      "relax",
-      "budget"
+      "photo",
+      "niche"
     ],
     "area": "五道口",
     "address": "海淀区荷清路XX号",
@@ -2090,8 +2050,7 @@
     "category": "夜宵烧烤",
     "tags": [
       "food",
-      "busy",
-      "budget"
+      "busy"
     ],
     "area": "五道口",
     "address": "海淀区成府路XX号",
@@ -2126,8 +2085,7 @@
     "category": "夜宵烧烤",
     "tags": [
       "food",
-      "busy",
-      "budget"
+      "busy"
     ],
     "area": "五道口",
     "address": "海淀区王庄路XX号",
@@ -2162,8 +2120,7 @@
     "category": "夜宵烧烤",
     "tags": [
       "food",
-      "busy",
-      "budget"
+      "busy"
     ],
     "area": "五道口",
     "address": "海淀区成府路XX号",
@@ -2199,7 +2156,7 @@
     "tags": [
       "art",
       "photo",
-      "relax"
+      "niche"
     ],
     "area": "五道口",
     "address": "海淀区成府路XX号",
@@ -2270,7 +2227,7 @@
     "category": "花店",
     "tags": [
       "art",
-      "relax",
+      "photo",
       "budget"
     ],
     "area": "五道口",
@@ -2374,8 +2331,7 @@
     "name": "爆肚冯(五道口店)",
     "category": "餐厅-北京风味",
     "tags": [
-      "food",
-      "niche"
+      "food"
     ],
     "area": "五道口",
     "address": "海淀区成府路24号",
@@ -2442,8 +2398,7 @@
     "name": "京酱肉丝家常菜",
     "category": "餐厅-北京风味",
     "tags": [
-      "food",
-      "family"
+      "food"
     ],
     "area": "五道口",
     "address": "海淀区成府路18号",
@@ -2511,6 +2466,7 @@
     "category": "餐厅-北京风味",
     "tags": [
       "food",
+      "budget",
       "niche"
     ],
     "area": "五道口",
@@ -2544,9 +2500,7 @@
     "name": "Green Leaf Kitchen",
     "category": "餐厅-素食轻食",
     "tags": [
-      "food",
-      "healthy",
-      "budget"
+      "food"
     ],
     "area": "五道口",
     "address": "海淀区成府路33号",
@@ -2579,9 +2533,7 @@
     "name": "Vegan Garden",
     "category": "餐厅-素食轻食",
     "tags": [
-      "food",
-      "healthy",
-      "niche"
+      "food"
     ],
     "area": "五道口",
     "address": "海淀区华清嘉园东门",
@@ -2615,8 +2567,8 @@
     "category": "餐厅-素食轻食",
     "tags": [
       "food",
-      "healthy",
-      "budget"
+      "budget",
+      "busy"
     ],
     "area": "五道口",
     "address": "海淀区知春路108号",
@@ -2650,7 +2602,6 @@
     "category": "餐厅-素食轻食",
     "tags": [
       "food",
-      "healthy",
       "photo"
     ],
     "area": "五道口",
@@ -2685,7 +2636,6 @@
     "category": "餐厅-素食轻食",
     "tags": [
       "food",
-      "healthy",
       "niche"
     ],
     "area": "五道口",
@@ -2719,9 +2669,8 @@
     "name": "角落里的咖啡馆",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
-      "relax",
-      "niche"
+      "art",
+      "photo"
     ],
     "area": "五道口",
     "address": "海淀区成府路15号",
@@ -2754,7 +2703,7 @@
     "name": "星辰咖啡",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
+      "art",
       "photo",
       "busy"
     ],
@@ -2789,9 +2738,9 @@
     "name": "青年空间咖啡",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
-      "budget",
-      "busy"
+      "art",
+      "photo",
+      "budget"
     ],
     "area": "五道口",
     "address": "海淀区成府路28号",
@@ -2824,8 +2773,8 @@
     "name": "文艺复兴咖啡",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
       "art",
+      "photo",
       "niche"
     ],
     "area": "五道口",
@@ -2859,9 +2808,8 @@
     "name": "深夜咖啡馆",
     "category": "咖啡厅",
     "tags": [
-      "coffee",
-      "relax",
-      "niche"
+      "art",
+      "photo"
     ],
     "area": "五道口",
     "address": "海淀区成府路37号",
@@ -2894,9 +2842,9 @@
     "name": "静思空间",
     "category": "共享空间/自习室",
     "tags": [
-      "study",
-      "relax",
-      "niche"
+      "niche",
+      "budget",
+      "photo"
     ],
     "area": "五道口",
     "address": "海淀区成府路31号",
@@ -2929,9 +2877,8 @@
     "name": "灵感工坊",
     "category": "共享空间/自习室",
     "tags": [
-      "study",
-      "creative",
-      "niche"
+      "niche",
+      "budget"
     ],
     "area": "五道口",
     "address": "海淀区中关村北大街40号",
@@ -2964,9 +2911,8 @@
     "name": "书香角落",
     "category": "共享空间/自习室",
     "tags": [
-      "study",
-      "relax",
-      "art"
+      "niche",
+      "budget"
     ],
     "area": "五道口",
     "address": "海淀区成府路19号",
@@ -2999,7 +2945,7 @@
     "name": "青春驿站",
     "category": "共享空间/自习室",
     "tags": [
-      "study",
+      "niche",
       "budget",
       "busy"
     ],
@@ -3034,9 +2980,8 @@
     "name": "时光酒吧",
     "category": "酒吧清吧",
     "tags": [
-      "bar",
-      "relax",
-      "music"
+      "art",
+      "niche"
     ],
     "area": "五道口",
     "address": "海淀区成府路22号",
@@ -3069,8 +3014,8 @@
     "name": "学生时代",
     "category": "酒吧清吧",
     "tags": [
-      "bar",
-      "budget",
+      "art",
+      "niche",
       "busy"
     ],
     "area": "五道口",
@@ -3104,9 +3049,9 @@
     "name": "猫咪的秘密花园",
     "category": "宠物友好咖啡",
     "tags": [
-      "coffee",
-      "pet",
-      "relax"
+      "niche",
+      "photo",
+      "outdoor"
     ],
     "area": "五道口",
     "address": "海淀区成府路21号",
@@ -3139,8 +3084,7 @@
     "name": "汪星人的乐园",
     "category": "宠物友好咖啡",
     "tags": [
-      "coffee",
-      "pet",
+      "niche",
       "photo"
     ],
     "area": "五道口",
@@ -3174,9 +3118,8 @@
     "name": "萌宠下午茶",
     "category": "宠物友好咖啡",
     "tags": [
-      "coffee",
-      "pet",
-      "budget"
+      "niche",
+      "photo"
     ],
     "area": "五道口",
     "address": "海淀区知春路109号",
@@ -3209,9 +3152,8 @@
     "name": "爱宠之家",
     "category": "宠物友好咖啡",
     "tags": [
-      "coffee",
-      "pet",
-      "niche"
+      "niche",
+      "photo"
     ],
     "area": "五道口",
     "address": "海淀区中关村北大街41号",
@@ -3244,9 +3186,9 @@
     "name": "五道口 Livehouse",
     "category": "livehouse",
     "tags": [
-      "music",
-      "art",
-      "busy"
+      "busy",
+      "niche",
+      "photo"
     ],
     "area": "五道口",
     "address": "海淀区成府路23号",
@@ -3279,8 +3221,7 @@
     "name": "青年节拍",
     "category": "livehouse",
     "tags": [
-      "music",
-      "art",
+      "busy",
       "niche"
     ],
     "area": "五道口",
@@ -3314,9 +3255,9 @@
     "name": "青春回响",
     "category": "livehouse",
     "tags": [
-      "music",
-      "art",
-      "busy"
+      "busy",
+      "niche",
+      "photo"
     ],
     "area": "五道口",
     "address": "海淀区成府路20号",
@@ -3352,7 +3293,7 @@
     "tags": [
       "outdoor",
       "photo",
-      "niche"
+      "budget"
     ],
     "area": "清华大学",
     "address": "清华大学主楼前",
@@ -3385,9 +3326,9 @@
     "name": "五道口涂鸦墙",
     "category": "景点/地标",
     "tags": [
-      "art",
+      "outdoor",
       "photo",
-      "niche"
+      "budget"
     ],
     "area": "五道口",
     "address": "城铁桥下",
@@ -3421,8 +3362,8 @@
     "category": "景点/地标",
     "tags": [
       "outdoor",
-      "busy",
-      "photo"
+      "photo",
+      "budget"
     ],
     "area": "五道口",
     "address": "五道口地铁站旁",
@@ -3455,9 +3396,9 @@
     "name": "北语文化角",
     "category": "景点/地标",
     "tags": [
-      "art",
-      "niche",
-      "outdoor"
+      "outdoor",
+      "photo",
+      "budget"
     ],
     "area": "北京语言大学",
     "address": "北京语言大学内",
@@ -3490,9 +3431,7 @@
     "name": "COSMOS 音乐空间",
     "category": "夜店",
     "tags": [
-      "music",
-      "busy",
-      "bar"
+      "busy"
     ],
     "area": "五道口",
     "address": "华清嘉园商业街",
@@ -3525,9 +3464,7 @@
     "name": "星聚会KTV",
     "category": "KTV",
     "tags": [
-      "music",
-      "busy",
-      "budget"
+      "busy"
     ],
     "area": "五道口",
     "address": "五道口购物中心3层",
@@ -3560,9 +3497,7 @@
     "name": "Mix Club",
     "category": "夜店",
     "tags": [
-      "music",
-      "busy",
-      "bar"
+      "busy"
     ],
     "area": "五道口",
     "address": "成府路东段",
@@ -3595,9 +3530,7 @@
     "name": "华联影院",
     "category": "电影院",
     "tags": [
-      "art",
-      "budget",
-      "family"
+      "busy"
     ],
     "area": "五道口",
     "address": "华联商厦5层",
@@ -3630,9 +3563,9 @@
     "name": "学堂路艺术影厅",
     "category": "电影院",
     "tags": [
-      "art",
-      "niche",
-      "budget"
+      "busy",
+      "budget",
+      "photo"
     ],
     "area": "清华大学",
     "address": "清华大学学堂路",
@@ -3701,7 +3634,6 @@
     "category": "美食城",
     "tags": [
       "food",
-      "busy",
       "budget"
     ],
     "area": "五道口",
@@ -3736,8 +3668,8 @@
     "category": "美食街",
     "tags": [
       "food",
-      "budget",
-      "explore"
+      "busy",
+      "budget"
     ],
     "area": "五道口",
     "address": "成府路中段",
@@ -3806,7 +3738,6 @@
     "category": "餐厅-日韩料理",
     "tags": [
       "food",
-      "bar",
       "busy"
     ],
     "area": "五道口",
@@ -3908,8 +3839,8 @@
     "name": "黑八台球俱乐部",
     "category": "台球/棋牌",
     "tags": [
-      "budget",
-      "niche"
+      "busy",
+      "budget"
     ],
     "area": "五道口",
     "address": "成府路西段",
@@ -3942,8 +3873,8 @@
     "name": "骰子桌游吧",
     "category": "桌游/密室",
     "tags": [
-      "niche",
-      "budget"
+      "busy",
+      "niche"
     ],
     "area": "五道口",
     "address": "华清嘉园东区",
@@ -3976,8 +3907,8 @@
     "name": "迷宫密室逃脱",
     "category": "桌游/密室",
     "tags": [
-      "niche",
-      "explore"
+      "busy",
+      "niche"
     ],
     "area": "五道口",
     "address": "五道口购物中心2层",
@@ -4011,8 +3942,7 @@
     "category": "运动娱乐",
     "tags": [
       "outdoor",
-      "family",
-      "photo"
+      "busy"
     ],
     "area": "五道口",
     "address": "清华科技园西侧",
@@ -4045,8 +3975,8 @@
     "name": "五道口剧本杀馆",
     "category": "桌游/密室",
     "tags": [
-      "niche",
-      "explore"
+      "busy",
+      "niche"
     ],
     "area": "五道口",
     "address": "华清嘉园西区",
@@ -4081,7 +4011,7 @@
     "tags": [
       "outdoor",
       "photo",
-      "niche"
+      "budget"
     ],
     "area": "清华大学",
     "address": "清华大学西区",
@@ -4114,7 +4044,7 @@
     "name": "光合作用电竞馆",
     "category": "电竞/网咖",
     "tags": [
-      "niche",
+      "busy",
       "budget"
     ],
     "area": "五道口",
@@ -4149,7 +4079,7 @@
     "category": "餐厅-北京风味",
     "tags": [
       "food",
-      "budget"
+      "busy"
     ],
     "area": "五道口",
     "address": "成府路中段",
@@ -4182,9 +4112,9 @@
     "name": "华清嘉园跳蚤市场",
     "category": "文创小店",
     "tags": [
-      "niche",
-      "budget",
-      "explore"
+      "art",
+      "photo",
+      "niche"
     ],
     "area": "五道口",
     "address": "华清嘉园社区广场",
@@ -4355,9 +4285,7 @@
     "name": "日式居酒屋·灯笼",
     "category": "餐厅-日韩料理",
     "tags": [
-      "food",
-      "bar",
-      "niche"
+      "food"
     ],
     "area": "五道口",
     "address": "华清嘉园北门",
@@ -4391,6 +4319,7 @@
     "category": "奶茶甜品",
     "tags": [
       "food",
+      "photo",
       "budget"
     ],
     "area": "五道口",
@@ -4424,9 +4353,9 @@
     "name": "五道口脱口秀俱乐部",
     "category": "livehouse",
     "tags": [
-      "music",
       "busy",
-      "niche"
+      "niche",
+      "photo"
     ],
     "area": "五道口",
     "address": "华清嘉园商街",
@@ -4460,8 +4389,8 @@
     "category": "文创小店",
     "tags": [
       "art",
-      "niche",
-      "photo"
+      "photo",
+      "niche"
     ],
     "area": "五道口",
     "address": "双清路",
@@ -4494,7 +4423,8 @@
     "name": "北大百年讲堂",
     "category": "景点/地标",
     "tags": [
-      "art",
+      "outdoor",
+      "photo",
       "niche"
     ],
     "area": "北京大学",
@@ -4528,8 +4458,8 @@
     "name": "VR星球体验馆",
     "category": "运动娱乐",
     "tags": [
-      "niche",
-      "explore"
+      "outdoor",
+      "busy"
     ],
     "area": "五道口",
     "address": "五道口购物中心2层",
@@ -4562,8 +4492,8 @@
     "name": "学府保龄球馆",
     "category": "运动娱乐",
     "tags": [
-      "budget",
-      "family"
+      "outdoor",
+      "busy"
     ],
     "area": "五道口",
     "address": "中关村北大街东侧",
@@ -4596,9 +4526,8 @@
     "name": "猫咪咖啡·喵星人基地",
     "category": "宠物友好咖啡",
     "tags": [
-      "pet",
-      "photo",
-      "relax"
+      "niche",
+      "photo"
     ],
     "area": "五道口",
     "address": "王庄路",
@@ -4632,7 +4561,8 @@
     "category": "景点/地标",
     "tags": [
       "outdoor",
-      "photo"
+      "photo",
+      "budget"
     ],
     "area": "清华大学",
     "address": "清华大学西门内",
@@ -4665,9 +4595,9 @@
     "name": "五道口古着店·时光衣橱",
     "category": "文创小店",
     "tags": [
-      "niche",
+      "art",
       "photo",
-      "art"
+      "niche"
     ],
     "area": "五道口",
     "address": "成府路西段",
@@ -4700,8 +4630,8 @@
     "name": "24h自习咖啡·深夜图书馆",
     "category": "共享空间/自习室",
     "tags": [
-      "budget",
-      "niche"
+      "niche",
+      "budget"
     ],
     "area": "五道口",
     "address": "学院路中段",
@@ -4734,8 +4664,8 @@
     "name": "韩式汗蒸房",
     "category": "运动娱乐",
     "tags": [
-      "relax",
-      "niche"
+      "outdoor",
+      "busy"
     ],
     "area": "五道口",
     "address": "华清嘉园东区",
@@ -4768,9 +4698,8 @@
     "name": "精酿啤酒屋·Hop Garden",
     "category": "酒吧",
     "tags": [
-      "bar",
-      "niche",
-      "food"
+      "busy",
+      "niche"
     ],
     "area": "五道口",
     "address": "成府路东段",
@@ -4803,8 +4732,9 @@
     "name": "Whisky Bar·单一麦芽",
     "category": "酒吧清吧",
     "tags": [
-      "bar",
-      "niche"
+      "art",
+      "niche",
+      "photo"
     ],
     "area": "五道口",
     "address": "华清嘉园南门",
@@ -4837,7 +4767,6 @@
     "name": "歌舞青春KTV",
     "category": "KTV",
     "tags": [
-      "music",
       "busy",
       "budget"
     ],
@@ -4872,8 +4801,7 @@
     "name": "天台露营酒吧",
     "category": "酒吧",
     "tags": [
-      "bar",
-      "photo",
+      "busy",
       "niche"
     ],
     "area": "五道口",
@@ -4908,6 +4836,7 @@
     "category": "公园绿地",
     "tags": [
       "outdoor",
+      "photo",
       "budget"
     ],
     "area": "北京林业大学",
@@ -4935,5 +4864,143 @@
       "内向"
     ],
     "best_time": "傍晚"
+  },
+  {
+    "id": "poi_155",
+    "name": "好利来·半熟芝士",
+    "category": "奶茶甜品",
+    "tags": [
+      "food",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "海淀区成府路28号",
+    "lat": 40.0021834709381,
+    "lng": 116.33504403779013,
+    "open_hours": "08:00-22:00",
+    "avg_stay_minutes": 20,
+    "avg_wait_minutes": 5,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.5,
+    "review_summary": "招牌半熟芝士入口即化，每次路过都忍不住买一盒。",
+    "reviews": [
+      "半熟芝士是真的好吃，外皮酥脆内馅绵密，买来当伴手礼特别合适。",
+      "店面干净整洁，蛋糕种类很多，价格也不算贵。",
+      "生日蛋糕选了他家的，颜值和味道都在线，朋友们都很喜欢。"
+    ],
+    "mood_match": [
+      "happy",
+      "relax"
+    ],
+    "mbti_tags": [
+      "甜蜜",
+      "精致"
+    ],
+    "best_time": "下午 14:00-18:00 最适合买下午茶"
+  },
+  {
+    "id": "poi_156",
+    "name": "黑天鹅蛋糕",
+    "category": "奶茶甜品",
+    "tags": [
+      "food",
+      "photo",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "海淀区中关村北大街15号",
+    "lat": 39.98755734022627,
+    "lng": 116.32375573402263,
+    "open_hours": "09:00-21:30",
+    "avg_stay_minutes": 25,
+    "avg_wait_minutes": 3,
+    "crowd_level": "low",
+    "price_level": 3,
+    "rating": 4.6,
+    "review_summary": "高端定制蛋糕，适合特殊场合，颜值无敌。",
+    "reviews": [
+      "蛋糕造型非常精致，适合生日和纪念日，味道偏法式不会太甜。",
+      "店内装修很有格调，拍照超好看，朋友圈必发。",
+      "价格偏高但品质对得起，芝士蛋糕和提拉米苏是招牌。"
+    ],
+    "mood_match": [
+      "happy",
+      "relax"
+    ],
+    "mbti_tags": [
+      "精致",
+      "浪漫"
+    ],
+    "best_time": "全天均可，下午茶时段人少体验更好"
+  },
+  {
+    "id": "poi_157",
+    "name": "原麦山丘",
+    "category": "奶茶甜品",
+    "tags": [
+      "food",
+      "photo"
+    ],
+    "area": "五道口",
+    "address": "海淀区学院路7号",
+    "lat": 39.98912514066764,
+    "lng": 116.3378651662118,
+    "open_hours": "07:30-21:00",
+    "avg_stay_minutes": 20,
+    "avg_wait_minutes": 8,
+    "crowd_level": "medium",
+    "price_level": 2,
+    "rating": 4.4,
+    "review_summary": "软欧包界的天花板，每天现烤出炉香气四溢。",
+    "reviews": [
+      "他家的奶酪包是一绝，外酥里嫩，奶香浓郁，排队也值得。",
+      "面包种类很多，每次去都想多买几个，早餐搭配咖啡完美。",
+      "店员很热情，偶尔还有试吃，五道口附近学生都爱来。"
+    ],
+    "mood_match": [
+      "happy",
+      "hungry"
+    ],
+    "mbti_tags": [
+      "日常",
+      "治愈"
+    ],
+    "best_time": "早上 08:00-10:00 刚出炉最香"
+  },
+  {
+    "id": "poi_158",
+    "name": "熊猫不走蛋糕",
+    "category": "奶茶甜品",
+    "tags": [
+      "food",
+      "photo",
+      "niche"
+    ],
+    "area": "五道口",
+    "address": "海淀区清华东路16号",
+    "lat": 39.986862301461024,
+    "lng": 116.3334048361259,
+    "open_hours": "09:00-22:00",
+    "avg_stay_minutes": 30,
+    "avg_wait_minutes": 5,
+    "crowd_level": "low",
+    "price_level": 2,
+    "rating": 4.3,
+    "review_summary": "熊猫人送蛋糕上门跳舞，仪式感拉满的生日蛋糕。",
+    "reviews": [
+      "朋友生日订了一个，熊猫人上门又唱又跳，全场氛围直接拉满！",
+      "蛋糕味道不错，慕斯口感很细腻，最主要是仪式感。",
+      "适合给人惊喜，线下门店也可以坐下来吃，环境挺好的。"
+    ],
+    "mood_match": [
+      "happy",
+      "explore"
+    ],
+    "mbti_tags": [
+      "惊喜",
+      "社交"
+    ],
+    "best_time": "下午和晚间最适合庆祝"
   }
 ]

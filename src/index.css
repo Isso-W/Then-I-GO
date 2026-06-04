@@ -6,6 +6,9 @@
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
+/* 让 Tailwind dark: 前缀跟 data-theme 属性联动 */
+@variant dark (&:is([data-theme="dark"] *));
+
 /* 主题 CSS 变量：暗色（默认）+ 浅色 */
 :root {
   --bg-base: #05060F;
@@ -18,19 +21,47 @@
   --text-muted: rgba(255, 255, 255, 0.4);
   --text-faint: rgba(255, 255, 255, 0.2);
   --fog-color: rgba(5, 6, 15, 0.92);
+  --overlay-bg: rgba(5, 6, 15, 0.95);
+  --accent-gold: #FFD166;
+  /* 地图配色 */
+  --map-bg: #0A0A1A;
+  --terrain-campus: #1F1B47;
+  --terrain-park: #0F3A24;
+  --terrain-water: #0E3B47;
+  --terrain-commercial: #3D3013;
+  --road-primary: #6C5CFF;
+  --road-secondary: #4B40A8;
+  --road-tertiary: #3A327D;
+  --road-default: #2A2358;
+  --road-footway: #3F368B;
+  --road-opacity: 0.65;
 }
 
 [data-theme="light"] {
-  --bg-base: #F5F5FA;
-  --bg-card: rgba(255, 255, 255, 0.9);
-  --bg-nav: rgba(255, 255, 255, 0.92);
-  --bg-input: rgba(0, 0, 0, 0.04);
-  --border-subtle: rgba(0, 0, 0, 0.08);
-  --text-primary: #1A1A2E;
-  --text-secondary: rgba(26, 26, 46, 0.8);
-  --text-muted: rgba(26, 26, 46, 0.45);
-  --text-faint: rgba(26, 26, 46, 0.2);
-  --fog-color: rgba(255, 248, 225, 0.5);
+  --bg-base: #F7F4EF;
+  --bg-card: rgba(255, 255, 255, 0.92);
+  --bg-nav: rgba(255, 255, 255, 0.95);
+  --bg-input: rgba(130, 110, 80, 0.06);
+  --border-subtle: rgba(130, 110, 80, 0.10);
+  --text-primary: #2C2925;
+  --text-secondary: rgba(44, 41, 37, 0.78);
+  --text-muted: rgba(44, 41, 37, 0.45);
+  --text-faint: rgba(44, 41, 37, 0.22);
+  --fog-color: rgba(240, 235, 225, 0.88);
+  --overlay-bg: rgba(247, 244, 239, 0.95);
+  --accent-gold: #B07C00;
+  /* 地图配色 — 亮色 */
+  --map-bg: #EDE9E0;
+  --terrain-campus: #DDD8EC;
+  --terrain-park: #C8E6C9;
+  --terrain-water: #B3E0E8;
+  --terrain-commercial: #F0E0C8;
+  --road-primary: #6C5CFF;
+  --road-secondary: #9990C8;
+  --road-tertiary: #B5AED0;
+  --road-default: #C8C2DB;
+  --road-footway: #B5AED0;
+  --road-opacity: 0.85;
 }
 
 @layer base {

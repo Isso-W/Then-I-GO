@@ -350,14 +350,15 @@ export default function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[200] flex flex-col items-center justify-center backdrop-blur-md"
-            style={{ backgroundColor: theme === "dark" ? "rgba(5,6,15,0.95)" : "rgba(245,245,250,0.95)" }}
+            style={{ backgroundColor: "var(--overlay-bg)" }}
           >
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-              className="h-12 w-12 rounded-full border-4 border-white/10 border-t-[#6C5CFF]"
+              className="h-12 w-12 rounded-full border-4 border-t-[#6C5CFF]"
+              style={{ borderColor: "var(--border-subtle)", borderTopColor: "#6C5CFF" }}
             />
-            <p className="mt-6 text-[15px] font-bold text-white/60">AI 正在为你规划路线…</p>
+            <p className="mt-6 text-[15px] font-bold" style={{ color: "var(--text-muted)" }}>AI 正在为你规划路线…</p>
           </motion.div>
         )}
       </AnimatePresence>

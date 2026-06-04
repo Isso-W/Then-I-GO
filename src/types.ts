@@ -35,6 +35,7 @@ export interface Coupon {
   icon: ReactNode;
   color: string;
   tag?: string;
+  image?: string;
 }
 
 export interface TimelineItemData {
@@ -67,6 +68,7 @@ export interface Waypoint {
   distanceText: string; // 距离描述，如"步行约8分钟"
   lat: number;          // 真实坐标，地图组件用
   lng: number;
+  category?: string;    // POI 品类，如"咖啡厅"，用于匹配品类插图
 }
 
 // 第二站的 A/B 抉择：两个气质相反的候选 + 一句抉择提示

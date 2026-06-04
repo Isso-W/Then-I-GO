@@ -61,7 +61,7 @@ export function MineScreen({ onNavigate, profile, generatedRoute, tripHistory = 
             <button className="relative" onClick={() => { setPanel("notif"); setNotifRead(true); }}>
               <Bell size={20} />
               {notifications.length > 0 && !notifRead && (
-                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-[#FF4D64] rounded-full border border-[#0A0A1A]" />
+                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-[#FF4D64] rounded-full border" style={{ borderColor: "var(--bg-base)" }} />
               )}
             </button>
             <button onClick={() => onNavigate('settings')}>
@@ -188,7 +188,7 @@ function NotificationsOverlay({ title, messages, onClose }: { title: string; mes
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 26, stiffness: 240 }}
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[70%] overflow-y-auto no-scrollbar rounded-t-[28px] border-t p-5 pb-8 shadow-[0_-20px_60px_rgba(0,0,0,0.3)]"
+        className="max-h-[70%] overflow-y-auto no-scrollbar rounded-t-[28px] border-t p-5 pb-8 shadow-[0_-20px_60px_rgba(0,0,0,0.15)] dark:shadow-[0_-20px_60px_rgba(0,0,0,0.6)]"
         style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)" }}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -202,7 +202,7 @@ function NotificationsOverlay({ title, messages, onClose }: { title: string; mes
         </div>
         <div className="space-y-2.5">
           {messages.length === 0 && (
-            <div className="py-10 text-center text-[13px]" style={{ color: "var(--text-muted)" }}>暂无消息</div>
+            <div className="py-10 text-center text-[13px]" style={{ color: "var(--text-faint)" }}>暂无消息</div>
           )}
           {messages.map((m, i) => (
             <div key={i} className="flex gap-3 rounded-2xl border p-3.5" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-input)" }}>
@@ -420,7 +420,7 @@ function StatCard({ num, label }: { num: string; label: string }) {
   return (
     <div className="rounded-xl p-2 text-center border" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-subtle)" }}>
       <div className="text-[17px] font-black font-mono leading-none" style={{ color: "var(--text-primary)" }}>{num}</div>
-      <div className="mt-1 text-[9px] uppercase tracking-tighter scale-90 font-bold" style={{ color: "var(--text-muted)" }}>{label}</div>
+      <div className="mt-1 text-[9px] uppercase tracking-tighter scale-90 font-bold" style={{ color: "var(--text-faint)" }}>{label}</div>
     </div>
   );
 }
@@ -429,7 +429,7 @@ function Badge({ icon, label, color }: { icon: React.ReactNode; label: string; c
   return (
     <div className="flex flex-col items-center gap-2 group cursor-pointer w-14">
       <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${color} shadow-lg border group-hover:scale-110 transition-transform`} style={{ borderColor: "var(--border-subtle)" }}>
-        <div className="filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">{icon}</div>
+        <div className="filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.3)] dark:drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]">{icon}</div>
       </div>
       <span className="text-[10px] text-center leading-tight h-8 px-1" style={{ color: "var(--text-muted)" }}>{label}</span>
     </div>

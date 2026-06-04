@@ -247,17 +247,18 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
                         key={date}
                         onClick={() => setSelectedDate(date)}
                         className={`shrink-0 px-4 py-1.5 rounded-full text-[11px] font-black transition-all border ${
-                          selectedDate === date 
-                            ? "bg-[#6C5CFF] border-[#6C5CFF] text-white shadow-[0_5px_15px_rgba(108,92,255,0.3)]" 
-                            : "bg-[var(--bg-input)] border-[var(--border-subtle)] text-[var(--text-muted)]"
+                          selectedDate === date
+                            ? "bg-[#6C5CFF] border-[#6C5CFF] text-white shadow-[0_5px_15px_rgba(108,92,255,0.3)]"
+                            : ""
                         }`}
+                        style={selectedDate !== date ? { backgroundColor: "var(--bg-input)", color: "var(--text-muted)" } : undefined}
                       >
                         {date === "今日" ? "今日" : date}
                       </button>
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between mb-4 text-[11px] text-[var(--text-muted)] uppercase tracking-widest font-black">
+                  <div className="flex items-center justify-between mb-4 text-[11px] uppercase tracking-widest font-black" style={{ color: "var(--text-faint)" }}>
                     <span className="flex items-center gap-1.5">
                       <div className="h-1 w-3 bg-[#6C5CFF] rounded-full" />
                       {selectedDate === "今日" ? "今日素材集" : `${selectedDate} 素材集`}
@@ -283,12 +284,12 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
                   {/* 为每一站上传照片（可选，不传用示例图）—— 需先有真实路线 */}
                   {canGenerate && (
                   <div className="mt-5">
-                    <div className="mb-3 flex items-center justify-between text-[11px] text-[var(--text-muted)] uppercase tracking-widest font-black">
+                    <div className="mb-3 flex items-center justify-between text-[11px] uppercase tracking-widest font-black" style={{ color: "var(--text-faint)" }}>
                       <span className="flex items-center gap-1.5">
                         <div className="h-1 w-3 bg-[#FFD166] rounded-full" />
                         给每一站配张照片
                       </span>
-                      <span className="text-[var(--text-muted)] normal-case tracking-normal font-bold">
+                      <span className="normal-case tracking-normal font-bold" style={{ color: "var(--text-faint)" }}>
                         {Object.keys(uploads).length}/{genStops.length}
                       </span>
                     </div>
@@ -299,7 +300,8 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
                           <button
                             key={idx}
                             onClick={() => pickPhoto(idx)}
-                            className="group relative h-28 w-20 shrink-0 overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-[var(--bg-input)] active:scale-95 transition-transform"
+                            className="group relative h-28 w-20 shrink-0 overflow-hidden rounded-xl border active:scale-95 transition-transform"
+                            style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-input)" }}
                           >
                             {photo ? (
                               <>
@@ -312,9 +314,9 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
                               </>
                             ) : (
                               <div className="flex h-full w-full flex-col items-center justify-center gap-1.5 px-1 text-center">
-                                <ImagePlus size={20} className="text-[var(--text-muted)]" />
+                                <ImagePlus size={20} style={{ color: "var(--text-muted)" }} />
                                 <div className="text-base">{s.emoji}</div>
-                                <div className="truncate w-full text-[9px] font-bold text-[var(--text-muted)]">{s.name}</div>
+                                <div className="truncate w-full text-[9px] font-bold" style={{ color: "var(--text-muted)" }}>{s.name}</div>
                               </div>
                             )}
                             <div className="absolute left-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#6C5CFF] text-[9px] font-black text-white">{idx + 1}</div>
@@ -322,7 +324,7 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
                         );
                       })}
                     </div>
-                    <p className="mt-2 text-[10px] text-[var(--text-muted)]">不上传也行，缺的用示例素材图自动补上。</p>
+                    <p className="mt-2 text-[10px]" style={{ color: "var(--text-faint)" }}>不上传也行，缺的用示例素材图自动补上。</p>
                   </div>
                   )}
                   <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
@@ -339,8 +341,8 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
                           <Sparkles size={16} className="text-white fill-white" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-[15px] font-black text-white">生成今日 AI Vlog</span>
-                          <span className="text-[10px] text-[var(--text-muted)] font-bold">选个风格 · 消耗 50 积分</span>
+                          <span className="text-[15px] font-black" style={{ color: "var(--text-primary)" }}>生成今日 AI Vlog</span>
+                          <span className="text-[10px] font-bold" style={{ color: "var(--text-faint)" }}>选个风格 · 消耗 50 积分</span>
                         </div>
                       </div>
                     </motion.button>
@@ -356,7 +358,7 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
                         <span className="text-[15px] font-black text-white">先去探索生成今天的路线</span>
                         <ChevronRight size={18} className="text-[var(--text-secondary)]" />
                       </motion.button>
-                      <p className="mt-2 text-center text-[11px] text-[var(--text-muted)]">
+                      <p className="mt-2 text-center text-[11px]" style={{ color: "var(--text-faint)" }}>
                         Vlog 是今天这趟走法的记录，跑完探索就能为每一站配图、一键生成。
                       </p>
                     </div>
@@ -382,7 +384,7 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
                       onClick={() => setPlayingVlog(vlog)}
                       className="group relative overflow-hidden rounded-2xl border border-[#6C5CFF]/30 bg-[#6C5CFF]/[0.06] p-3 flex gap-3 text-left active:bg-[#6C5CFF]/[0.12] transition-colors"
                     >
-                      <div className="relative h-20 w-24 rounded-xl overflow-hidden shrink-0 bg-[var(--bg-input)]">
+                      <div className="relative h-20 w-24 rounded-xl overflow-hidden shrink-0" style={{ backgroundColor: "var(--bg-input)" }}>
                         <img src={img} alt={vlog.title} className={`absolute inset-0 h-full w-full object-cover ${STYLE_META[vlog.style].filter} transition-transform duration-500 group-hover:scale-110`} />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-colors">
                           <PlayCircle size={28} className="text-white" />
@@ -390,14 +392,14 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
                         <div className="absolute bottom-1 right-1 rounded px-1 py-0.5 bg-black/60 text-[8px] font-bold text-white">{duration}</div>
                       </div>
                       <div className="flex-1 flex flex-col justify-center min-w-0">
-                        <div className="flex items-center gap-1.5 text-[10px] text-[var(--text-muted)] font-bold">
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold" style={{ color: "var(--text-faint)" }}>
                           {date}
                           <span className="rounded-full px-1.5 py-0.5 text-[8px] font-black" style={{ background: `${STYLE_META[vlog.style].accent}22`, color: STYLE_META[vlog.style].accent }}>
                             {STYLE_META[vlog.style].label}
                           </span>
                         </div>
-                        <h3 className="text-[15px] font-bold text-[var(--text-primary)] truncate mt-0.5">{vlog.title}</h3>
-                        <div className="mt-2 flex items-center gap-3 text-[10px] text-[var(--text-muted)]">
+                        <h3 className="text-[15px] font-bold truncate mt-0.5" style={{ color: "var(--text-primary)" }}>{vlog.title}</h3>
+                        <div className="mt-2 flex items-center gap-3 text-[10px]" style={{ color: "var(--text-muted)" }}>
                           <span className="flex items-center gap-1 font-bold text-[#A98BFF]"><Music size={11} /> {vlog.bgm}</span>
                         </div>
                       </div>
@@ -589,11 +591,12 @@ function StylePickerOverlay({ onPick, onCancel }: { onPick: (s: VlogStyle) => vo
         exit={{ y: 320 }}
         transition={{ type: "spring", damping: 28, stiffness: 280 }}
         onClick={(e) => e.stopPropagation()}
-        className="w-full rounded-t-3xl border-t border-[var(--border-subtle)] bg-[var(--bg-base)] p-6 pb-10"
+        className="w-full rounded-t-3xl border-t p-6 pb-10"
+        style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-card)" }}
       >
-        <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-[var(--text-faint)]" />
-        <h2 className="text-[18px] font-black text-white">选择 Vlog 风格</h2>
-        <p className="mt-1 text-[12px] text-[var(--text-muted)]">AI 会用对应的画面滤镜、旁白语气和 BGM 剪辑</p>
+        <div className="mx-auto mb-5 h-1 w-10 rounded-full" style={{ backgroundColor: "var(--text-faint)" }} />
+        <h2 className="text-[18px] font-black" style={{ color: "var(--text-primary)" }}>选择 Vlog 风格</h2>
+        <p className="mt-1 text-[12px]" style={{ color: "var(--text-muted)" }}>AI 会用对应的画面滤镜、旁白语气和 BGM 剪辑</p>
 
         <div className="mt-5 space-y-3">
           {STYLE_ORDER.map((s, i) => {
@@ -606,12 +609,13 @@ function StylePickerOverlay({ onPick, onCancel }: { onPick: (s: VlogStyle) => vo
                 transition={{ delay: 0.05 * i }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => onPick(s)}
-                className="group relative flex w-full items-center gap-4 overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-input)] p-3 text-left active:bg-white/[0.07]"
+                className="group relative flex w-full items-center gap-4 overflow-hidden rounded-2xl border p-3 text-left"
+                style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-input)" }}
               >
                 <div className={`h-14 w-14 shrink-0 rounded-xl ${m.preview} shadow-lg`} />
                 <div className="min-w-0 flex-1">
-                  <div className="text-[15px] font-black text-white">{m.label}</div>
-                  <div className="text-[12px] text-[var(--text-muted)]">{m.desc}</div>
+                  <div className="text-[15px] font-black" style={{ color: "var(--text-primary)" }}>{m.label}</div>
+                  <div className="text-[12px]" style={{ color: "var(--text-muted)" }}>{m.desc}</div>
                 </div>
                 <div className="rounded-full p-2 transition-colors" style={{ color: m.accent }}>
                   <Play size={18} className="fill-current" />
@@ -712,7 +716,7 @@ function VlogGenerationOverlay({ ready, onFinish }: { ready: boolean; onFinish: 
           </AnimatePresence>
         </div>
 
-        <div className="mt-12 w-64 h-1.5 bg-[var(--bg-input)] rounded-full overflow-hidden relative">
+        <div className="mt-12 w-64 h-1.5 rounded-full overflow-hidden relative" style={{ backgroundColor: "var(--bg-input)" }}>
           <motion.div 
             className="absolute inset-y-0 left-0 bg-[#6C5CFF] shadow-[0_0_15px_rgba(108,92,255,1)]"
             style={{ width: `${progress}%` }}
@@ -838,7 +842,7 @@ function VlogPlayerOverlay({ vlog, onClose }: { vlog: GeneratedVlog; onClose: ()
 
             {/* 路线缩略图（静态全貌） */}
             {hasGeo && (
-              <div className="mt-5 h-44 w-full overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[#05060F]">
+              <div className="mt-5 h-44 w-full overflow-hidden rounded-2xl border" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-base)" }}>
                 <RouteReplay geo={vlog.geo!} accent={theme.accent} frozen />
               </div>
             )}
@@ -901,11 +905,11 @@ function StoryHero() {
     <Glass className="relative overflow-hidden p-5">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_25%,rgba(108,92,255,.25),transparent_25%)]" />
       <div className="relative z-10 w-[65%]">
-        <div className="flex items-center gap-1.5 text-[11px] text-[var(--text-muted)]">
-          今日故事 <span className="rounded-full bg-[#FF4D64] px-1 py-0.5 text-[8px] font-bold">NEW</span>
+        <div className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--text-muted)" }}>
+          今日故事 <span className="rounded-full bg-[#FF4D64] px-1 py-0.5 text-[8px] font-bold text-white">NEW</span>
         </div>
-        <h2 className="mt-2 text-[18px] font-bold leading-tight uppercase tracking-tight">城市里的小确幸</h2>
-        <p className="mt-2 text-[12px] leading-relaxed text-[var(--text-muted)] line-clamp-2">在这条无名小巷，你发现了惊喜。</p>
+        <h2 className="mt-2 text-[18px] font-bold leading-tight uppercase tracking-tight" style={{ color: "var(--text-primary)" }}>城市里的小确幸</h2>
+        <p className="mt-2 text-[12px] leading-relaxed line-clamp-2" style={{ color: "var(--text-muted)" }}>在这条无名小巷，你发现了惊喜。</p>
         <button className="mt-4 rounded-full bg-[#6C5CFF]/80 px-5 py-2 text-[11px] font-bold">
           查看详情
         </button>
@@ -940,15 +944,15 @@ function TimelineItem({ time, title, desc, icon, img, recorded, index }: Timelin
         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#6C5CFF]/20 text-[#A98BFF] ring-1 ring-[#6C5CFF]/40 z-10">
           {React.cloneElement(icon as React.ReactElement, { size: 14 })}
         </div>
-        <div className="mt-1 flex-1 w-px bg-[var(--bg-input)] min-h-[40px]" />
+        <div className="mt-1 flex-1 w-px min-h-[40px]" style={{ backgroundColor: "var(--border-subtle)" }} />
       </div>
-      <div className="flex flex-1 gap-3 rounded-xl bg-white/[0.02] p-3 mb-3 border border-[var(--border-subtle)]">
-        <div className="w-10 shrink-0 text-[11px] font-mono text-[var(--text-muted)] pt-0.5">{time}</div>
+      <div className="flex flex-1 gap-3 rounded-xl p-3 mb-3 border" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-subtle)" }}>
+        <div className="w-10 shrink-0 text-[11px] font-mono pt-0.5" style={{ color: "var(--text-faint)" }}>{time}</div>
         <div className="min-w-0 flex-1">
-          <div className="text-[15px] font-bold text-[var(--text-primary)]">{title}</div>
-          <p className="mt-1 text-[12px] leading-relaxed text-[var(--text-muted)]">{desc}</p>
+          <div className="text-[15px] font-bold" style={{ color: "var(--text-primary)" }}>{title}</div>
+          <p className="mt-1 text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>{desc}</p>
         </div>
-        <div className={`h-12 w-12 shrink-0 rounded-lg ${img} border border-[var(--border-subtle)] opacity-80`} />
+        <div className={`h-12 w-12 shrink-0 rounded-lg ${img} border opacity-80`} style={{ borderColor: "var(--border-subtle)" }} />
       </div>
     </motion.div>
   );

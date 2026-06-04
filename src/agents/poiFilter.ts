@@ -70,10 +70,27 @@ const DURATION_MINUTES: Record<string, number> = {
   "30min": 30, "1h": 60, "2h": 120, half_day: 240,
 };
 
-// 评分：rating + 心情匹配加成 - 距离惩罚（每公里 -0.1）
 export function scorePOI(poi: POI, prefs: UserPreferences): number {
   let score = poi.rating;
+
   if (poi.mood_match.includes(prefs.mood)) score += 0.5;
+
+  const tagOverlap = poi.tags.filter((t) => prefs.special.includes(t)).length;
+  score += tagOverlap * 0.3;
+
+  if (prefs.special.includes("budget") && poi.price_level === 1) score += 0.4;
+  if (prefs.special.includes("busy") && poi.crowd_level === "high") score += 0.3;
+  if (prefs.special.includes("busy") && poi.crowd_level === "low") score -= 0.3;
+
+  if (prefs.companion === "couple" && poi.crowd_level === "low") score += 0.3;
+  if (prefs.companion === "friends" && poi.crowd_level === "high") score += 0.2;
+
+  if (prefs.foodPreference?.length > 0 && getActivityType(poi.category) === "eating") {
+    if (prefs.foodPreference.includes("light") && /素食|轻食|沙拉/.test(poi.category + poi.name)) score += 0.4;
+    if (prefs.foodPreference.includes("spicy") && /火锅|烧烤|川|湘|麻辣/.test(poi.category + poi.name)) score += 0.4;
+    if (prefs.foodPreference.includes("coffee") && /咖啡|甜品|奶茶/.test(poi.category)) score += 0.4;
+  }
+
   const km = distanceMeters(ORIGIN, { lat: poi.lat, lng: poi.lng }) / 1000;
   score -= km * 0.1;
   return score;

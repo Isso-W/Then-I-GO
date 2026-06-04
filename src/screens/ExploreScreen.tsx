@@ -14,6 +14,7 @@ import { buildNavSteps, type NavStep } from "../lib/turnByTurn";
 import { buildGraph, routePolyline, type Street } from "../lib/roadGraph";
 import streetNetwork from "../../scripts/data/street-network.json";
 import type { BBox } from "../components/mapProjection";
+import { getCategoryImage } from "../lib/categoryImages";
 
 const NAV_GRAPH = buildGraph((streetNetwork as { streets: Street[] }).streets);
 
@@ -119,7 +120,7 @@ export function ExploreScreen({
 
   return (
     <AppLayout>
-      <div className="absolute inset-0 z-0 overflow-hidden" style={{ backgroundColor: "var(--bg-base)" }}>
+      <div className="absolute inset-0 z-0 overflow-hidden" style={{ backgroundColor: "var(--map-bg)" }}>
         <Map route={generatedRoute} currentPosition={currentPosition} onUserDrag={onUserDrag} step={step} waypointIndex={waypointIndex} />
       </div>
       <FogLayer />
@@ -258,15 +259,15 @@ export function ExploreScreen({
 function FogLayer() {
   return (
     <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden">
-      <motion.div 
+      <motion.div
         animate={{ x: [0, 20, 0], opacity: [0.15, 0.25, 0.15] }}
         transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-        className="absolute -left-28 top-[25%] h-44 w-80 rounded-full bg-slate-300/20 blur-2xl" 
+        className="absolute -left-28 top-[25%] h-44 w-80 rounded-full bg-slate-300/20 blur-2xl"
       />
-      <motion.div 
+      <motion.div
         animate={{ x: [0, -30, 0], opacity: [0.1, 0.2, 0.1] }}
         transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-        className="absolute -right-24 top-[20%] h-52 w-96 rounded-full bg-slate-300/20 blur-3xl" 
+        className="absolute -right-24 top-[20%] h-52 w-96 rounded-full bg-slate-300/20 blur-3xl"
       />
       <div className="absolute left-[10%] bottom-[30%] h-40 w-80 rounded-full bg-slate-300/24 blur-3xl" />
       <div className="absolute right-[-10%] bottom-[20%] h-48 w-80 rounded-full bg-slate-300/18 blur-3xl" />
@@ -282,10 +283,10 @@ function ExploreHeader() {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
       >
-        <h1 className="flex items-center gap-2 text-[24px] font-bold leading-none text-white drop-shadow-lg">
-          那我走 <Sparkles size={14} className="text-[#FFD166]" />
+        <h1 className="flex items-center gap-2 text-[24px] font-bold leading-none drop-shadow-lg" style={{ color: "var(--text-primary)" }}>
+          那我走 <Sparkles size={14} className="text-[var(--accent-gold)]" />
         </h1>
-        <p className="mt-1.5 text-[12px] text-[#D7D7E8]/80 font-medium">不知道去哪？跟我走</p>
+        <p className="mt-1.5 text-[12px] font-medium" style={{ color: "var(--text-muted)" }}>你只管出门，剩下由系统决定</p>
       </motion.div>
     </header>
   );
@@ -353,6 +354,11 @@ function DirectionPanel({ distToTarget, inRange, navSteps }: {
           </div>
         </>
       )}
+      <div className="mt-3 border-t pt-2 space-y-1.5 text-[8px]" style={{ borderColor: "var(--border-subtle)", color: "var(--text-muted)" }}>
+        <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#6C5CFF]" />打卡点</div>
+        <div className="flex items-center gap-1.5"><span className="h-2 w-2 rotate-45 border border-[#FFD166] bg-transparent" />下一目标</div>
+        <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-500" />已完成</div>
+      </div>
     </Glass>
   );
 }
@@ -361,11 +367,11 @@ function ProgressPanel({ step }: { step: ExploreStep }) {
   return (
     <Glass className="absolute left-4 top-[120px] z-20 w-[115px] p-2.5">
       <div className="flex items-center justify-between text-[10px]">
-        <div className="flex items-center gap-1.5 opacity-60 font-medium">
-          <Zap size={12} className="fill-[#FFD166] text-[#FFD166]" />
+        <div className="flex items-center gap-1.5 font-medium" style={{ color: "var(--text-muted)" }}>
+          <Zap size={12} className="fill-[var(--accent-gold)] text-[var(--accent-gold)]" />
           <span>体力</span>
         </div>
-        <span className="font-bold text-[#FFD166]">85</span>
+        <span className="font-bold text-[var(--accent-gold)]">85</span>
       </div>
     </Glass>
   );
@@ -374,16 +380,17 @@ function ProgressPanel({ step }: { step: ExploreStep }) {
 function FloatingActions({ onAction }: { onAction: (a: string) => void }) {
   return (
     <div className="absolute left-5 bottom-[115px] z-30 flex flex-col gap-2">
-      <button className="flex h-12 w-12 flex-col items-center justify-center rounded-full border border-white/10 bg-[#10142c]/80 text-white shadow-lg backdrop-blur-md active:scale-90 overflow-hidden">
+      <button className="flex h-12 w-12 flex-col items-center justify-center rounded-full border shadow-lg backdrop-blur-md active:scale-90 overflow-hidden" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-card)", color: "var(--text-muted)" }}>
         <Compass size={18} className="text-[#A98BFF]" />
         <span className="mt-0.5 text-[8px] opacity-70">重置</span>
       </button>
-      <button 
+      <button
         onClick={() => onAction('event')}
-        className="relative flex h-12 w-12 flex-col items-center justify-center rounded-full border border-white/10 bg-[#10142c]/80 text-white shadow-lg backdrop-blur-md active:scale-95"
+        className="relative flex h-12 w-12 flex-col items-center justify-center rounded-full border shadow-lg backdrop-blur-md active:scale-95"
+        style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-card)", color: "var(--text-muted)" }}
       >
-        <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-[#FF4D64] text-[9px] font-bold">2</span>
-        <Gift size={20} className="fill-[#FFD166] text-[#FFD166]" />
+        <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-[#FF4D64] text-[9px] font-bold text-white">2</span>
+        <Gift size={20} className="fill-[var(--accent-gold)] text-[var(--accent-gold)]" />
         <span className="mt-0.5 text-[8px] opacity-70">事件</span>
       </button>
     </div>
@@ -391,18 +398,13 @@ function FloatingActions({ onAction }: { onAction: (a: string) => void }) {
 }
 
 function Legend({ step }: { step?: ExploreStep }) {
-  const isIntro = step === "intro";
   return (
     <div className="absolute right-5 bottom-[40%] z-30 flex flex-col gap-3">
-      <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1A1A2E]/90 border border-white/10 text-white/40 shadow-lg active:scale-95">
-        <HelpCircle size={20} />
-      </button>
-      <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1A1A2E]/90 border border-white/10 text-white shadow-lg active:scale-95">
-        <Target size={20} />
-      </button>
-      <button className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1A1A2E]/90 border border-white/10 text-white shadow-lg active:scale-95">
-        <Layers size={20} />
-      </button>
+      {[HelpCircle, Target, Layers].map((Icon, i) => (
+        <button key={i} className="flex h-10 w-10 items-center justify-center rounded-xl border shadow-lg backdrop-blur-md active:scale-95" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-card)", color: "var(--text-muted)" }}>
+          <Icon size={20} />
+        </button>
+      ))}
     </div>
   );
 }
@@ -468,22 +470,20 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
   return (
     <Glass
       onClick={() => setIsExpanded(!isExpanded)}
-      className="relative w-full z-40 p-6 overflow-hidden transition-all duration-300 cursor-pointer rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.15)]"
+      className="relative w-full z-40 p-6 overflow-hidden transition-all duration-300 cursor-pointer rounded-[32px] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
     >
-      <div className={`absolute inset-0 bg-gradient-to-br from-[${content.color}]/10 to-transparent pointer-events-none`} />
-      
       <div className="mb-2.5 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Sparkles size={14} className="text-[#FFD166]" />
-          <h2 className="text-[16px] font-bold uppercase tracking-tight">
+          <Sparkles size={14} className="text-[var(--accent-gold)]" />
+          <h2 className="text-[16px] font-bold uppercase tracking-tight" style={{ color: "var(--text-primary)" }}>
             {stationLabel}
           </h2>
           {hasTarget && (
             <span
               className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
-                inRange ? "bg-emerald-500/20 text-emerald-300" : ""
+                inRange ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" : ""
               }`}
-              style={inRange ? undefined : { backgroundColor: "var(--bg-input)", color: "var(--text-muted)" }}
+              style={!inRange ? { backgroundColor: "var(--bg-input)", color: "var(--text-muted)" } : undefined}
             >
               {inRange ? "✓ 到了 · 可打卡" : `距目标 ${rangeLabel}`}
             </span>
@@ -503,7 +503,7 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
 
       <div className="rounded-xl border p-2.5 space-y-2" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-input)" }}>
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full ring-1" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-primary)", ringColor: "var(--border-subtle)" }}>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full ring-1" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-secondary)", ringColor: "var(--border-subtle)" }}>
             <Camera size={20} />
           </div>
           <div className="min-w-0 flex-1">
@@ -512,8 +512,8 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
           </div>
         </div>
         <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg w-fit" style={{ backgroundColor: "var(--bg-input)" }}>
-          <Zap size={12} className="fill-[#FFD166] text-[#FFD166]" />
-          <span className="text-[12px] font-bold text-[#FFD166]">{displayReward}</span>
+          <Zap size={12} className="fill-[var(--accent-gold)] text-[var(--accent-gold)]" />
+          <span className="text-[12px] font-bold text-[var(--accent-gold)]">{displayReward}</span>
         </div>
       </div>
 
@@ -529,7 +529,7 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
               <p className="text-[12px] leading-relaxed" style={{ color: "var(--text-muted)" }}>
                 {content.detail}
               </p>
-              
+
               <button
                 onClick={handleAction}
                 className="w-full rounded-xl py-3 text-[14px] font-bold text-white shadow-lg active:scale-[0.98] transition-transform"
@@ -545,54 +545,90 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
   );
 }
 
+function HiddenTaskImage({ category, emoji }: { category?: string; emoji?: string }) {
+  const [failed, setFailed] = useState(false);
+  const src = getCategoryImage(category);
+  if (failed || !category) {
+    return (
+      <div className="flex h-full w-full items-center justify-center rounded-2xl bg-amber-500/10">
+        <span className="text-6xl drop-shadow-lg">{emoji || "🗺️"}</span>
+      </div>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt=""
+      className="h-full w-full rounded-2xl object-cover"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 function HiddenTaskAlert({ hiddenTask, onAccept, mystery }: { hiddenTask?: Waypoint; onAccept: () => void; mystery?: boolean }) {
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-50 flex items-center justify-center p-8 backdrop-blur-md bg-black/20"
+      className="absolute inset-0 z-50 flex items-end justify-center pb-6 px-4 backdrop-blur-md bg-black/30"
     >
-      <div className="relative w-full max-w-sm rounded-[32px] border border-amber-500/30 bg-[#0a0a1a]/90 p-6 text-center shadow-[0_0_50px_rgba(251,191,36,0.3)]" style={{ color: "#fff" }}>
-        <div className="absolute -top-12 left-1/2 -translate-x-1/2">
-          <motion.div 
-            animate={{ rotate: 360 }}
-            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-            className="relative flex h-24 w-24 items-center justify-center"
-          >
-            <div className="absolute inset-0 rounded-full border-2 border-dashed border-amber-500/50" />
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-500 text-white shadow-[0_0_20px_rgba(251,191,36,0.8)]">
-              <Sparkles size={32} />
-            </div>
-          </motion.div>
+      <motion.div
+        initial={{ y: 60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        className="relative w-full max-w-sm overflow-hidden rounded-[28px] shadow-[0_-4px_40px_rgba(0,0,0,0.3)]"
+        style={{ backgroundColor: "var(--bg-card)" }}
+      >
+        {/* 顶部标签 */}
+        <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 rounded-full bg-amber-500 px-3 py-1.5 shadow-lg">
+          <Sparkles size={13} className="text-black" />
+          <span className="text-[11px] font-black text-black tracking-wide">发现 · 隐藏任务</span>
         </div>
-        
-        <div className="mt-12 space-y-4">
+
+        {/* 品类插图 */}
+        <div className="h-[220px] w-full bg-amber-500/5">
+          <HiddenTaskImage category={hiddenTask?.category} emoji={hiddenTask?.emoji} />
+        </div>
+
+        {/* 内容 */}
+        <div className="space-y-3 p-5">
           <div>
-            <h2 className="text-[24px] font-black text-amber-100 italic">触发：隐藏记忆</h2>
-            <p className="mt-1 text-[13px] text-amber-200/60 tracking-wider">系统检测到附近存在未公开的坐标</p>
-          </div>
-          
-          <div className="rounded-2xl bg-white/5 p-4 text-left border border-white/10">
-            <div className="flex items-center gap-2 text-amber-400">
-               <MapPin size={16} />
-               <span className="text-[14px] font-bold">{mystery ? "？？？" : (hiddenTask?.name ?? "隐藏坐标")}</span>
-            </div>
-            <p className="mt-2 text-[12px] leading-relaxed text-white/50">
+            <h2 className="text-[22px] font-black text-[var(--text-primary)] leading-tight">
+              {mystery ? "？？？" : (hiddenTask?.name ?? "隐藏坐标")}
+            </h2>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-[var(--text-muted)] line-clamp-2">
               {hiddenTask?.description ?? "附近藏着一个未公开的坐标，藏着这个街区的某个秘密瞬间。"}
             </p>
           </div>
-          
-          <div className="flex flex-col gap-2 pt-2">
-            <button 
-              onClick={onAccept}
-              className="w-full rounded-2xl bg-amber-500 hover:bg-amber-400 py-4 text-[16px] font-black text-black transition-colors"
-            >
-              立刻前往
-            </button>
+
+          {/* 距离 + 奖励 */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1.5">
+              <MapPin size={13} className="text-amber-500" />
+              <span className="text-[12px] font-bold text-amber-600 dark:text-amber-400">
+                {hiddenTask?.distanceText ?? "附近"}
+              </span>
+            </div>
+            {!mystery && hiddenTask?.reward && (
+              <div className="flex items-center gap-1.5 rounded-full bg-[#6C5CFF]/10 px-3 py-1.5">
+                <Gift size={13} className="text-[#6C5CFF]" />
+                <span className="text-[12px] font-bold text-[#6C5CFF] truncate max-w-[140px]">
+                  {hiddenTask.reward}
+                </span>
+              </div>
+            )}
           </div>
+
+          {/* 按钮 */}
+          <button
+            onClick={onAccept}
+            className="w-full rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 py-3.5 text-[15px] font-black text-white shadow-lg shadow-amber-500/25 transition-transform active:scale-[0.98]"
+          >
+            立即前往
+          </button>
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 }
@@ -621,18 +657,19 @@ function BranchChoiceOverlay({ branch, onPick, mystery }: { branch?: RouteBranch
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.08 * i }}
             onClick={() => onPick(i)}
-            className="flex-1 rounded-3xl border border-white/10 bg-[#14142B]/90 p-4 text-left shadow-[0_18px_50px_rgba(0,0,0,.45)] active:scale-[0.97] transition-transform"
+            className="flex-1 rounded-3xl border p-4 text-left backdrop-blur-xl active:scale-[0.97] transition-transform shadow-[0_8px_30px_rgba(0,0,0,0.1)] dark:shadow-[0_18px_50px_rgba(0,0,0,.45)]"
+            style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-card)" }}
           >
             <div className="text-3xl">{opt.emoji}</div>
-            <div className="mt-2 text-[15px] font-bold text-white">{mystery ? "？？？" : opt.name}</div>
-            <p className="mt-1 text-[11px] leading-relaxed text-white/45 line-clamp-3">{opt.description}</p>
-            <div className="mt-2 flex items-center gap-1 text-[10px] text-[#A98BFF]">
+            <div className="mt-2 text-[15px] font-bold" style={{ color: "var(--text-primary)" }}>{mystery ? "？？？" : opt.name}</div>
+            <p className="mt-1 text-[11px] leading-relaxed line-clamp-3" style={{ color: "var(--text-muted)" }}>{opt.description}</p>
+            <div className="mt-2 flex items-center gap-1 text-[10px] text-[#6C5CFF]">
               <MapPin size={11} /> {opt.distanceText}
             </div>
           </motion.button>
         ))}
       </div>
-      <p className="mt-4 text-[11px] text-white/40">点一张卡 = 选定第二站</p>
+      <p className="mt-4 text-[11px]" style={{ color: "var(--text-muted)" }}>点一张卡 = 选定第二站</p>
     </motion.div>
   );
 }
@@ -839,7 +876,7 @@ const IntroOverlay: React.FC<{ onDirectStart: () => void; onCustomize: () => voi
         transition={{ type: "spring", damping: 25, stiffness: 120 }}
         className="w-full max-w-sm mx-auto"
       >
-        <div className="rounded-[32px] border shadow-[0_20px_50px_rgba(0,0,0,0.15)] backdrop-blur-xl overflow-hidden" style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)" }}>
+        <div className="rounded-[32px] border backdrop-blur-xl overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.5)]" style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)" }}>
           {/* Toggle bar — always visible */}
           <button
             onClick={() => setCollapsed(!collapsed)}
@@ -851,11 +888,11 @@ const IntroOverlay: React.FC<{ onDirectStart: () => void; onCustomize: () => voi
               </div>
               <span className="text-[15px] font-black italic tracking-tight" style={{ color: "var(--text-primary)" }}>当前位置</span>
               <div className="flex items-center gap-1.5 rounded-full bg-[#FFD166]/10 border border-[#FFD166]/20 px-2.5 py-0.5">
-                <span className="text-[10px] font-bold text-[#FFD166] uppercase tracking-wider">五道口 · 北京</span>
+                <span className="text-[10px] font-bold text-[var(--accent-gold)] uppercase tracking-wider">五道口 · 北京</span>
               </div>
             </div>
             <motion.div animate={{ rotate: collapsed ? 180 : 0 }} transition={{ duration: 0.2 }}>
-              <ChevronDown size={18} style={{ color: "var(--text-muted)" }} />
+              <ChevronDown size={18} style={{ color: "var(--text-faint)" }} />
             </motion.div>
           </button>
 
@@ -966,7 +1003,7 @@ function AchievementOverlay({ onContinue }: { onContinue: () => void }) {
       className="absolute inset-0 z-[130] flex items-center justify-center p-8 backdrop-blur-2xl bg-black/60"
     >
       <div className="w-full max-w-sm rounded-[40px] p-8 text-center border-2 relative overflow-hidden" style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)", color: "var(--text-primary)" }}>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(108,92,255,0.15),transparent_70%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(108,92,255,0.12),transparent_70%)]" />
 
         <div className="relative z-10">
           <motion.div
@@ -976,7 +1013,7 @@ function AchievementOverlay({ onContinue }: { onContinue: () => void }) {
             className="mb-8 flex justify-center"
           >
             <div className="h-32 w-32 rounded-full bg-gradient-to-tr from-[#6C5CFF] to-[#A855F7] p-1 shadow-[0_0_50px_rgba(108,92,255,0.6)]">
-              <div className="h-full w-full rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--bg-base)" }}>
+              <div className="h-full w-full rounded-full flex items-center justify-center" style={{ backgroundColor: "var(--bg-card)" }}>
                  <Compass size={60} className="text-[#6C5CFF]" />
               </div>
             </div>
@@ -1038,7 +1075,6 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
     { id: "outdoor", icon: Mountain, label: "户外" },
     { id: "food", icon: Utensils, label: "美食" },
     { id: "busy", icon: Flame, label: "热闹" },
-    { id: "family", icon: Users, label: "亲子" },
     { id: "photo", icon: CameraIcon, label: "拍照" },
     { id: "niche", icon: Gem, label: "小众" },
     { id: "budget", icon: PiggyBank, label: "省钱" },
@@ -1077,10 +1113,11 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
       initial={{ opacity: 0, scale: 1.05 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-[100] flex flex-col" style={{ backgroundColor: "var(--bg-base)" }}
+      className="absolute inset-0 z-[100] flex flex-col"
+      style={{ backgroundColor: "var(--bg-base)" }}
     >
       <div className="flex items-center px-4 py-4 mt-12">
-        <button onClick={onBack} className="p-2 active:scale-90 rounded-full" style={{ color: "var(--text-secondary)", backgroundColor: "var(--bg-input)" }}>
+        <button onClick={onBack} className="p-2 active:scale-90 rounded-full" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-secondary)" }}>
           <ChevronLeft size={24} />
         </button>
         <div className="flex-1 text-center pr-10">
@@ -1092,37 +1129,37 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
       </div>
 
       <div className="flex-1 overflow-y-auto px-5 pb-40 scrollbar-hide">
-        <div className="relative mb-6 mt-1 overflow-hidden rounded-3xl bg-gradient-to-br from-[#1E293B] to-[#0F172A] p-4 shadow-xl border border-white/5">
+        <div className="relative mb-6 mt-1 overflow-hidden rounded-3xl p-4 shadow-xl border" style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)" }}>
           {weatherImage && (
-            <img src={weatherImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-40" />
+            <img src={weatherImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-20 dark:opacity-40" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-[#0F172A]/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t dark:from-[#0F172A] dark:via-[#0F172A]/60 from-white/80 via-white/40 to-transparent" />
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#6C5CFF]/10 blur-[60px] rounded-full" />
           <div className="flex justify-between items-start relative z-10">
             <div>
-              <div className="flex items-center gap-1.5 rounded-full bg-white/5 border border-white/10 px-2.5 py-1 text-[10px] font-bold text-white/80 w-fit">
+              <div className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold w-fit" style={{ backgroundColor: "var(--bg-input)", borderColor: "var(--border-subtle)", color: "var(--text-secondary)" }}>
                 <MapPin size={10} /> 五道口
               </div>
               <div className="mt-3 flex items-center gap-2">
                 <span className="text-3xl">{weather ? weatherEmoji(weather.icon) : "⏳"}</span>
                 <div>
-                  <div className="text-3xl font-black text-white">{weather?.temp ?? "--"}°C</div>
-                  <div className="text-xs font-bold text-white/60">{weather?.desc ?? "加载中"}</div>
+                  <div className="text-3xl font-black" style={{ color: "var(--text-primary)" }}>{weather?.temp ?? "--"}°C</div>
+                  <div className="text-xs font-bold" style={{ color: "var(--text-muted)" }}>{weather?.desc ?? "加载中"}</div>
                 </div>
               </div>
-              <div className="mt-2 rounded-full bg-[#6C5CFF]/20 border border-[#6C5CFF]/30 px-3 py-0.5 text-[10px] font-bold text-[#A594FF] w-fit">
+              <div className="mt-2 rounded-full bg-[#6C5CFF]/15 border border-[#6C5CFF]/30 px-3 py-0.5 text-[10px] font-bold text-[#6C5CFF] w-fit">
                 {weather ? weatherAdvice(weather).tag : "..."}
               </div>
             </div>
             <div className="text-right">
-              <div className="text-[12px] font-bold text-white mb-1">
+              <div className="text-[12px] font-bold mb-1" style={{ color: "var(--text-primary)" }}>
                 {weather ? `体感 ${weather.feelsLike}°C` : ""}
               </div>
-              <p className="text-[10px] text-white/40 leading-tight max-w-[130px]">
+              <p className="text-[10px] leading-tight max-w-[130px]" style={{ color: "var(--text-muted)" }}>
                 {weather ? weatherAdvice(weather).tip : "正在获取天气..."}
               </p>
               {weather && (
-                <div className="mt-2 flex justify-end gap-3 text-[10px] text-white/40">
+                <div className="mt-2 flex justify-end gap-3 text-[10px]" style={{ color: "var(--text-muted)" }}>
                   <span>💧 {weather.humidity}%</span>
                   <span>💨 {weather.windSpeed}km/h</span>
                 </div>
@@ -1156,7 +1193,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
                   key={d.id}
                   onClick={() => setDuration(d.id)}
                   className={`py-2 px-1 rounded-xl border text-[9px] font-bold transition-all ${
-                    duration === d.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
+                    duration === d.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_15px_rgba(108,92,255,0.15)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-faint)]"
                   }`}
                 >
                   {d.label}
@@ -1172,14 +1209,14 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
                    key={t.id}
                    onClick={() => setTransport(t.id)}
                    className={`flex items-center justify-center gap-2 py-2 rounded-xl border text-[9px] font-bold transition-all ${
-                     transport === t.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
+                     transport === t.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_15px_rgba(108,92,255,0.15)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-faint)]"
                    }`}
                  >
                    <t.icon size={12} />
                    {t.label}
                  </button>
                ))}
-               <p className="text-[9px] text-center text-white/20 mt-1">当前仅支持步行与公共交通</p>
+               <p className="text-[9px] text-center mt-1" style={{ color: "var(--text-faint)" }}>当前仅支持步行与公共交通</p>
              </div>
           </div>
         </div>
@@ -1191,7 +1228,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
               key={s.id}
               onClick={() => toggleList(special, setSpecial, s.id)}
               className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-[9px] font-bold transition-all ${
-                special.includes(s.id) ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
+                special.includes(s.id) ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_15px_rgba(108,92,255,0.15)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
               }`}
             >
               <s.icon size={11} />
@@ -1200,14 +1237,14 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
           ))}
         </div>
 
-        <div className="text-[9px] font-bold text-white/30 mb-1.5 ml-0.5">同行人</div>
+        <div className="text-[9px] font-bold mb-1.5 ml-0.5" style={{ color: "var(--text-faint)" }}>同行人</div>
         <div className="flex flex-wrap gap-2 mb-6">
           {companions.map((c) => (
             <button
               key={c.id}
               onClick={() => setCompanion(c.id)}
               className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-[9px] font-bold transition-all ${
-                companion === c.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
+                companion === c.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_15px_rgba(108,92,255,0.15)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
               }`}
             >
               <c.icon size={11} />
@@ -1223,7 +1260,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
               key={f.id}
               onClick={() => toggleList(foodPreference, setFoodPreference, f.id)}
               className={`flex items-center gap-1.5 py-1.5 px-3 rounded-xl border text-[9px] font-bold transition-all ${
-                foodPreference.includes(f.id) ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] shadow-[0_0_15px_rgba(108,92,255,0.2)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
+                foodPreference.includes(f.id) ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_15px_rgba(108,92,255,0.15)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
               }`}
             >
               <f.icon size={11} />
@@ -1237,8 +1274,8 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
           title="今天想被安排什么程度？"
           help={
             <div className="space-y-1.5">
-              <div><span className="font-bold text-white">别让我思考</span>：隐藏下一站位置，不用选，直接带你逛</div>
-              <div><span className="font-bold text-white">正常探索</span>：显示下一站位置，路上有岔路，你来选</div>
+              <div><span className="font-bold" style={{ color: "var(--text-primary)" }}>别让我思考</span>：隐藏下一站位置，不用选，直接带你逛</div>
+              <div><span className="font-bold" style={{ color: "var(--text-primary)" }}>正常探索</span>：显示下一站位置，路上有岔路，你来选</div>
             </div>
           }
         />
@@ -1248,7 +1285,7 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
               key={i.id}
               onClick={() => setIntensity(i.id)}
               className={`relative flex flex-col items-center text-center gap-1 p-1 py-2.5 rounded-xl border transition-all ${
-                intensity === i.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] shadow-[0_0_20px_rgba(108,92,255,0.3)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
+                intensity === i.id ? "bg-[#6C5CFF]/15 border-[#6C5CFF] text-[#6C5CFF] dark:text-white shadow-[0_0_20px_rgba(108,92,255,0.2)]" : "bg-[var(--bg-input)] border-transparent text-[var(--text-muted)]"
               }`}
             >
               {i.recommended && (
@@ -1288,8 +1325,8 @@ function SectionTitle({ num, title, sub, help }: { num: number | string; title: 
       {sub && <span className="text-[10px] font-medium" style={{ color: "var(--text-faint)" }}>{sub}</span>}
       {help && (
         <span className="group relative inline-flex">
-          <HelpCircle size={12} className="cursor-help transition-colors" style={{ color: "var(--text-muted)" }} />
-          <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full z-50 mt-2 w-56 rounded-xl border p-3 text-left text-[11px] leading-relaxed opacity-0 shadow-[0_12px_30px_rgba(0,0,0,0.55)] transition-opacity duration-150 group-hover:opacity-100" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-card)", color: "var(--text-secondary)" }}>
+          <HelpCircle size={12} style={{ color: "var(--text-faint)" }} className="hover:opacity-70 cursor-help transition-colors" />
+          <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-full z-50 mt-2 w-56 rounded-xl border p-3 text-left text-[11px] leading-relaxed opacity-0 shadow-[0_8px_24px_rgba(0,0,0,0.1)] dark:shadow-[0_12px_30px_rgba(0,0,0,0.55)] transition-opacity duration-150 group-hover:opacity-100" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-card)", color: "var(--text-secondary)" }}>
             {help}
           </span>
         </span>
@@ -1326,10 +1363,11 @@ function GearConfirmationOverlay({ onConfirm, onBack }: { onConfirm: () => void;
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
-      className="absolute inset-0 z-[100] flex flex-col" style={{ backgroundColor: "var(--bg-base)" }}
+      className="absolute inset-0 z-[100] flex flex-col"
+      style={{ backgroundColor: "var(--bg-base)" }}
     >
       <div className="flex items-center px-4 py-4 mt-12">
-        <button onClick={onBack} className="p-2 active:scale-90 rounded-full" style={{ color: "var(--text-secondary)", backgroundColor: "var(--bg-input)" }}>
+        <button onClick={onBack} className="p-2 active:scale-90 rounded-full" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-secondary)" }}>
           <ChevronLeft size={24} />
         </button>
         <div className="flex-1 text-center pr-10">
@@ -1351,9 +1389,9 @@ function GearConfirmationOverlay({ onConfirm, onBack }: { onConfirm: () => void;
                   ? "bg-[#6C5CFF]/15 border-[#6C5CFF] shadow-[0_8px_20px_rgba(108,92,255,0.15)]"
                   : ""
               }`}
-              style={confirmed.includes(item.id) ? undefined : { backgroundColor: "var(--bg-input)", borderColor: "var(--border-subtle)" }}
+              style={!confirmed.includes(item.id) ? { backgroundColor: "var(--bg-input)", borderColor: "var(--border-subtle)" } : undefined}
             >
-              <div className={`p-2 rounded-xl ${confirmed.includes(item.id) ? "bg-[#6C5CFF] text-white" : ""}`} style={confirmed.includes(item.id) ? undefined : { backgroundColor: "var(--bg-input)", color: "var(--text-faint)" }}>
+              <div className={`p-2 rounded-xl ${confirmed.includes(item.id) ? "bg-[#6C5CFF] text-white" : ""}`} style={!confirmed.includes(item.id) ? { backgroundColor: "var(--bg-input)", color: "var(--text-faint)" } : undefined}>
                 <item.icon size={20} />
               </div>
               <div className="flex-1 text-left">
@@ -1362,7 +1400,7 @@ function GearConfirmationOverlay({ onConfirm, onBack }: { onConfirm: () => void;
               </div>
               <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-all ${
                 confirmed.includes(item.id) ? "border-[#6C5CFF] bg-[#6C5CFF]" : ""
-              }`} style={confirmed.includes(item.id) ? undefined : { borderColor: "var(--border-subtle)" }}>
+              }`} style={!confirmed.includes(item.id) ? { borderColor: "var(--border-subtle)" } : undefined}>
                 {confirmed.includes(item.id) && <CheckCircle2 size={12} className="text-white" />}
               </div>
             </button>

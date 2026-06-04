@@ -17,7 +17,7 @@ export default function geminiProxy(
       process.env.GOOGLE_CLOUD_LOCATION ||
       "us-central1";
     const apiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-    const credFile = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    const credFile = env.GOOGLE_APPLICATION_CREDENTIALS || process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
     if (!project && credFile) {
       try {

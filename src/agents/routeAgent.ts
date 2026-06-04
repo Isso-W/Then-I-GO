@@ -21,7 +21,7 @@ const TRANSPORT_LABELS: Record<string, string> = {
 };
 const SPECIAL_LABELS: Record<string, string> = {
   art: "文艺", outdoor: "户外", food: "美食", busy: "热闹",
-  family: "亲子", photo: "拍照", niche: "小众", budget: "省钱",
+  photo: "拍照", niche: "小众", budget: "省钱",
 };
 const FOOD_LABELS: Record<string, string> = {
   light: "清淡", spicy: "麻辣", western: "西式", coffee: "甜品咖啡",
@@ -145,6 +145,7 @@ function hydrate(sel: GeminiSelection, poi: POI): Waypoint {
     distanceText: walkingTimeText(dist),
     lat: poi.lat,
     lng: poi.lng,
+    category: poi.category,
   };
 }
 
@@ -260,7 +261,7 @@ function parseAndHydrate(
         name: poi.name, description: poi.review_summary,
         task: "到达后打个卡吧", reward: "探索经验 +10", emoji: "📍",
         distanceText: walkingTimeText(distanceMeters(ORIGIN, { lat: poi.lat, lng: poi.lng })),
-        lat: poi.lat, lng: poi.lng,
+        lat: poi.lat, lng: poi.lng, category: poi.category,
       });
     });
   }

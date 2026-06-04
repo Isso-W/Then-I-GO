@@ -84,7 +84,7 @@ export function ChatPanel({
             {/* Messages */}
             <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar px-4 py-2 space-y-3">
               {messages.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-full gap-2 opacity-40">
+                <div className="flex flex-col items-center justify-center h-full gap-2 opacity-40" style={{ color: "var(--text-secondary)" }}>
                   <MessageCircle size={32} />
                   <p className="text-[12px]" style={{ color: "var(--text-muted)" }}>跟我说说你想去哪、想吃什么、或者换个地方走走</p>
                 </div>
@@ -96,7 +96,7 @@ export function ChatPanel({
                       msg.role === "user"
                         ? "bg-[#6C5CFF] text-white rounded-br-md"
                         : msg.role === "system"
-                        ? "bg-emerald-500/20 text-emerald-300 rounded-bl-md text-[12px] italic"
+                        ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 rounded-bl-md text-[12px] italic"
                         : "rounded-bl-md"
                     }`}
                     style={msg.role === "assistant" ? { backgroundColor: "var(--bg-input)", color: "var(--text-primary)" } : undefined}
