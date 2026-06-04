@@ -118,8 +118,9 @@ function rewardHint(category: string): string {
     }
   }
   const base = category.match(/^(餐厅|酒吧)/);
-  if (base) return CATEGORY_REWARDS[base[1]] ?? "探索优惠券";
-  return "探索优惠券";
+  if (base) return CATEGORY_REWARDS[base[1]] ?? "¥5骑行体验券";
+  const fallbacks = ["¥5骑行体验券", "¥10打车优惠券"];
+  return fallbacks[category.length % 2];
 }
 
 function buildCandidateBlock(candidates: POI[]): string {
@@ -259,7 +260,7 @@ function parseAndHydrate(
       usedIds.add(poi.id);
       waypoints.push({
         name: poi.name, description: poi.review_summary,
-        task: "到达后打个卡吧", reward: "¥15探索优惠券", emoji: "📍",
+        task: "到达后打个卡吧", reward: "¥5骑行体验券", emoji: "📍",
         distanceText: walkingTimeText(distanceMeters(ORIGIN, { lat: poi.lat, lng: poi.lng })),
         lat: poi.lat, lng: poi.lng, category: poi.category,
       });
@@ -282,7 +283,7 @@ function parseAndHydrate(
       if (pair) {
         const mk = (poi: POI): Waypoint => ({
           name: poi.name, description: poi.review_summary,
-          task: "到这儿打个卡", reward: "¥20探索优惠券", emoji: "📍",
+          task: "到这儿打个卡", reward: "¥10打车优惠券", emoji: "📍",
           distanceText: walkingTimeText(distanceMeters(ORIGIN, { lat: poi.lat, lng: poi.lng })),
           lat: poi.lat, lng: poi.lng,
         });
