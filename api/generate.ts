@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { IncomingMessage, ServerResponse } from "http";
 
 let aiInstance: any = null;
 
@@ -22,16 +22,28 @@ async function getAI() {
   return aiInstance;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== "POST") return res.status(405).end();
+function readBody(req: IncomingMessage): Promise<string> {
+  return new Promise((resolve) => {
+    let body = "";
+    req.on("data", (c: Buffer) => { body += c.toString(); });
+    req.on("end", () => resolve(body));
+  });
+}
+
+export default async function handler(req: IncomingMessage, res: ServerResponse) {
+  if (req.method !== "POST") { res.statusCode = 405; res.end(); return; }
 
   try {
-    const { model, prompt } = req.body;
+    const raw = await readBody(req);
+    const { model, prompt } = JSON.parse(raw);
     const ai = await getAI();
     const response = await ai.models.generateContent({ model, contents: prompt });
-    res.json({ text: response.text ?? "" });
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ text: response.text ?? "" }));
   } catch (e: any) {
     console.error("[api/generate]", e);
-    res.status(500).json({ error: e.message });
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: e.message }));
   }
 }

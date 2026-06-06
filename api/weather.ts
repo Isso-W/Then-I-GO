@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
+import type { IncomingMessage, ServerResponse } from "http";
 
 const WEATHER_ZH: Record<string, string> = {
   Clear: "晴", Sunny: "晴", "Partly Cloudy": "多云", "Partly cloudy": "多云",
@@ -14,7 +14,7 @@ const WEATHER_ZH: Record<string, string> = {
 
 const FALLBACK = { temp: "22", feelsLike: "22", desc: "晴", humidity: "50", windSpeed: "10", icon: "113" };
 
-export default async function handler(_req: VercelRequest, res: VercelResponse) {
+export default async function handler(_req: IncomingMessage, res: ServerResponse) {
   try {
     const resp = await fetch("https://wttr.in/Wudaokou,Beijing?format=j1&lang=zh", {
       headers: { "User-Agent": "curl/7.0" },
@@ -23,16 +23,18 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     const data = await resp.json();
     const cur = data.current_condition?.[0] ?? {};
     const rawDesc = (cur.lang_zh?.[0]?.value ?? cur.weatherDesc?.[0]?.value ?? "Clear").trim();
-    res.json({
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({
       temp: cur.temp_C ?? "22",
       feelsLike: cur.FeelsLikeC ?? cur.temp_C ?? "22",
       desc: WEATHER_ZH[rawDesc] ?? rawDesc,
       humidity: cur.humidity ?? "50",
       windSpeed: cur.windspeedKmph ?? "10",
       icon: cur.weatherCode ?? "113",
-    });
+    }));
   } catch (e: any) {
     console.warn("[api/weather] fallback:", e.message);
-    res.json(FALLBACK);
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify(FALLBACK));
   }
 }
