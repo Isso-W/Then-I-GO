@@ -8,9 +8,10 @@ import { MineScreen } from "./screens/MineScreen";
 import { EventDetailScreen } from "./screens/EventDetailScreen";
 import { SettingsScreen } from "./screens/SettingsScreen";
 import { generateRoute } from "./agents/routeAgent";
+import { reviewRoute } from "./agents/routeReviewer";
+import { findPOIByName, getBaseCategory } from "./agents/poiFilter";
 import { ORIGIN } from "./components/mapProjection";
 import { positionFromStep } from "./lib/derivePosition";
-import { commitBranchChoice } from "./lib/branch";
 import { chatWithRoute, type ChatAction } from "./agents/chatAgent";
 import type { ChatMessage } from "./components/ChatPanel";
 import type { LatLng } from "./components/mapProjection";
@@ -96,10 +97,16 @@ export default function App() {
 
   // 行为信号追踪（不驱动渲染，用 useRef）
   const tripStartTime = useRef<number | null>(null);
-  const branchChosenRef = useRef<number | undefined>(undefined);
   const chatActionLog = useRef<string[]>([]);
   const hiddenTriggered = useRef(false);
   const pendingRecord = useRef<TripRecord | null>(null);
+  const weatherRef = useRef<{ code?: string; temp?: number }>({});
+
+  // 打卡拍照暂存（genStop index → dataURL），传给 StoryScreen 预填充
+  const [checkinPhotos, setCheckinPhotos] = useState<Record<number, string>>({});
+  const handleCheckinPhoto = useCallback((stopIndex: number, dataUrl: string) => {
+    setCheckinPhotos((prev) => ({ ...prev, [stopIndex]: dataUrl }));
+  }, []);
 
   // Chatbot 状态
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -109,7 +116,7 @@ export default function App() {
     setChatMessages((prev) => [...prev, { role: "user", text }]);
     setChatLoading(true);
     try {
-      const resp = await chatWithRoute(text, generatedRoute, preferences ?? DEFAULT_PREFERENCES, currentPosition);
+      const resp = await chatWithRoute(text, generatedRoute, preferences ?? DEFAULT_PREFERENCES, currentPosition, waypointIndex, tripHistory, weatherRef.current.code, weatherRef.current.temp);
       setChatMessages((prev) => [...prev, { role: "assistant", text: resp.message }]);
       applyAction(resp.action);
     } catch {
@@ -119,32 +126,80 @@ export default function App() {
     }
   };
 
+  const reviewModifiedRoute = async (modified: GeneratedRoute, lockedIdx: number) => {
+    console.log("🔍 聊天改路线 → 启动审查，锁定前", lockedIdx + 1, "站:", modified.waypoints.slice(0, lockedIdx + 1).map(w => w.name));
+    try {
+      const cats = modified.waypoints.map(
+        (w) => findPOIByName(w.name)?.category ?? "未知"
+      );
+      if (modified.hiddenTask) cats.push(findPOIByName(modified.hiddenTask.name)?.category ?? "未知");
+      const result = await reviewRoute(modified, cats, preferences ?? DEFAULT_PREFERENCES);
+
+      if (result.action === "reorder" && result.reorder) {
+        const nameOrder = result.reorder;
+        const wpMap = new Map(modified.waypoints.map((w) => [w.name, w]));
+        const hidden = modified.hiddenTask;
+
+        const locked = modified.waypoints.slice(0, lockedIdx + 1);
+        const futureNames = new Set(
+          modified.waypoints.slice(lockedIdx + 1).map((w) => w.name)
+        );
+        const reorderedFuture = nameOrder
+          .filter((n) => futureNames.has(n) && n !== hidden?.name)
+          .map((n) => wpMap.get(n)!);
+
+        console.log("🔀 审查建议调序 | 原未来站:", [...futureNames], "→ 新顺序:", reorderedFuture.map(w => w.name));
+
+        if (reorderedFuture.length === futureNames.size) {
+          const finalWaypoints = [...locked, ...reorderedFuture];
+          setGeneratedRoute((r) => r ? { ...r, waypoints: finalWaypoints } : r);
+          const futurePreview = reorderedFuture.map((w) => w.name).join(" → ");
+          if (futurePreview) {
+            setChatMessages((prev) => [...prev, {
+              role: "system",
+              text: `🔀 后续路线已优化：${futurePreview}`,
+            }]);
+          }
+        } else {
+          console.warn("🔀 审查调序数量不匹配，跳过:", reorderedFuture.length, "vs", futureNames.size);
+        }
+      } else if (result.action === "reselect") {
+        const issueText = result.issues.map((i) => i.description).join("；");
+        console.log("⚠️ 审查建议重选:", issueText);
+        setChatMessages((prev) => [...prev, { role: "system", text: `⚠️ 审查提示：${issueText}` }]);
+      } else {
+        console.log("✅ 聊天改路线审查通过");
+      }
+    } catch (e) {
+      console.error("聊天改路线审查失败:", e);
+      // 审查失败不阻塞
+    }
+  };
+
   const applyAction = (action: ChatAction) => {
     if (!action || action.type === "none" || !generatedRoute || showFeedback) return;
     chatActionLog.current.push(action.type);
     const wp = action.waypoint;
-    if (action.type === "replace_next" && wp) {
-      setGeneratedRoute((r) => {
-        if (!r) return r;
-        const wps = [...r.waypoints];
-        if (wps.length > 1) wps[wps.length - 1] = wp;
-        else wps.push(wp);
-        return { ...r, waypoints: wps };
-      });
-      setChatMessages((prev) => [...prev, { role: "system", text: `✓ 下一站已替换为「${wp.name}」` }]);
+    if (action.type === "replace_current" && wp) {
+      const idx = waypointIndex;
+      const modified = { ...generatedRoute, waypoints: [...generatedRoute.waypoints] };
+      modified.waypoints[idx] = wp;
+      setGeneratedRoute(modified);
+      setChatMessages((prev) => [...prev, { role: "system", text: `✓ 当前站已替换为「${wp.name}」` }]);
+      reviewModifiedRoute(modified, waypointIndex);
     } else if (action.type === "skip_current") {
-      if (exploreStep === "initial" || exploreStep === "checkin_initial") {
-        setExploreStep("hidden_found");
-      } else if (exploreStep === "next_objective" || exploreStep === "checkin_next") {
+      if (waypointIndex < generatedRoute.waypoints.length - 1) {
+        setWaypointIndex((i) => i + 1);
+        setExploreStep("next_objective");
+      } else {
         setExploreStep("achievement_unlock");
       }
       setChatMessages((prev) => [...prev, { role: "system", text: "✓ 已跳过当前站" }]);
     } else if (action.type === "add_stop" && wp) {
-      setGeneratedRoute((r) => {
-        if (!r) return r;
-        return { ...r, waypoints: [...r.waypoints, wp] };
-      });
+      const modified = { ...generatedRoute, waypoints: [...generatedRoute.waypoints, wp] };
+      setGeneratedRoute(modified);
       setChatMessages((prev) => [...prev, { role: "system", text: `✓ 已在路线末尾加了「${wp.name}」` }]);
+      reviewModifiedRoute(modified, waypointIndex);
     }
   };
 
@@ -163,14 +218,14 @@ export default function App() {
     setScreen(next);
   };
 
-  // 用户没填偏好就直接"开始探索"时用的默认值（探索 / 1 小时 / 步行 / 不挑）
+  // 用户没填偏好就直接"开始探索"时用的默认值（探索 / 半天 / 步行 / 不挑）
   const DEFAULT_PREFERENCES: UserPreferences = {
     mood: "explore",
-    duration: "1h",
+    duration: "half_day",
     transport: "walk",
-    special: [],
+    special: ["outdoor"],
     foodPreference: [],
-    intensity: "normal",
+    intensity: "don't_think",
     companion: "solo",
   };
 
@@ -181,16 +236,24 @@ export default function App() {
     setGenerateError(null);
     // 重置行为信号
     tripStartTime.current = Date.now();
-    branchChosenRef.current = undefined;
     chatActionLog.current = [];
     hiddenTriggered.current = false;
     try {
-      const route = await generateRoute(prefs, profile, tripHistory);
+      let wCode: string | undefined;
+      let wTemp: number | undefined;
+      try {
+        const w = await fetch("/api/weather").then(r => r.json());
+        wCode = w.icon;
+        wTemp = parseInt(w.temp);
+        weatherRef.current = { code: wCode, temp: wTemp };
+      } catch {}
+      const route = await generateRoute(prefs, profile, tripHistory, wCode, wTemp);
       setGeneratedRoute(route);
       setOverridePosition(null);
       setWaypointIndex(0);
+      setCheckinPhotos({});
       console.log("AI 生成的路线：", route);
-      setExploreStep("initial");
+      setExploreStep("gear_confirmation");
     } catch (err) {
       console.error("生成路线失败：", err);
       setGenerateError("路线生成失败，请重试");
@@ -211,30 +274,19 @@ export default function App() {
     setScreen("explore");
   };
 
-  // intro → 直接开始
+  // intro → 直接开始（跳过偏好，直接生成路线）
   const handleDirectStart = () => {
-    setPreferences(DEFAULT_PREFERENCES);
-    setExploreStep("gear_confirmation");
+    runGeneration(DEFAULT_PREFERENCES);
   };
 
-  // 偏好页确认 → 先进装备确认
+  // 偏好页确认 → 直接生成路线（路线生成完成后进装备确认）
   const handlePreferenceConfirm = (prefs: UserPreferences) => {
-    setPreferences(prefs);
-    setExploreStep("gear_confirmation");
+    runGeneration(prefs);
   };
 
-  // 装备确认 → 开始生成路线
+  // 装备确认 → 开始探索
   const handleGearConfirm = () => {
-    runGeneration(preferences ?? DEFAULT_PREFERENCES);
-  };
-
-  // 二叉树 A/B：用户选定第二站 → 写回 waypoints[1] → 进 next_objective
-  const handleBranchChoice = (index: number) => {
-    branchChosenRef.current = index;
-    setGeneratedRoute((r) => (r ? commitBranchChoice(r, index) : r));
-    setOverridePosition(null);
-    setWaypointIndex((prev) => prev + 1);
-    setExploreStep("next_objective");
+    setExploreStep("initial");
   };
 
   // 追踪 hidden_active 触发 + achievement_unlock 组装 TripRecord
@@ -272,7 +324,6 @@ export default function App() {
       id: crypto.randomUUID(),
       date: new Date().toISOString().slice(0, 10),
       waypoints: wps,
-      branchChosen: branchChosenRef.current,
       chatActions: [...chatActionLog.current],
       distanceKm: 0,
       durationMin: elapsed,
@@ -331,6 +382,14 @@ export default function App() {
     });
   }, []);
 
+  const handleTripFeedback = useCallback((tripId: string, text: string) => {
+    setTripHistory((prev) => {
+      const updated = prev.map((t) => t.id === tripId ? { ...t, feedback: text } : t);
+      try { localStorage.setItem(TRIP_HISTORY_KEY, JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+  }, []);
+
   // Vlog 生成后持久化
   const handleVlogGenerated = useCallback((v: GeneratedVlog) => {
     setGeneratedVlogs((prev) => {
@@ -383,23 +442,20 @@ export default function App() {
               onPreferenceConfirm={handlePreferenceConfirm}
               onDirectStart={handleDirectStart}
               onGearConfirm={handleGearConfirm}
+              weatherCode={weatherRef.current.code}
               generatedRoute={generatedRoute}
               currentPosition={currentPosition}
               onUserDrag={setOverridePosition}
-              onBranchChoice={handleBranchChoice}
               mystery={preferences?.intensity === "don't_think"}
               waypointIndex={waypointIndex}
               onAdvanceWaypoint={() => {
                 const next = waypointIndex + 1;
                 if (next < (generatedRoute?.waypoints.length ?? 0)) {
                   setWaypointIndex(next);
-                  const ht = generatedRoute?.hiddenTask;
-                  if (exploreStep === "reward_hidden" && ht) {
-                    setOverridePosition({ lat: ht.lat, lng: ht.lng });
-                  } else {
-                    setOverridePosition(null);
-                  }
+                  setOverridePosition(null);
                   setExploreStep("next_objective");
+                } else if (generatedRoute?.hiddenTask) {
+                  setExploreStep("hidden_found");
                 } else {
                   setExploreStep("achievement_unlock");
                 }
@@ -411,17 +467,20 @@ export default function App() {
               onAchievementContinue={handleAchievementContinue}
               onFeedbackReact={(emoji) => saveTripRecord(emoji)}
               onFeedbackDismiss={() => saveTripRecord()}
+              onCheckinPhoto={handleCheckinPhoto}
             />
           )}
           {screen === "story" && (
             <StoryScreen
               onNavigate={navigate}
               generatedRoute={generatedRoute}
+              checkinPhotos={checkinPhotos}
               vlogs={generatedVlogs}
               onVlogGenerated={handleVlogGenerated}
               tripHistory={tripHistory}
               onTripReaction={handleTripReaction}
               onWaypointReaction={handleWaypointReaction}
+              onTripFeedback={handleTripFeedback}
             />
           )}
           {screen === "bag" && <BagScreen onNavigate={navigate} generatedRoute={generatedRoute} />}

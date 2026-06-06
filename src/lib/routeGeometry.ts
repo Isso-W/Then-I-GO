@@ -75,14 +75,13 @@ export function partialPoly(poly: LatLng[], frac: number): LatLng[] {
  * 逐段沿街寻路得到 legs，拼成 fullPath，并算总里程 / 步行时长。
  */
 export function computeVlogGeo(route: GeneratedRoute): VlogGeo {
-  // 按实际探索顺序：wp[0] → hiddenTask → wp[1] → wp[2] → ...
+  // 按实际探索顺序：wp[0] → wp[1] → ... → wp[N-1] → hiddenTask
   const allWps: { lat: number; lng: number; emoji: string; name: string; reward: string }[] = [];
-  for (let i = 0; i < route.waypoints.length; i++) {
-    const wp = route.waypoints[i];
+  for (const wp of route.waypoints) {
     allWps.push(wp);
-    if (i === 0 && route.hiddenTask) {
-      allWps.push(route.hiddenTask);
-    }
+  }
+  if (route.hiddenTask) {
+    allWps.push(route.hiddenTask);
   }
   const stops: VlogGeoStop[] = allWps.map((wp) => ({
     lat: wp.lat,

@@ -8,7 +8,7 @@ import { distanceMeters } from "../agents/poiFilter";
 import type { LatLng } from "../components/mapProjection";
 import { ChatBubble, ChatPanel, type ChatMessage } from "../components/ChatPanel";
 import { TripFeedbackOverlay } from "../components/TripFeedbackOverlay";
-import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute, Waypoint, RouteBranch } from "../types";
+import { ScreenType, ExploreStep, UserPreferences, GeneratedRoute, Waypoint } from "../types";
 import { useWeather, weatherEmoji, weatherAdvice } from "../lib/useWeather";
 import { buildNavSteps, type NavStep } from "../lib/turnByTurn";
 import { buildGraph, routePolyline, type Street } from "../lib/roadGraph";
@@ -25,10 +25,10 @@ export function ExploreScreen({
   onPreferenceConfirm,
   onDirectStart,
   onGearConfirm,
+  weatherCode,
   generatedRoute,
   currentPosition,
   onUserDrag,
-  onBranchChoice,
   mystery,
   chatMessages,
   chatLoading,
@@ -39,6 +39,7 @@ export function ExploreScreen({
   onFeedbackDismiss,
   waypointIndex = 0,
   onAdvanceWaypoint,
+  onCheckinPhoto,
 }: {
   onNavigate: (s: ScreenType) => void;
   step: ExploreStep;
@@ -46,10 +47,10 @@ export function ExploreScreen({
   onPreferenceConfirm: (prefs: UserPreferences) => void;
   onDirectStart: () => void;
   onGearConfirm?: () => void;
+  weatherCode?: string;
   generatedRoute: GeneratedRoute | null;
   currentPosition: LatLng;
   onUserDrag?: (p: LatLng) => void;
-  onBranchChoice: (index: number) => void;
   mystery?: boolean;
   chatMessages?: ChatMessage[];
   chatLoading?: boolean;
@@ -60,6 +61,7 @@ export function ExploreScreen({
   onFeedbackDismiss?: () => void;
   waypointIndex?: number;
   onAdvanceWaypoint?: () => void;
+  onCheckinPhoto?: (stopIndex: number, dataUrl: string) => void;
 }) {
   const [chatOpen, setChatOpen] = useState(false);
 
@@ -81,7 +83,7 @@ export function ExploreScreen({
   };
 
   const handleInitialCheckin = () => {
-    setStep("hidden_found");
+    onAdvanceWaypoint?.();
   };
 
   const startHiddenTask = () => {
@@ -140,7 +142,7 @@ export function ExploreScreen({
           <PreferenceOverlay key="preference" onConfirm={onPreferenceConfirm} onBack={() => setStep("intro")} />
         )}
         {step === "gear_confirmation" && (
-          <GearConfirmationOverlay onConfirm={() => onGearConfirm?.()} onBack={() => setStep("preference_selection")} />
+          <GearConfirmationOverlay onConfirm={() => onGearConfirm?.()} onBack={() => setStep("intro")} weatherCode={weatherCode} generatedRoute={generatedRoute} />
         )}
       </AnimatePresence>
 
@@ -151,7 +153,7 @@ export function ExploreScreen({
       </AnimatePresence>
 
       <AnimatePresence>
-        {isGameStarted && !isCapturing && step !== "branch_choice" && (
+        {isGameStarted && !isCapturing && (
           <motion.div
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -180,7 +182,15 @@ export function ExploreScreen({
       <AnimatePresence>
         {isCapturing && (
           <CameraInterface
-            onCapture={() => {
+            onCapture={(photoDataUrl) => {
+              if (photoDataUrl && onCheckinPhoto && generatedRoute) {
+                const wpCount = generatedRoute.waypoints.length;
+                if (step === "checkin_hidden") {
+                  onCheckinPhoto(wpCount, photoDataUrl);
+                } else {
+                  onCheckinPhoto(waypointIndex, photoDataUrl);
+                }
+              }
               if (inRange) {
                 if (step === "checkin_initial") handleInitialCheckin();
                 if (step === "checkin_hidden") handleHiddenCheckin();
@@ -206,20 +216,8 @@ export function ExploreScreen({
             name={generatedRoute?.hiddenTask?.name}
             reward={generatedRoute?.hiddenTask?.reward}
             emoji={generatedRoute?.hiddenTask?.emoji}
-            onContinue={() => {
-              if (generatedRoute?.branch) {
-                setStep("branch_choice");
-              } else {
-                onAdvanceWaypoint?.();
-              }
-            }}
+            onContinue={() => setStep("achievement_unlock")}
           />
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {step === "branch_choice" && (
-          <BranchChoiceOverlay branch={generatedRoute?.branch} onPick={onBranchChoice} mystery={mystery} />
         )}
       </AnimatePresence>
 
@@ -488,7 +486,7 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
 
       <div className="rounded-xl border p-2.5 space-y-2" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-input)" }}>
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full ring-1" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-secondary)", ringColor: "var(--border-subtle)" }}>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: "rgba(108,92,255,0.15)", color: "#A98BFF" }}>
             <Navigation size={20} />
           </div>
           <div className="min-w-0 flex-1">
@@ -617,48 +615,7 @@ function HiddenTaskAlert({ hiddenTask, onAccept, mystery }: { hiddenTask?: Waypo
   );
 }
 
-function BranchChoiceOverlay({ branch, onPick, mystery }: { branch?: RouteBranch; onPick: (index: number) => void; mystery?: boolean }) {
-  if (!branch) return null;
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="absolute inset-0 z-50 flex flex-col items-center justify-center p-6 backdrop-blur-md bg-black/30" style={{ color: "#fff" }}
-    >
-      <motion.h2
-        initial={{ y: -10, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="mb-5 text-center text-[20px] font-black italic text-white drop-shadow-lg"
-      >
-        {branch.axis}
-      </motion.h2>
-      <div className="flex w-full max-w-sm gap-3">
-        {branch.options.map((opt, i) => (
-          <motion.button
-            key={i}
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.08 * i }}
-            onClick={() => onPick(i)}
-            className="flex-1 rounded-3xl border p-4 text-left backdrop-blur-xl active:scale-[0.97] transition-transform shadow-[0_8px_30px_rgba(0,0,0,0.1)] dark:shadow-[0_18px_50px_rgba(0,0,0,.45)]"
-            style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-card)" }}
-          >
-            <div className="text-3xl">{opt.emoji}</div>
-            <div className="mt-2 text-[15px] font-bold" style={{ color: "var(--text-primary)" }}>{mystery ? "？？？" : opt.name}</div>
-            <p className="mt-1 text-[11px] leading-relaxed line-clamp-3" style={{ color: "var(--text-muted)" }}>{opt.description}</p>
-            <div className="mt-2 flex items-center gap-1 text-[10px] text-[#6C5CFF]">
-              <MapPin size={11} /> {opt.distanceText}
-            </div>
-          </motion.button>
-        ))}
-      </div>
-      <p className="mt-4 text-[11px]" style={{ color: "var(--text-muted)" }}>点一张卡 = 选定第二站</p>
-    </motion.div>
-  );
-}
-
-function CameraInterface({ onCapture, onClose }: { onCapture: () => void, onClose: () => void }) {
+function CameraInterface({ onCapture, onClose }: { onCapture: (photoDataUrl?: string) => void, onClose: () => void }) {
   const [isRecording, setIsRecording] = useState(false);
   const [progress, setProgress] = useState(0);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
@@ -698,6 +655,24 @@ function CameraInterface({ onCapture, onClose }: { onCapture: () => void, onClos
     startCamera(next);
   };
 
+  const grabFrame = (): string | undefined => {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth) return undefined;
+    const canvas = document.createElement("canvas");
+    const size = Math.min(video.videoWidth, 720);
+    const scale = size / video.videoWidth;
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return undefined;
+    if (facingMode === "user") {
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL("image/jpeg", 0.85);
+  };
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRecording) {
@@ -705,7 +680,8 @@ function CameraInterface({ onCapture, onClose }: { onCapture: () => void, onClos
         setProgress(prev => {
           if (prev >= 100) {
             clearInterval(interval);
-            setTimeout(onCapture, 500);
+            const photo = grabFrame();
+            setTimeout(() => onCapture(photo), 500);
             return 100;
           }
           return prev + 2;
@@ -961,7 +937,7 @@ function RewardOverlay({ onContinue, reward, emoji, name }: { onContinue: () => 
             onClick={onContinue}
             className="w-full rounded-2xl bg-[#6C5CFF] py-4 text-sm font-black text-white active:scale-95 transition-transform"
           >
-            查收并前往下一站
+            查收奖励
           </button>
         </div>
       </div>
@@ -1033,10 +1009,10 @@ const PreferenceOverlay: React.FC<{ onConfirm: (prefs: UserPreferences) => void;
   ];
 
   const durations = [
-    { id: "30min", label: "30分钟" },
     { id: "1h", label: "1小时" },
     { id: "2h", label: "2小时" },
     { id: "half_day", label: "半天" },
+    { id: "full_day", label: "整天" },
   ];
 
   const transports = [
@@ -1313,15 +1289,24 @@ function SectionTitle({ num, title, sub, help }: { num: number | string; title: 
   );
 }
 
-function GearConfirmationOverlay({ onConfirm, onBack }: { onConfirm: () => void; onBack: () => void }) {
-  const [confirmed, setConfirmed] = useState<string[]>(["phone", "battery"]);
-  
+const RAIN_CODES = new Set(["176","200","263","266","293","296","299","302","305","308","386","389","392"]);
+const ID_CATEGORIES = new Set(["酒吧","酒吧清吧","夜店","KTV","livehouse"]);
+
+function GearConfirmationOverlay({ onConfirm, onBack, weatherCode, generatedRoute }: { onConfirm: () => void; onBack: () => void; weatherCode?: string; generatedRoute?: GeneratedRoute | null }) {
+  const needUmbrella = !!weatherCode && RAIN_CODES.has(weatherCode);
+  const needId = !!generatedRoute && [
+    ...generatedRoute.waypoints,
+    ...(generatedRoute.hiddenTask ? [generatedRoute.hiddenTask] : []),
+  ].some(wp => ID_CATEGORIES.has(wp.category ?? ""));
+
   const gearList = [
     { id: "phone", icon: Smartphone, label: "手机", desc: "满电状态" },
     { id: "battery", icon: Battery, label: "充电宝", desc: "以防万一" },
-    { id: "umbrella", icon: Umbrella, label: "雨伞", desc: "预防阵雨" },
-    { id: "id_card", icon: CreditCard, label: "身份证", desc: "必要证件" },
+    ...(needUmbrella ? [{ id: "umbrella", icon: Umbrella, label: "雨伞", desc: "今天有雨，记得带伞" }] : []),
+    ...(needId ? [{ id: "id_card", icon: CreditCard, label: "身份证", desc: "部分场所需实名入场" }] : []),
   ];
+
+  const [confirmed, setConfirmed] = useState<string[]>([]);
 
   const handleConfirm = () => {
     localStorage.setItem('confirmedGear', JSON.stringify(confirmed));

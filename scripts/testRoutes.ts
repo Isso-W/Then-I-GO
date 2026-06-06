@@ -89,7 +89,6 @@ async function main() {
       const wps = route.waypoints.map((w) => `${w.emoji} ${w.name}`);
       const cats = route.waypoints.map((w) => w.category ?? "?");
       const hidden = route.hiddenTask ? `${route.hiddenTask.emoji} ${route.hiddenTask.name}` : "无";
-      const branch = route.branch ? `${route.branch.options[0].name} vs ${route.branch.options[1].name}` : "无";
       const uniqueCats = new Set(cats).size;
 
       const line = [
@@ -97,7 +96,6 @@ async function main() {
         `  站点(${wps.length}): ${wps.join(" → ")}`,
         `  品类: ${cats.join(" / ")}  (${uniqueCats} 种)`,
         `  隐藏: ${hidden}`,
-        `  岔路: ${branch}`,
       ].join("\n");
 
       console.log(`✅ ${wps.length} 站`);

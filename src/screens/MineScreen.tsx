@@ -79,7 +79,10 @@ export function MineScreen({ onNavigate, profile, generatedRoute, tripHistory = 
           </button>
           <div>
             <div className="flex items-center gap-2">
-              <div className="text-[20px] font-bold">那我走</div>
+              <div className="text-[20px] font-bold">{profile?.name || "那我走"}</div>
+              {profile?.gender && profile.gender !== "other" && (
+                <span className="text-[14px]">{profile.gender === "male" ? "👦" : "👧"}</span>
+              )}
               {profile?.mbti && (
                 <span className="rounded-full bg-[#6C5CFF]/20 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider text-[#A98BFF]">
                   {profile.mbti}

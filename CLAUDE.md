@@ -141,9 +141,25 @@ mood_match[], mbti_tags[]           偏好匹配维度
 best_time                           推荐游玩时段文案
 ```
 
-**生成策略**：分 3 批（西北区/东北区/南部区）各生成约 38 个，限定每批坐标范围，避免扎堆。生成后 `snapPOIsToRoads.ts` 把所有 POI 按路段长度加权随机吸附到路网上，保证每个点都在路上、可达可打卡。
+**生成策略**：Gemini 分 3 批（西北区/东北区/南部区）生成初始数据，限定每批坐标范围避免扎堆；后续人工审查 + 手工补充至 200 条，逐条校验 tags/mood_match/price_level 合理性。生成后 `snapPOIsToRoads.ts` 把所有 POI 按路段长度加权随机吸附到路网上，保证每个点都在路上、可达可打卡。
 
-**POI 类型覆盖**（30 种，121 个）：咖啡厅、餐厅系列（日韩/北京风味/素食/火锅/东北菜/小吃）、奶茶甜品、书店、文创小店、美术馆、livehouse、公园绿地、酒吧系列、夜宵烧烤、花店、健身瑜伽、共享自习室、宠物友好咖啡、景点/地标、夜店、KTV、电影院、美食城、美食街、台球/棋牌、桌游/密室、运动娱乐。洗衣/便利店已删除（低探索价值）。
+**POI 类型覆盖**（31 种，200 个）：咖啡厅(20)、奶茶甜品(13)、文创小店(12)、餐厅-日韩料理(12)、餐厅-北京风味(10)、书店(9)、餐厅(9)、景点/地标(9)、公园绿地(7)、夜宵烧烤(6)、餐厅-素食轻食(6)、共享空间/自习室(6)、宠物友好咖啡(6)、运动娱乐(6)、酒吧(5)、美术馆(5)、健身/瑜伽(5)、花店(5)、酒吧清吧(5)、livehouse(5)、餐厅-火锅(5)、餐厅-小吃(5)、桌游/密室(5)、餐厅-东北菜(4)、夜店(3)、KTV(3)、电影院(3)、美食城(3)、台球/棋牌(3)、电竞/网咖(3)、美食街(2)。洗衣/便利店已删除（低探索价值）。
+
+**数据质量管控**（人工审查 + 脚本校验）：
+
+- **tags 语义审查**：7 种合法 tag（`art` 文艺 / `outdoor` 户外 / `food` 美食 / `busy` 热闹 / `photo` 拍照 / `niche` 小众 / `budget` 省钱），逐条检查 tag 与实际场所是否匹配。已修正的典型问题：室内场所（健身房/VR馆/保龄球/汗蒸房等 9 个）错标 `outdoor`；连锁咖啡（星巴克/瑞幸/Tims/Peet's）错标 `art`；自习室错标 `photo`/`busy`。
+- **mood_match 闭集约束**：只允许 6 种用户可选心情（`happy`/`tired`/`bored`/`relax`/`explore`/`hungry`），清理了 34 个 POI 中混入的非法值（budget/photo/art/busy/study——这些是 tag 不是 mood）。
+- **price_level 一致性**：公园绿地从 0 修正为 1（price_level 定义为 1-4 档），跳蚤市场等 price_level=1 的补上 `budget` tag。
+- **标签丰富度**：单标签 POI 从 15 个减至 7 个（仅健身房/运动场馆只标 `busy`，合理），补充了 15 个餐厅/娱乐场所的第二标签。
+- **品类均衡**：补充了东北菜(1→4)、小吃(1→5)、火锅(2→5)、台球棋牌(1→3)、电竞网咖(1→3) 等原本偏少的品类，每种至少 2 个确保候选池有选择空间。
+
+**统计概览**：
+- Tag 分布：photo 92 / niche 83 / budget 75 / busy 75 / food 75 / art 52 / outdoor 16
+- Mood 覆盖：explore 94 / relax 91 / happy 85 / hungry 63 / bored 34 / tired 32
+- Price 分布：¥1 档 68 个 / ¥2 档 105 个 / ¥3 档 25 个 / ¥4 档 2 个
+- Rating：3.9~4.8（均值 4.38）
+- 停留时间：10~180 分钟（均值 65 分钟）
+- 人流：low 56 / medium 91 / high 53
 
 ### 品类图片（`public/categories/`，`src/lib/categoryImages.ts`）
 
@@ -160,7 +176,7 @@ best_time                           推荐游玩时段文案
 `routeAgent.ts` + `poiFilter.ts` + `routeReviewer.ts` 实现的工作流：
 
 ```
-1. poiFilter.filterCandidates：按偏好标签/营业时间/排队时长过滤，渐进降级，每个 base category 最多 2 个（category cap），取 top 10
+1. poiFilter.filterCandidates：按偏好标签/营业时间/排队时长过滤，渐进降级，每个 base category 最多 2 个（category cap），取 top 15
 2. routeAgent.buildPrompt → Gemini call 1：从候选里选点 + 排序 + 写故事/任务/奖励
 3. routeReviewer.reviewRoute → Gemini call 2（ReAct 审查）：
    - 品类多样性（连续同类型？整体太集中？）

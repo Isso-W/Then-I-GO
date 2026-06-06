@@ -53,14 +53,16 @@ function fmtDuration(scenes: { durationSec: number }[]): string {
 
 const REACTION_OPTIONS = ["🤩", "😎", "😐", "😩", "💀", "💸"];
 
-export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGenerated, tripHistory = [], onTripReaction, onWaypointReaction }: {
+export function StoryScreen({ onNavigate, generatedRoute, checkinPhotos = {}, vlogs = [], onVlogGenerated, tripHistory = [], onTripReaction, onWaypointReaction, onTripFeedback }: {
   onNavigate: (s: ScreenType) => void;
   generatedRoute?: GeneratedRoute | null;
+  checkinPhotos?: Record<number, string>;
   vlogs?: GeneratedVlog[];
   onVlogGenerated?: (v: GeneratedVlog) => void;
   tripHistory?: TripRecord[];
   onTripReaction?: (tripId: string, emoji: string) => void;
   onWaypointReaction?: (tripId: string, waypointIdx: number, emoji: string) => void;
+  onTripFeedback?: (tripId: string, text: string) => void;
 }) {
   const [activeTab, setActiveTab] = React.useState(0);
   const [selectedDate, setSelectedDate] = React.useState("今日");
@@ -98,7 +100,6 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
   ];
   const routeItems: TimelineItemData[] | null = generatedRoute
     ? [
-        { time: "出发", title: "从五道口出发", desc: `今日路线：${generatedRoute.title}`, icon: <MapPin size={17} />, img: "bg-gradient-to-br from-green-700 to-yellow-300" },
         ...generatedRoute.waypoints.map((wp, i) => ({
           time: `第${i + 1}站`,
           title: `${wp.emoji} ${wp.name}`,
@@ -119,11 +120,9 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
     : null;
 
   const currentItems =
-    selectedDate === "今日" && routeItems
+    selectedDate === "今日"
       ? routeItems
-      : itemsByDate[selectedDate] || [
-          { time: "15:00", title: "日常记录", desc: "在这个城市的惬意午后。", icon: <MapPin size={17} />, img: "bg-gradient-to-br from-slate-700 to-slate-900" },
-        ];
+      : itemsByDate[selectedDate] || null;
 
   const routeTitle =
     selectedDate === "今日"
@@ -135,25 +134,29 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
 
   // 生成 Vlog 用的规范站点列表（也是上传配图的对象）：
   // 有真实路线 → waypoints(+隐藏任务)，与回放地图站点一一对应；否则退回时间线素材。
-  // 按实际探索顺序：wp[0] → hiddenTask → wp[1] → wp[2] → ...
+  // 按实际探索顺序：wp[0] → wp[1] → ... → wp[N-1] → hiddenTask
   const genStops = React.useMemo(
     () => {
-      if (!generatedRoute) return currentItems.map((it) => ({ name: cleanName(it.title), desc: it.desc, emoji: "📍" }));
-      const ordered: { name: string; desc: string; emoji: string }[] = [];
-      for (let i = 0; i < generatedRoute.waypoints.length; i++) {
-        const wp = generatedRoute.waypoints[i];
-        ordered.push({ name: wp.name, desc: wp.description, emoji: wp.emoji });
-        if (i === 0 && generatedRoute.hiddenTask) {
-          ordered.push({ name: generatedRoute.hiddenTask.name, desc: generatedRoute.hiddenTask.description, emoji: generatedRoute.hiddenTask.emoji });
-        }
+      if (!generatedRoute) return (currentItems ?? []).map((it) => ({ name: cleanName(it.title), desc: it.desc, emoji: "📍" }));
+      const ordered: { name: string; desc: string; emoji: string }[] = generatedRoute.waypoints.map((wp) => ({
+        name: wp.name, desc: wp.description, emoji: wp.emoji,
+      }));
+      if (generatedRoute.hiddenTask) {
+        ordered.push({ name: generatedRoute.hiddenTask.name, desc: generatedRoute.hiddenTask.description, emoji: generatedRoute.hiddenTask.emoji });
       }
       return ordered;
     },
     [generatedRoute, currentItems]
   );
 
-  // 切日期 / 换路线时清空已上传的配图（站点变了，index 不再对应）
-  React.useEffect(() => { setUploads({}); }, [selectedDate, generatedRoute]);
+  // 切日期 / 换路线时重置配图：今日用打卡拍的照片预填，其他清空
+  React.useEffect(() => {
+    if (selectedDate === "今日" && Object.keys(checkinPhotos).length > 0) {
+      setUploads({ ...checkinPhotos });
+    } else {
+      setUploads({});
+    }
+  }, [selectedDate, generatedRoute, checkinPhotos]);
 
   // 点某一站的上传槽 → 打开文件选择
   const pickPhoto = (idx: number) => {
@@ -258,6 +261,8 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
                     ))}
                   </div>
 
+                  {currentItems ? (
+                  <>
                   <div className="flex items-center justify-between mb-4 text-[11px] uppercase tracking-widest font-black" style={{ color: "var(--text-faint)" }}>
                     <span className="flex items-center gap-1.5">
                       <div className="h-1 w-3 bg-[#6C5CFF] rounded-full" />
@@ -265,7 +270,7 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
                     </span>
                     <span className="text-[#6C5CFF]">{currentItems.length} 个片段</span>
                   </div>
-                  
+
                   <div className="space-y-0">
                     {currentItems.map((it, idx) => (
                       <TimelineItem
@@ -281,7 +286,6 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
                     ))}
                   </div>
 
-                  {/* 为每一站上传照片（可选，不传用示例图）—— 需先有真实路线 */}
                   {canGenerate && (
                   <div className="mt-5">
                     <div className="mb-3 flex items-center justify-between text-[11px] uppercase tracking-widest font-black" style={{ color: "var(--text-faint)" }}>
@@ -328,6 +332,14 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
                   </div>
                   )}
                   <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
+                  </>
+                  ) : (
+                  <div className="flex flex-col items-center justify-center py-12 gap-3">
+                    <MapPinned size={32} style={{ color: "var(--text-muted)" }} />
+                    <p className="text-sm font-bold" style={{ color: "var(--text-muted)" }}>还没有今日路线</p>
+                    <p className="text-xs" style={{ color: "var(--text-faint)" }}>先去探索，打卡后这里会出现素材集</p>
+                  </div>
+                  )}
 
                   {canGenerate ? (
                     <motion.button
@@ -415,6 +427,7 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
                       delayOffset={realHistory.length}
                       onReact={onTripReaction}
                       onWaypointReact={onWaypointReaction}
+                      onFeedback={onTripFeedback}
                     />
                   ))}
                 </div>
@@ -450,16 +463,20 @@ export function StoryScreen({ onNavigate, generatedRoute, vlogs = [], onVlogGene
 }
 
 // ── 风格选择浮层 ──────────────────────────────────────────
-function TripCard({ trip, idx, delayOffset, onReact, onWaypointReact }: {
+function TripCard({ trip, idx, delayOffset, onReact, onWaypointReact, onFeedback }: {
   key?: string;
   trip: TripRecord;
   idx: number;
   delayOffset: number;
   onReact?: (tripId: string, emoji: string) => void;
   onWaypointReact?: (tripId: string, waypointIdx: number, emoji: string) => void;
+  onFeedback?: (tripId: string, text: string) => void;
 }) {
   const [showPicker, setShowPicker] = React.useState(false);
   const [activeWp, setActiveWp] = React.useState<number | null>(null);
+  const [showFeedbackInput, setShowFeedbackInput] = React.useState(false);
+  const [feedbackText, setFeedbackText] = React.useState(trip.feedback ?? "");
+  const feedbackRef = React.useRef<HTMLTextAreaElement>(null);
   const today = new Date().toISOString().slice(0, 10);
   const dayLabel = trip.date === today ? "今天" : trip.date.slice(5).replace("-", ".");
   const visitedCount = trip.waypoints.filter((w) => w.visited).length;
@@ -572,6 +589,77 @@ function TripCard({ trip, idx, delayOffset, onReact, onWaypointReact }: {
           )}
         </div>
       )}
+
+      {trip.feedback && !showFeedbackInput && (
+        <button
+          onClick={() => setShowFeedbackInput(true)}
+          className="mt-2 w-full rounded-lg px-3 py-1.5 text-left text-[12px] italic"
+          style={{ backgroundColor: "var(--bg-input)", color: "var(--text-secondary)" }}
+        >
+          "{trip.feedback}"
+        </button>
+      )}
+
+      {!trip.feedback && !showFeedbackInput && (
+        <button
+          onClick={() => { setShowFeedbackInput(true); setTimeout(() => feedbackRef.current?.focus(), 100); }}
+          className="mt-2 flex items-center gap-1 text-[11px] font-bold"
+          style={{ color: "var(--text-faint)" }}
+        >
+          <span>✏️</span> 写点感想
+        </button>
+      )}
+
+      <AnimatePresence>
+        {showFeedbackInput && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <textarea
+              ref={feedbackRef}
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value.slice(0, 100))}
+              placeholder="这趟旅程有什么想说的..."
+              rows={2}
+              className="mt-2 w-full resize-none rounded-xl border px-3 py-2 text-[12px] outline-none transition-colors focus:border-[#6C5CFF]"
+              style={{
+                backgroundColor: "var(--bg-input)",
+                borderColor: "var(--border-subtle)",
+                color: "var(--text-primary)",
+              }}
+              autoFocus
+            />
+            <div className="mt-1 flex items-center justify-between px-1">
+              <span className="text-[10px]" style={{ color: "var(--text-faint)" }}>
+                {feedbackText.length}/100
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setShowFeedbackInput(false); setFeedbackText(trip.feedback ?? ""); }}
+                  className="text-[11px] font-bold"
+                  style={{ color: "var(--text-faint)" }}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => {
+                    const trimmed = feedbackText.trim();
+                    if (trimmed) onFeedback?.(trip.id, trimmed);
+                    setShowFeedbackInput(false);
+                  }}
+                  className="rounded-full px-4 py-1 text-[11px] font-bold text-white"
+                  style={{ backgroundColor: "#6C5CFF" }}
+                >
+                  保存
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
@@ -669,7 +757,8 @@ function VlogGenerationOverlay({ ready, onFinish }: { ready: boolean; onFinish: 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-[110] flex flex-col items-center justify-center bg-black/90 backdrop-blur-xl"
+      className="absolute inset-0 z-[110] flex flex-col items-center justify-center backdrop-blur-xl"
+      style={{ backgroundColor: "var(--bg-base)" }}
     >
       <div className="absolute inset-0 overflow-hidden opacity-20 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] bg-[#6C5CFF]/30 blur-[120px] rounded-full animate-pulse" />
@@ -680,7 +769,7 @@ function VlogGenerationOverlay({ ready, onFinish }: { ready: boolean; onFinish: 
           {/* Animated rings */}
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-32 w-32 rounded-full border border-[#6C5CFF]/20 animate-[ping_3s_infinite]" />
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-24 w-24 rounded-full border border-[#6C5CFF]/40 animate-[ping_2s_infinite]" />
-          
+
           <div className="h-20 w-20 rounded-3xl bg-[#6C5CFF] flex items-center justify-center shadow-[0_0_50px_rgba(108,92,255,0.6)] relative z-10">
             <AnimatePresence mode="wait">
               <motion.div
@@ -699,7 +788,7 @@ function VlogGenerationOverlay({ ready, onFinish }: { ready: boolean; onFinish: 
           </div>
         </div>
 
-        <h2 className="text-2xl font-black text-white italic tracking-tight mb-2">
+        <h2 className="text-2xl font-black italic tracking-tight mb-2" style={{ color: "var(--text-primary)" }}>
           {progress < 100 ? "AI 正在创作中" : "制作完成！"}
         </h2>
         <div className="flex items-center gap-2 text-[var(--text-muted)] text-[13px] font-medium h-6">
@@ -762,7 +851,8 @@ function VlogPlayerOverlay({ vlog, onClose }: { vlog: GeneratedVlog; onClose: ()
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-[120] bg-black overflow-hidden"
+      className="absolute inset-0 z-[120] overflow-hidden"
+      style={{ backgroundColor: "var(--bg-base)" }}
     >
       {/* ── 路线回放 ── */}
       {phase === "replay" && hasGeo && (
@@ -808,15 +898,15 @@ function VlogPlayerOverlay({ vlog, onClose }: { vlog: GeneratedVlog; onClose: ()
               <span className="rounded-full px-2 py-0.5 text-[10px] font-black" style={{ background: `${theme.accent}33`, color: theme.accent }}>
                 {theme.label}
               </span>
-              <span className="text-[13px] font-black italic text-white drop-shadow">{vlog.title}</span>
+              <span className="text-[13px] font-black italic drop-shadow" style={{ color: "var(--text-primary)" }}>{vlog.title}</span>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => setPhase("card")} className="rounded-full bg-black/40 px-3 py-1.5 text-[11px] font-bold text-[var(--text-secondary)] active:scale-90">跳过</button>
-              <button onClick={onClose} className="rounded-full bg-black/40 p-2 text-[var(--text-secondary)] active:scale-90"><X size={18} /></button>
+              <button onClick={() => setPhase("card")} className="rounded-full px-3 py-1.5 text-[11px] font-bold active:scale-90" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-secondary)" }}>跳过</button>
+              <button onClick={onClose} className="rounded-full p-2 active:scale-90" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-secondary)" }}><X size={18} /></button>
             </div>
           </div>
           {/* BGM chip */}
-          <div className="pointer-events-none absolute bottom-3 right-4 z-10 flex items-center gap-1.5 rounded-full bg-black/40 px-2.5 py-1 text-[10px] font-bold text-white/70">
+          <div className="pointer-events-none absolute bottom-3 right-4 z-10 flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-bold" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-muted)" }}>
             <Music size={11} style={{ color: theme.accent }} /> {vlog.bgm}
           </div>
         </div>
@@ -824,20 +914,19 @@ function VlogPlayerOverlay({ vlog, onClose }: { vlog: GeneratedVlog; onClose: ()
 
       {/* ── City Walk 战报卡 ── */}
       {phase === "card" && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 flex flex-col overflow-y-auto no-scrollbar">
-          <div className={`absolute inset-0 ${theme.preview} opacity-[0.18]`} />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/80 to-black" />
-          <button onClick={onClose} className="absolute right-5 top-12 z-20 rounded-full bg-white/10 p-2 text-white/70 active:scale-90"><X size={20} /></button>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 flex flex-col overflow-y-auto no-scrollbar" style={{ backgroundColor: "var(--bg-base)" }}>
+          <div className={`absolute inset-0 ${theme.preview} opacity-[0.10]`} />
+          <button onClick={onClose} className="absolute right-5 top-12 z-20 rounded-full p-2 active:scale-90" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-muted)" }}><X size={20} /></button>
 
           <div className="relative z-10 mx-auto w-full max-w-sm px-6 pb-10 pt-16">
             <div className="text-[11px] font-black uppercase tracking-[0.2em]" style={{ color: theme.accent }}>
               {theme.label} · City Walk 战报
             </div>
-            <h2 className="mt-1.5 text-[26px] font-black italic leading-tight text-white">{vlog.title}</h2>
+            <h2 className="mt-1.5 text-[26px] font-black italic leading-tight" style={{ color: "var(--text-primary)" }}>{vlog.title}</h2>
             {/* 人格金句 */}
             <div className="mt-3 inline-flex items-center gap-2 rounded-full border px-3 py-1.5" style={{ borderColor: `${theme.accent}55`, background: `${theme.accent}1A` }}>
               <Sparkles size={14} style={{ color: theme.accent }} />
-              <span className="text-[13px] font-bold text-white">{vlog.verdict}</span>
+              <span className="text-[13px] font-bold" style={{ color: "var(--text-primary)" }}>{vlog.verdict}</span>
             </div>
 
             {/* 路线缩略图（静态全貌） */}
@@ -865,17 +954,17 @@ function VlogPlayerOverlay({ vlog, onClose }: { vlog: GeneratedVlog; onClose: ()
             </div>
 
             {/* 分享文案 */}
-            <div className="mt-4 rounded-2xl border border-[var(--border-subtle)] bg-white/[0.04] p-4">
-              <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)]">
+            <div className="mt-4 rounded-2xl border p-4" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-input)" }}>
+              <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest" style={{ color: "var(--text-muted)" }}>
                 <Music size={11} /> {vlog.bgm}
               </div>
-              <p className="text-[13px] leading-relaxed text-white/85">{vlog.shareCaption}</p>
+              <p className="text-[13px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>{vlog.shareCaption}</p>
             </div>
 
             {/* 操作 */}
             <div className="mt-6 flex gap-3">
               {hasGeo && (
-                <button onClick={replay} className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-[var(--bg-input)] py-3.5 text-[14px] font-bold text-white active:scale-95">
+                <button onClick={replay} className="flex flex-1 items-center justify-center gap-2 rounded-2xl border py-3.5 text-[14px] font-bold active:scale-95" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-input)", color: "var(--text-primary)" }}>
                   <RotateCcw size={16} /> 重看回放
                 </button>
               )}
@@ -892,10 +981,10 @@ function VlogPlayerOverlay({ vlog, onClose }: { vlog: GeneratedVlog; onClose: ()
 
 function StatCell({ icon, value, unit, accent }: { icon: React.ReactNode; value: string; unit: string; accent: string }) {
   return (
-    <div className="flex flex-col items-center rounded-2xl border border-[var(--border-subtle)] bg-white/[0.04] py-3">
+    <div className="flex flex-col items-center rounded-2xl border py-3" style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-input)" }}>
       <div style={{ color: accent }}>{icon}</div>
-      <div className="mt-1 text-[18px] font-black leading-none text-white">{value}</div>
-      <div className="mt-0.5 text-[10px] font-bold text-[var(--text-muted)]">{unit}</div>
+      <div className="mt-1 text-[18px] font-black leading-none" style={{ color: "var(--text-primary)" }}>{value}</div>
+      <div className="mt-0.5 text-[10px] font-bold" style={{ color: "var(--text-muted)" }}>{unit}</div>
     </div>
   );
 }

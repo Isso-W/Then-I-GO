@@ -18,12 +18,31 @@ import type { Street } from "../lib/roadGraph";
 const network = streetNetwork as { streets: Street[] };
 interface TerrainPolygon { name: string; type: "campus" | "park" | "water" | "commercial"; points: LatLng[]; }
 const terrain = terrainRaw as { polygons: TerrainPolygon[] };
-const TERRAIN_STYLE: Record<TerrainPolygon["type"], { fill: string; opacity: number }> = {
+const TERRAIN_DARK: Record<string, { fill: string; opacity: number }> = {
   campus: { fill: "#1F1B47", opacity: 0.5 },
   park: { fill: "#0F3A24", opacity: 0.5 },
   water: { fill: "#0E3B47", opacity: 0.65 },
   commercial: { fill: "#3D3013", opacity: 0.4 },
 };
+const TERRAIN_LIGHT: Record<string, { fill: string; opacity: number }> = {
+  campus: { fill: "#E8E4F8", opacity: 0.5 },
+  park: { fill: "#D6EFE0", opacity: 0.5 },
+  water: { fill: "#D4EEF4", opacity: 0.65 },
+  commercial: { fill: "#F5EDDA", opacity: 0.4 },
+};
+
+function useIsLight() {
+  const [light, setLight] = useState(
+    () => typeof document !== "undefined" && !!document.querySelector("[data-theme=light]")
+  );
+  useEffect(() => {
+    const el = document.documentElement;
+    const obs = new MutationObserver(() => setLight(el.getAttribute("data-theme") === "light"));
+    obs.observe(el, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => obs.disconnect();
+  }, []);
+  return light;
+}
 
 const REFERENCE_WIDTH_PX = 500;
 
@@ -59,6 +78,18 @@ export function RouteReplay({
   onDone?: () => void;
   onStopChange?: (stopIndex: number | null) => void;
 }) {
+  const isLight = useIsLight();
+  const terrainStyle = isLight ? TERRAIN_LIGHT : TERRAIN_DARK;
+  const streetColor = isLight ? "rgba(108,92,255,0.35)" : "#2A2358";
+  const ghostColor = isLight ? "#6C5CFF" : "#ffffff";
+  const dotInactive = isLight ? "#999" : "#ffffff";
+  const originFill = isLight ? "#6C5CFF" : "#fff";
+  const originStroke = isLight ? "#6C5CFF" : "#fff";
+  const badgeText = isLight ? "#fff" : "#0A0A1A";
+  const progressBg = isLight ? "rgba(0,0,0,0.12)" : "rgba(255,255,255,0.25)";
+  const labelBg = isLight ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.50)";
+  const labelText = isLight ? "rgba(0,0,0,0.75)" : "rgba(255,255,255,0.85)";
+
   const fullBbox = useMemo(() => computeViewBox(geo.fullPath, MIN_VIEW_RADIUS_METERS / 2, 1.35), [geo]);
 
   // 每段时长（按段长 clamp）+ 到站停留（停留期间播放该站照片特写）
@@ -88,8 +119,8 @@ export function RouteReplay({
   const markerScale = width / REFERENCE_WIDTH_PX;
 
   const terrainShapes = useMemo(
-    () => terrain.polygons.map((poly, idx) => ({ key: `t-${idx}`, pts: polyAttr(poly.points, bbox), style: TERRAIN_STYLE[poly.type] })),
-    [bbox]
+    () => terrain.polygons.map((poly, idx) => ({ key: `t-${idx}`, pts: polyAttr(poly.points, bbox), style: terrainStyle[poly.type] ?? terrainStyle.campus })),
+    [bbox, terrainStyle]
   );
   const streetPaths = useMemo(
     () => network.streets.map((s, idx) => ({ key: `s-${idx}`, d: pathStr(s.points, bbox) })),
@@ -159,7 +190,7 @@ export function RouteReplay({
   const headingName = geo.stops[prog.leg]?.name;
 
   return (
-    <div className="relative h-full w-full overflow-hidden">
+    <div className="relative h-full w-full overflow-hidden" style={{ backgroundColor: "var(--bg-base)" }}>
       <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
         <g>
           {terrainShapes.map((t) => (
@@ -168,10 +199,10 @@ export function RouteReplay({
         </g>
         <g opacity={0.5}>
           {streetPaths.map((s) => (
-            <path key={s.key} d={s.d} fill="none" stroke="#2A2358" strokeWidth={1.2} strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+            <path key={s.key} d={s.d} fill="none" stroke={streetColor} strokeWidth={1.2} strokeLinecap="round" vectorEffect="non-scaling-stroke" />
           ))}
         </g>
-        <path d={fullRoutePath} fill="none" stroke="#ffffff" strokeOpacity={0.12} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+        <path d={fullRoutePath} fill="none" stroke={ghostColor} strokeOpacity={0.12} strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
         <path d={trailPath} fill="none" stroke={accent} strokeWidth={9} opacity={0.25} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
         <path d={trailPath} fill="none" stroke={accent} strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
 
@@ -186,11 +217,11 @@ export function RouteReplay({
                   <text textAnchor="middle" dominantBaseline="central" fontSize={17}>{s.emoji}</text>
                   <g transform="translate(13,-13)">
                     <circle r={7.5} fill="#FFD166" />
-                    <text textAnchor="middle" dominantBaseline="central" fontSize={9} fontWeight={800} fill="#0A0A1A">{i + 1}</text>
+                    <text textAnchor="middle" dominantBaseline="central" fontSize={9} fontWeight={800} fill={badgeText}>{i + 1}</text>
                   </g>
                 </g>
               ) : (
-                <circle r={5} fill="#ffffff" opacity={0.3} />
+                <circle r={5} fill={dotInactive} opacity={0.3} />
               )}
             </g>
           );
@@ -199,8 +230,8 @@ export function RouteReplay({
         {/* 起点 */}
         {geo.fullPath.length > 0 && (
           <g transform={`translate(${originXY.x}, ${originXY.y}) scale(${markerScale})`}>
-            <circle r={6} fill="#fff" opacity={0.85} />
-            <circle r={11} fill="none" stroke="#fff" strokeWidth={1.5} opacity={0.5} />
+            <circle r={6} fill={originFill} opacity={0.85} />
+            <circle r={11} fill="none" stroke={originStroke} strokeWidth={1.5} opacity={0.5} />
           </g>
         )}
 
@@ -218,7 +249,7 @@ export function RouteReplay({
         <div className="absolute inset-x-0 top-0 px-3 pt-3">
           <div className="flex gap-1">
             {geo.stops.map((_, i) => (
-              <div key={i} className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/25">
+              <div key={i} className="h-0.5 flex-1 overflow-hidden rounded-full" style={{ background: progressBg }}>
                 <div
                   className="h-full rounded-full transition-[width] duration-200 ease-linear"
                   style={{ background: accent, width: i < prog.leg ? "100%" : i === prog.leg ? `${prog.frac * 100}%` : "0%" }}
@@ -231,7 +262,7 @@ export function RouteReplay({
 
       {walking && headingName && (
         <div className="pointer-events-none absolute inset-x-0 bottom-6 flex justify-center">
-          <div className="flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-[12px] font-bold text-white/85 backdrop-blur-sm">
+          <div className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[12px] font-bold backdrop-blur-sm" style={{ background: labelBg, color: labelText }}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: accent }} />
             前往 第{prog.leg + 1}站
           </div>

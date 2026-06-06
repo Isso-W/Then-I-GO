@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { ArrowLeft, User, Bell, Shield, Smartphone, HelpCircle, LogOut, ChevronRight, Moon, Sun, Monitor, X } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { ArrowLeft, User, Bell, Shield, Smartphone, HelpCircle, LogOut, ChevronRight, Moon, Sun, Monitor, X, Check } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Glass, AppLayout } from "../components/Layout";
 import type { UserProfile } from "../types";
@@ -27,6 +27,12 @@ const MBTI_TYPES: { code: string; label: string }[] = [
 
 type ThemeMode = "dark" | "light" | "auto";
 
+const GENDER_OPTIONS: { value: 'male' | 'female' | 'other'; label: string; emoji: string }[] = [
+  { value: "male", label: "男", emoji: "👦" },
+  { value: "female", label: "女", emoji: "👧" },
+  { value: "other", label: "保密", emoji: "🤫" },
+];
+
 export function SettingsScreen({ onBack, themeMode, onThemeChange, profile, onUpdateProfile }: {
   onBack: () => void;
   themeMode?: ThemeMode;
@@ -35,6 +41,7 @@ export function SettingsScreen({ onBack, themeMode, onThemeChange, profile, onUp
   onUpdateProfile?: (p: UserProfile) => void;
 }) {
   const [mbtiOpen, setMbtiOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const handleMbtiSelect = (code: string) => {
     if (!profile) return;
@@ -42,6 +49,14 @@ export function SettingsScreen({ onBack, themeMode, onThemeChange, profile, onUp
     try { localStorage.setItem(PROFILE_KEY, JSON.stringify(updated)); } catch {}
     onUpdateProfile?.(updated);
     setMbtiOpen(false);
+  };
+
+  const handleProfileSave = (name: string, gender: 'male' | 'female' | 'other' | null) => {
+    if (!profile) return;
+    const updated = { ...profile, name: name || undefined, gender };
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(updated)); } catch {}
+    onUpdateProfile?.(updated);
+    setProfileOpen(false);
   };
 
   return (
@@ -63,7 +78,7 @@ export function SettingsScreen({ onBack, themeMode, onThemeChange, profile, onUp
         <section className="mb-6">
           <h2 className="mb-3 px-1 text-[12px] font-bold uppercase tracking-widest" style={{ color: "var(--text-faint)" }}>个人信息</h2>
           <Glass className="overflow-hidden">
-            <SettingItem icon={<User size={18} />} label="个人资料" detail="那我走" />
+            <SettingItem icon={<User size={18} />} label="个人资料" detail={profile?.name || "未设置"} onClick={() => setProfileOpen(true)} />
             <div className="mx-4 h-px bg-[var(--border-subtle)]" />
             <SettingItem icon={<Smartphone size={18} />} label="绑定手机" detail="138****8888" />
             <div className="mx-4 h-px bg-[var(--border-subtle)]" />
@@ -136,6 +151,14 @@ export function SettingsScreen({ onBack, themeMode, onThemeChange, profile, onUp
             onClose={() => setMbtiOpen(false)}
           />
         )}
+        {profileOpen && (
+          <ProfileEditorOverlay
+            currentName={profile?.name}
+            currentGender={profile?.gender}
+            onSave={handleProfileSave}
+            onClose={() => setProfileOpen(false)}
+          />
+        )}
       </AnimatePresence>
     </AppLayout>
   );
@@ -198,6 +221,97 @@ function MbtiPickerOverlay({ current, onSelect, onClose }: {
             );
           })}
         </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function ProfileEditorOverlay({ currentName, currentGender, onSave, onClose }: {
+  currentName?: string;
+  currentGender?: 'male' | 'female' | 'other' | null;
+  onSave: (name: string, gender: 'male' | 'female' | 'other' | null) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(currentName ?? "");
+  const [gender, setGender] = useState<'male' | 'female' | 'other' | null>(currentGender ?? null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      className="absolute inset-0 z-[120] flex flex-col justify-end bg-black/60 backdrop-blur-sm"
+    >
+      <motion.div
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 26, stiffness: 240 }}
+        onClick={(e) => e.stopPropagation()}
+        className="rounded-t-[28px] border-t p-5 pb-8 shadow-[0_-20px_60px_rgba(0,0,0,0.6)]"
+        style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-subtle)" }}
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-[18px] font-black" style={{ color: "var(--text-primary)" }}>编辑个人资料</h2>
+          <button onClick={onClose} className="rounded-full p-1.5 active:scale-90" style={{ backgroundColor: "var(--bg-input)", color: "var(--text-muted)" }}>
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="mb-5">
+          <label className="block text-[13px] font-bold mb-2" style={{ color: "var(--text-muted)" }}>昵称</label>
+          <input
+            ref={inputRef}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="输入你的昵称"
+            maxLength={20}
+            className="w-full rounded-xl px-4 py-3 text-[16px] font-medium outline-none transition-colors focus:ring-2 focus:ring-[#6C5CFF]/40"
+            style={{ backgroundColor: "var(--bg-input)", color: "var(--text-primary)", border: "1px solid var(--border-subtle)" }}
+          />
+        </div>
+
+        <div className="mb-6">
+          <label className="block text-[13px] font-bold mb-2" style={{ color: "var(--text-muted)" }}>性别</label>
+          <div className="flex gap-3">
+            {GENDER_OPTIONS.map((opt) => {
+              const selected = gender === opt.value;
+              return (
+                <motion.button
+                  key={opt.value}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => setGender(selected ? null : opt.value)}
+                  className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-3 text-[15px] font-bold transition-colors ${
+                    selected
+                      ? "border-[#6C5CFF] bg-[#6C5CFF]/15"
+                      : "border-transparent active:bg-white/[0.08]"
+                  }`}
+                  style={{
+                    border: `1px solid ${selected ? "#6C5CFF" : "var(--border-subtle)"}`,
+                    backgroundColor: selected ? undefined : "var(--bg-input)",
+                    color: selected ? "#A98BFF" : "var(--text-secondary)",
+                  }}
+                >
+                  <span>{opt.emoji}</span>
+                  {opt.label}
+                </motion.button>
+              );
+            })}
+          </div>
+        </div>
+
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={() => onSave(name.trim(), gender)}
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#6C5CFF] text-[16px] font-bold text-white shadow-[0_4px_16px_rgba(108,92,255,0.35)]"
+        >
+          <Check size={18} />
+          保存
+        </motion.button>
       </motion.div>
     </motion.div>
   );

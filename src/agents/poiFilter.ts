@@ -1,12 +1,10 @@
 import poisRaw from "../data/pois.json";
-import type { POI, UserPreferences } from "../types";
+import type { POI, UserPreferences, TripRecord } from "../types";
 
 const pois = poisRaw as POI[];
 
-// 五道口地铁站坐标，作为所有距离计算的原点
 export const ORIGIN = { lat: 39.992, lng: 116.337 };
 
-// Haversine 公式算两点间地表距离（米）
 export function distanceMeters(
   a: { lat: number; lng: number },
   b: { lat: number; lng: number }
@@ -23,23 +21,41 @@ export function distanceMeters(
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-// 步行约 80m/min，把米换成"步行约 N 分钟"
 export function walkingTimeText(meters: number): string {
   const minutes = Math.max(1, Math.round(meters / 80));
   return `步行约${minutes}分钟`;
 }
 
-// "08:00-20:00" / "18:00-02:00" → 判断 now 是否在区间内（支持跨午夜）
 export function isOpenAt(openHours: string, now: Date): boolean {
   const match = openHours.match(/^(\d{2}):(\d{2})-(\d{2}):(\d{2})$/);
-  if (!match) return true; // 解析不了就当一直开
+  if (!match) return true;
   const [, sh, sm, eh, em] = match;
   const start = Number(sh) * 60 + Number(sm);
   const end = Number(eh) * 60 + Number(em);
   const cur = now.getHours() * 60 + now.getMinutes();
   if (end >= start) return cur >= start && cur <= end;
-  // 跨午夜：开 18:00-02:00 意味着 cur ≥ 18:00 或 cur ≤ 02:00
   return cur >= start || cur <= end;
+}
+
+const DURATION_MIN: Record<string, number> = {
+  "1h": 60, "2h": 120, half_day: 240, full_day: 480,
+};
+
+export function isOpenDuring(openHours: string, from: Date, durationKey: string): boolean {
+  const match = openHours.match(/^(\d{2}):(\d{2})-(\d{2}):(\d{2})$/);
+  if (!match) return true;
+  const [, sh, sm, eh, em] = match;
+  const shopOpen = Number(sh) * 60 + Number(sm);
+  const shopClose = Number(eh) * 60 + Number(em);
+
+  const routeStart = from.getHours() * 60 + from.getMinutes();
+  const routeEnd = routeStart + (DURATION_MIN[durationKey] ?? 60);
+
+  if (shopClose >= shopOpen) {
+    return routeEnd > shopOpen && routeStart < shopClose;
+  }
+  // overnight shop (e.g. 18:00-02:00): open = [shopOpen,1440) ∪ [0,shopClose)
+  return routeStart < shopClose || routeEnd > shopOpen;
 }
 
 export type ActivityType = "eating" | "drinking" | "browsing" | "sitting" | "outdoor" | "service" | "entertainment";
@@ -60,93 +76,241 @@ export function getBaseCategory(category: string): string {
   return m ? m[1] : category;
 }
 
-const MAX_PER_CATEGORY = 2;
-
-const WAIT_THRESHOLD_MIN = 15;
-const MAX_CANDIDATES = 10;
-const MIN_ACCEPTABLE = 5;
-
-const DURATION_MINUTES: Record<string, number> = {
-  "30min": 30, "1h": 60, "2h": 120, half_day: 240,
+// ── 标签亲和矩阵（CLIP-like soft similarity）──
+// 用户偏好标签 → POI 标签之间的亲和度，直接匹配 = 1.0，语义相近给部分分
+const TAG_AFFINITY: Record<string, Record<string, number>> = {
+  art:     { art: 1.0, photo: 0.5, niche: 0.4 },
+  photo:   { photo: 1.0, art: 0.5, niche: 0.3, outdoor: 0.3 },
+  niche:   { niche: 1.0, art: 0.4, photo: 0.3, budget: 0.2 },
+  outdoor: { outdoor: 1.0, photo: 0.3 },
+  food:    { food: 1.0, busy: 0.2 },
+  busy:    { busy: 1.0, food: 0.2 },
+  budget:  { budget: 1.0, niche: 0.2 },
 };
 
-export function scorePOI(poi: POI, prefs: UserPreferences): number {
-  let score = poi.rating;
+function tagAffinityScore(userTags: string[], poiTags: string[]): number {
+  if (userTags.length === 0) return 0;
+  let total = 0;
+  for (const ut of userTags) {
+    const row = TAG_AFFINITY[ut];
+    if (!row) continue;
+    let best = 0;
+    for (const pt of poiTags) {
+      best = Math.max(best, row[pt] ?? 0);
+    }
+    total += best;
+  }
+  return total;
+}
 
-  if (poi.mood_match.includes(prefs.mood)) score += 0.5;
+export function findPOIByName(name: string): POI | undefined {
+  return pois.find((p) => p.name === name);
+}
 
-  const tagOverlap = poi.tags.filter((t) => prefs.special.includes(t)).length;
-  score += tagOverlap * 0.3;
+export function extractVisitedNames(history: TripRecord[]): Set<string> {
+  const names = new Set<string>();
+  for (const trip of history) {
+    for (const wp of trip.waypoints) {
+      if (wp.visited) names.add(wp.name);
+    }
+  }
+  return names;
+}
 
-  if (prefs.special.includes("budget") && poi.price_level === 1) score += 0.4;
-  if (prefs.special.includes("busy") && poi.crowd_level === "high") score += 0.3;
-  if (prefs.special.includes("busy") && poi.crowd_level === "low") score -= 0.3;
+const MAX_PER_CATEGORY = 2;
+const MAX_CANDIDATES = 15;
+const MAX_FOOD = 5;
+const EATING_CATEGORIES = new Set(["餐厅", "酒吧"]);
 
-  if (prefs.companion === "couple" && poi.crowd_level === "low") score += 0.3;
-  if (prefs.companion === "friends" && poi.crowd_level === "high") score += 0.2;
+const COMPANION_CROWD: Record<string, number> = {
+  couple: -0.7, solo: -0.3, family: 0, friends: 0.7,
+};
 
+const DURATION_MINUTES: Record<string, number> = {
+  "1h": 60, "2h": 120, half_day: 240, full_day: 480,
+};
+
+export interface ScoreBreakdown {
+  total: number;
+  base: number;
+  tagAffinity: number;
+  mood: number;
+  weather: number;
+  time: number;
+  wait: number;
+  stay: number;
+  novelty: number;
+  price: number;
+  crowd: number;
+  food: number;
+  distance: number;
+}
+
+type WeatherBias = "rain" | "snow" | "hot" | "cold" | "nice" | "none";
+
+function classifyWeather(code?: string, temp?: number): WeatherBias {
+  if (!code) return "none";
+  const c = parseInt(code);
+  if ([200, 386, 389, 392, 296, 299, 302, 305, 308, 311, 314, 350, 356, 359, 176, 263, 266, 281, 284, 293, 353, 182, 374, 377].includes(c)) return "rain";
+  if ([179, 227, 230, 317, 320, 323, 326, 329, 332, 335, 338, 362, 365, 368, 371, 395].includes(c)) return "snow";
+  if (temp !== undefined && temp >= 35) return "hot";
+  if (temp !== undefined && temp <= 0) return "cold";
+  return "nice";
+}
+
+const WEATHER_INDOOR: Record<WeatherBias, number> = {
+  rain: 0.3, snow: 0.35, hot: 0.2, cold: 0.25, nice: 0, none: 0,
+};
+const WEATHER_OUTDOOR: Record<WeatherBias, number> = {
+  rain: -0.4, snow: -0.5, hot: -0.3, cold: -0.3, nice: 0.15, none: 0,
+};
+
+export function scorePOI(
+  poi: POI,
+  prefs: UserPreferences,
+  visitedNames: Set<string> = new Set(),
+  weatherCode?: string,
+  weatherTemp?: number,
+): number {
+  return scorePOIDetailed(poi, prefs, visitedNames, weatherCode, weatherTemp).total;
+}
+
+function timeScoreAtHour(activity: ActivityType, hour: number): number {
+  const h = ((hour % 24) + 24) % 24;
+  if (h >= 20 || h < 4) {
+    if (activity === "drinking") return 0.3;
+    if (activity === "entertainment") return 0.2;
+    if (activity === "eating") return 0.1;
+    if (activity === "outdoor") return -0.3;
+    if (activity === "browsing") return -0.15;
+    return 0;
+  }
+  if (h >= 5 && h < 9) {
+    if (activity === "outdoor") return 0.2;
+    if (activity === "drinking") return -0.3;
+    if (activity === "entertainment") return -0.2;
+    return 0;
+  }
+  if (h >= 11 && h < 14) {
+    if (activity === "eating") return 0.2;
+    return 0;
+  }
+  if (h >= 14 && h < 18) {
+    if (activity === "browsing") return 0.1;
+    if (activity === "outdoor") return 0.1;
+    return 0;
+  }
+  return 0;
+}
+
+function timeScore(activity: ActivityType, startHour: number, durationMin: number): number {
+  const hours = Math.max(1, Math.ceil(durationMin / 60));
+  let sum = 0;
+  for (let i = 0; i < hours; i++) {
+    sum += timeScoreAtHour(activity, startHour + i);
+  }
+  return sum / hours;
+}
+
+export function scorePOIDetailed(
+  poi: POI,
+  prefs: UserPreferences,
+  visitedNames: Set<string> = new Set(),
+  weatherCode?: string,
+  weatherTemp?: number,
+  now: Date = new Date(),
+): ScoreBreakdown {
+  const base = (poi.rating - 3.0) / 2.0; // 3.0→0, 4.0→0.5, 4.8→0.9, 5.0→1.0
+  const tagAffinity = tagAffinityScore(prefs.special, poi.tags) * 0.4;
+  const mood = poi.mood_match.includes(prefs.mood) ? 0.15 : 0;
+
+  const bias = classifyWeather(weatherCode, weatherTemp);
+  const activity = getActivityType(poi.category);
+  const isOutdoor = activity === "outdoor";
+  const weather = isOutdoor ? WEATHER_OUTDOOR[bias] : WEATHER_INDOOR[bias];
+  const totalMin = DURATION_MINUTES[prefs.duration] ?? 60;
+  const time = timeScore(activity, now.getHours(), totalMin);
+  const wait = -(poi.avg_wait_minutes / totalMin) * 2.0;
+
+  const stayRatio = poi.avg_stay_minutes / totalMin;
+  const stay = stayRatio > 0.5 ? -(stayRatio - 0.5) * 3.0 : 0;
+
+  const noveltyMode = prefs.intensity === "don't_think";
+  let novelty = 0;
+  if (visitedNames.size > 0) {
+    if (visitedNames.has(poi.name)) {
+      novelty = noveltyMode ? -0.8 : -0.4;
+    } else {
+      novelty = noveltyMode ? 0.5 : 0.2;
+    }
+  } else if (noveltyMode) {
+    novelty = 0.15;
+  }
+
+  const budgetIntent = prefs.special.includes("budget") ? 1 : 0;
+  const price = (2 - poi.price_level) * 0.15 * (1 + budgetIntent);
+
+  const crowdVal = poi.crowd_level === "high" ? 1 : poi.crowd_level === "medium" ? 0 : -1;
+  const crowdPref = COMPANION_CROWD[prefs.companion] ?? 0;
+  const crowd = crowdVal * crowdPref * 0.3;
+
+  let food = 0;
   if (prefs.foodPreference?.length > 0 && getActivityType(poi.category) === "eating") {
-    if (prefs.foodPreference.includes("light") && /素食|轻食|沙拉/.test(poi.category + poi.name)) score += 0.4;
-    if (prefs.foodPreference.includes("spicy") && /火锅|烧烤|川|湘|麻辣/.test(poi.category + poi.name)) score += 0.4;
-    if (prefs.foodPreference.includes("coffee") && /咖啡|甜品|奶茶/.test(poi.category)) score += 0.4;
+    if (prefs.foodPreference.includes("light") && /素食|轻食|沙拉/.test(poi.category + poi.name)) food += 0.4;
+    if (prefs.foodPreference.includes("spicy") && /火锅|烧烤|川|湘|麻辣/.test(poi.category + poi.name)) food += 0.4;
+    if (prefs.foodPreference.includes("coffee") && /咖啡|甜品|奶茶/.test(poi.category)) food += 0.4;
   }
 
   const km = distanceMeters(ORIGIN, { lat: poi.lat, lng: poi.lng }) / 1000;
-  score -= km * 0.1;
-  return score;
-}
+  const distPenaltyPerKm = 1.5 / (totalMin / 30);
+  const distance = -(km * distPenaltyPerKm);
 
-type FilterStage = "strict" | "no_wait" | "no_tags" | "all";
-
-function applyFilters(
-  prefs: UserPreferences,
-  now: Date,
-  stage: FilterStage,
-  pool: POI[]
-): POI[] {
-  const totalMin = DURATION_MINUTES[prefs.duration] ?? 60;
-  const maxStayMin = totalMin / 2;
-  return pool.filter((poi) => {
-    if (stage !== "all" && !isOpenAt(poi.open_hours, now)) return false;
-    if (stage === "strict" && poi.avg_wait_minutes > WAIT_THRESHOLD_MIN) return false;
-    if (stage === "strict" && poi.avg_stay_minutes > maxStayMin) return false;
-    if ((stage === "strict" || stage === "no_wait") && prefs.special.length > 0) {
-      const overlap = poi.tags.some((t) => prefs.special.includes(t));
-      if (!overlap) return false;
-    }
-    return true;
-  });
+  const total = base + tagAffinity + mood + weather + time + wait + stay + novelty + price + crowd + food + distance;
+  return { total, base, tagAffinity, mood, weather, time, wait, stay, novelty, price, crowd, food, distance };
 }
 
 /**
- * 返回候选 POI 列表（已排序，最多 10 条）。
- * 候选不足 5 个时按 strict → no_wait → no_tags → all 逐步放宽。
- * 测试时可传入合成 pool 替代真实 pois.json。
+ * 唯一硬约束：必须营业。其他全部软化为评分因子。
+ * 品类 cap（每类最多 MAX_PER_CATEGORY 个）+ 总量 cap（MAX_CANDIDATES 个）。
  */
 export function filterCandidates(
   prefs: UserPreferences,
   now: Date = new Date(),
-  pool: POI[] = pois
+  pool: POI[] = pois,
+  history: TripRecord[] = [],
+  weatherCode?: string,
+  weatherTemp?: number,
 ): POI[] {
-  const stages: FilterStage[] = ["strict", "no_wait", "no_tags", "all"];
-  for (const stage of stages) {
-    const matched = applyFilters(prefs, now, stage, pool);
-    if (matched.length >= MIN_ACCEPTABLE || stage === "all") {
-      const sorted = matched
-        .map((p) => ({ poi: p, score: scorePOI(p, prefs) }))
-        .sort((a, b) => b.score - a.score);
-      const catCount = new Map<string, number>();
-      const capped: POI[] = [];
-      for (const { poi } of sorted) {
-        const base = getBaseCategory(poi.category);
-        const count = catCount.get(base) ?? 0;
-        if (count >= MAX_PER_CATEGORY) continue;
-        catCount.set(base, count + 1);
-        capped.push(poi);
-        if (capped.length >= MAX_CANDIDATES) break;
-      }
-      return capped;
-    }
+  const visitedNames = extractVisitedNames(history);
+
+  // 唯一硬约束：路线时间窗内有交集即可（夜宵 18:00 开、16:00 出发全天游也入选）
+  let open = pool.filter((p) => isOpenDuring(p.open_hours, now, prefs.duration));
+  if (open.length === 0) open = pool;
+
+  const sorted = open
+    .map((p) => ({ poi: p, score: scorePOI(p, prefs, visitedNames, weatherCode, weatherTemp) }))
+    .sort((a, b) => b.score - a.score);
+
+  const isLong = prefs.duration === "full_day" || prefs.duration === "half_day";
+  const catCount = new Map<string, number>();
+  let foodCount = 0;
+  const capped: POI[] = [];
+  for (const { poi } of sorted) {
+    const base = getBaseCategory(poi.category);
+    const activity = getActivityType(poi.category);
+    const isFood = activity === "eating" || activity === "drinking";
+
+    // 食物类（eating + drinking）总量上限 5 个
+    if (isFood && foodCount >= MAX_FOOD) continue;
+    // 单品类上限（餐厅/酒吧在长线路放宽到 3）
+    const cap = isLong && EATING_CATEGORIES.has(base) ? 3 : MAX_PER_CATEGORY;
+    const count = catCount.get(base) ?? 0;
+    if (count >= cap) continue;
+
+    catCount.set(base, count + 1);
+    if (isFood) foodCount++;
+    capped.push(poi);
+    if (capped.length >= MAX_CANDIDATES) break;
   }
-  return [];
+  return capped;
 }

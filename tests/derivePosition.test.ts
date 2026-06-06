@@ -62,8 +62,9 @@ describe("positionFromStep", () => {
     expect(positionFromStep("checkin_next", routeThree, ORIGIN, 2)).toEqual({ lat: wp2.lat, lng: wp2.lng });
   });
 
-  it("achievement_unlock = 最后一站", () => {
-    expect(positionFromStep("achievement_unlock", routeThree, ORIGIN, 2)).toEqual({ lat: wp2.lat, lng: wp2.lng });
+  it("achievement_unlock = 有隐藏任务时在隐藏任务位置，否则在最后一站", () => {
+    expect(positionFromStep("achievement_unlock", routeThree, ORIGIN, 2)).toEqual({ lat: hidden.lat, lng: hidden.lng });
+    expect(positionFromStep("achievement_unlock", routeTwo, ORIGIN, 1)).toEqual({ lat: wp1.lat, lng: wp1.lng });
   });
 
   it("单 waypoint 路线不越界", () => {

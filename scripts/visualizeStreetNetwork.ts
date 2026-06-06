@@ -48,26 +48,44 @@ function streetToJS(s: StreetSegment): string {
 // ---------- POI 样式 ----------
 
 const POI_COLOR: Record<string, string> = {
-  '咖啡厅':         '#A87CFF',  // 紫
-  '宠物友好咖啡':   '#C9A0FF',  // 浅紫
-  '奶茶甜品':       '#FF88CC',  // 粉
-  '书店':           '#4488FF',  // 蓝
-  '文创小店':       '#00CCEE',  // 青
-  '美术馆':         '#FF6699',  // 玫红
-  'livehouse':      '#FF3366',  // 深玫红
-  '公园绿地':       '#33CC77',  // 绿
-  '餐厅':           '#FF8833',  // 橙
-  '餐厅-日韩料理':  '#FFB347',  // 浅橙
-  '餐厅-北京风味':  '#FF6633',  // 深橙
-  '餐厅-素食轻食':  '#99DD44',  // 黄绿
-  '酒吧':           '#EE44AA',  // 深粉
-  '酒吧清吧':       '#CC3388',  // 深玫
-  '夜宵烧烤':       '#FF4444',  // 红
-  '便利店':         '#FFDD22',  // 黄
-  '花店':           '#FF99BB',  // 粉红
-  '健身/瑜伽':      '#44DDBB',  // 青绿
-  '共享空间/自习室':'#88AAFF',  // 浅蓝
-  '洗衣生活服务':   '#AAAAAA',  // 灰
+  // 饮品
+  '咖啡厅':         '#A87CFF',
+  '宠物友好咖啡':   '#C9A0FF',
+  '奶茶甜品':       '#FF88CC',
+  // 文化
+  '书店':           '#4488FF',
+  '文创小店':       '#00CCEE',
+  '美术馆':         '#FF6699',
+  '花店':           '#FF99BB',
+  // 演出/夜生活
+  'livehouse':      '#FF3366',
+  '酒吧':           '#EE44AA',
+  '酒吧清吧':       '#CC3388',
+  '夜店':           '#DD2288',
+  // 户外
+  '公园绿地':       '#33CC77',
+  '景点/地标':      '#22AA66',
+  // 餐饮
+  '餐厅':           '#FF8833',
+  '餐厅-日韩料理':  '#FFB347',
+  '餐厅-北京风味':  '#FF6633',
+  '餐厅-素食轻食':  '#99DD44',
+  '餐厅-火锅':      '#FF4422',
+  '餐厅-东北菜':    '#EE7733',
+  '餐厅-小吃':      '#FFAA55',
+  '美食城':         '#FF9944',
+  '美食街':         '#FFBB66',
+  '夜宵烧烤':       '#FF4444',
+  // 娱乐
+  'KTV':            '#FF55AA',
+  '电影院':         '#BB66FF',
+  '电竞/网咖':      '#66BBFF',
+  '台球/棋牌':      '#44CCAA',
+  '桌游/密室':      '#55DDCC',
+  '运动娱乐':       '#33BBDD',
+  // 运动/空间
+  '健身/瑜伽':      '#44DDBB',
+  '共享空间/自习室': '#88AAFF',
 };
 
 const CROWD_RADIUS: Record<string, number> = { low: 8, medium: 11, high: 15 };
@@ -75,11 +93,16 @@ const CROWD_RADIUS: Record<string, number> = { low: 8, medium: 11, high: 15 };
 function poiToJS(p: POI): string {
   const color  = POI_COLOR[p.category] ?? '#CCCCCC';
   const radius = CROWD_RADIUS[p.crowd_level] ?? 10;
+  const waitTag = p.avg_wait_minutes > 0
+    ? `⏳等 ${p.avg_wait_minutes}min`
+    : '⏳免等';
   const popup  = [
-    `<b>${p.name}</b>`,
+    `<b>${p.name}</b> <span style="color:#888;font-size:11px">${p.id}</span>`,
     `${p.category} · ⭐${p.rating} · ${'¥'.repeat(p.price_level)}`,
-    `客流：${p.crowd_level} | 停留约 ${p.avg_stay_minutes}min`,
-    `<i>${p.review_summary}</i>`,
+    `客流 ${p.crowd_level} | 停留约 ${p.avg_stay_minutes}min | ${waitTag}`,
+    `🏷️ ${p.tags.join(' · ')}`,
+    `🕐 ${p.open_hours}`,
+    `<i style="color:#666">${p.review_summary}</i>`,
   ].join('<br>');
   return `L.circleMarker([${p.lat},${p.lng}],` +
          `{radius:${radius},color:'${color}',fillColor:'${color}',fillOpacity:0.85,weight:1.5})` +

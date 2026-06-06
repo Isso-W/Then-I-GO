@@ -163,17 +163,6 @@ export function Map({
     step === "checkin_hidden" ||
     step === "reward_hidden";
 
-  const branchMarks = useMemo(
-    () =>
-      (route?.branch?.options ?? []).map((wp, i) => ({
-        key: i,
-        label: i === 0 ? "A" : "B",
-        ...projectLatLng({ lat: wp.lat, lng: wp.lng }, viewBox),
-      })),
-    [route, viewBox]
-  );
-  const showBranch = step === "branch_choice";
-
   const currentPos = projectLatLng(currentPosition, viewBox);
 
   // Determine next waypoint based on explore step
@@ -305,16 +294,6 @@ export function Map({
           <text textAnchor="middle" dominantBaseline="central" fontSize={18}>{hiddenMark.emoji}</text>
         </g>
       )}
-
-      {/* Branch choice markers */}
-      {showBranch &&
-        branchMarks.map((m) => (
-          <g key={`branch-${m.key}`} transform={`translate(${m.x}, ${m.y}) scale(${markerScale})`}>
-            <circle r={24} fill="#6C5CFF" opacity={0.2} />
-            <circle r={17} fill="#5B3BFF" stroke="#A98BFF" strokeWidth={2} />
-            <text textAnchor="middle" dominantBaseline="central" fontSize={16} fontWeight={800} fill="#FFFFFF">{m.label}</text>
-          </g>
-        ))}
 
       {/* Live navigation path from avatar to next target */}
       {navPath && nextWpPos && (

@@ -131,8 +131,6 @@ export function buildGraph(streets: Street[]): RoadGraph {
  * 只在最大连通分量上找。
  */
 export function snapToRoad(p: LatLng, g: RoadGraph): LatLng {
-  const LAT_M = 111_320;
-  const LNG_M = 111_320 * Math.cos((39.992 * Math.PI) / 180);
   const px = p.lng * LNG_M, py = p.lat * LAT_M;
   let bestD = Infinity;
   let bestPt: LatLng = p;
@@ -239,24 +237,26 @@ function dijkstra(g: RoadGraph, src: number, dst: number): number[] | null {
 export function shortestPath(from: LatLng, to: LatLng, g: RoadGraph): LatLng[] {
   const snappedFrom = snapToRoad(from, g);
   const snappedTo = snapToRoad(to, g);
-  const dstId = nearestNode(snappedTo, g);
-  if (dstId === null) return [snappedFrom, snappedTo];
 
   const srcEdge = nearestEdgeEndpoints(snappedFrom, g);
-  if (!srcEdge) return [snappedFrom, snappedTo];
+  const dstEdge = nearestEdgeEndpoints(snappedTo, g);
+  if (!srcEdge || !dstEdge) return [snappedFrom, snappedTo];
 
   let bestPath: number[] | null = null;
   let bestTotal = Infinity;
   for (const srcId of [srcEdge.a, srcEdge.b]) {
-    const ids = dijkstra(g, srcId, dstId);
-    if (!ids) continue;
-    let total = distMeters(snappedFrom, g.nodes[srcId]);
-    for (let i = 1; i < ids.length; i++) {
-      total += distMeters(g.nodes[ids[i - 1]], g.nodes[ids[i]]);
-    }
-    if (total < bestTotal) {
-      bestTotal = total;
-      bestPath = ids;
+    for (const dstId of [dstEdge.a, dstEdge.b]) {
+      const ids = dijkstra(g, srcId, dstId);
+      if (!ids) continue;
+      let total = distMeters(snappedFrom, g.nodes[srcId]);
+      for (let i = 1; i < ids.length; i++) {
+        total += distMeters(g.nodes[ids[i - 1]], g.nodes[ids[i]]);
+      }
+      total += distMeters(g.nodes[dstId], snappedTo);
+      if (total < bestTotal) {
+        bestTotal = total;
+        bestPath = ids;
+      }
     }
   }
 

@@ -9,6 +9,8 @@ export interface UserProfile {
   interests: string[];
   completedAt: number;
   avatar?: string;
+  name?: string;
+  gender?: 'male' | 'female' | 'other' | null;
 }
 
 export type ExploreStep =
@@ -21,7 +23,6 @@ export type ExploreStep =
   | "hidden_active"
   | "checkin_hidden"
   | "reward_hidden"
-  | "branch_choice"
   | "next_objective"
   | "checkin_next"
   | "vlog_ready"
@@ -71,18 +72,11 @@ export interface Waypoint {
   category?: string;    // POI 品类，如"咖啡厅"，用于匹配品类插图
 }
 
-// 第二站的 A/B 抉择：两个气质相反的候选 + 一句抉择提示
-export interface RouteBranch {
-  axis: string;                   // 抉择提示，如 "想安静还是想热闹？"
-  options: [Waypoint, Waypoint];  // 恰好两个候选第二站
-}
-
 // AI 生成的完整路线
 export interface GeneratedRoute {
   title: string;        // 今日路线标题，如"五道口的隐秘下午"
   waypoints: Waypoint[];
   hiddenTask?: Waypoint;        // 隐藏任务：不在主线里的真实 POI，Gemini 生成故事/任务/奖励
-  branch?: RouteBranch;         // 可选：第二站的 A/B 分叉（intensity 门控，只在用户想参与时出现）
 }
 
 // ── Vlog 生成 ──────────────────────────────────────────────
@@ -141,7 +135,6 @@ export interface TripRecord {
     isHidden?: boolean;
     reaction?: string;
   }[];
-  branchChosen?: number;
   chatActions: string[];
   distanceKm: number;
   durationMin: number;
@@ -149,6 +142,7 @@ export interface TripRecord {
   intensity: string;
   preferences: UserPreferences;
   reaction?: string;
+  feedback?: string;
 }
 
 // POI 数据库里的一条记录

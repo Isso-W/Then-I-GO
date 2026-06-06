@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import qrcode from "qrcode-generator";
-import { Gift, Star, Clock, Smartphone, Battery, Umbrella, CreditCard, X, ChevronRight } from "lucide-react";
+import { Gift, Star, Clock, Smartphone, Battery, Umbrella, CreditCard, X, ChevronRight, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { AppLayout } from "../components/Layout";
 import { BottomNav, PageTitle, TabBar } from "../components/CommonUI";
@@ -33,6 +33,7 @@ function filterTag(title: string, desc: string): string {
 export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: ScreenType) => void; generatedRoute?: GeneratedRoute | null }) {
   const [activeTab, setActiveTab] = useState(0);
   const [couponFilter, setCouponFilter] = useState<string>("全部");
+  const [badgeOpen, setBadgeOpen] = useState(false);
   const [gear, setGear] = useState<string[]>([]);
   const [tripHistory, setTripHistory] = useState<TripRecord[]>([]);
 
@@ -109,15 +110,41 @@ export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Scre
   const hasHidden = earnedCoupons.some((c) => c.tag === "隐藏") || tripHistory.some(t => t.waypoints.some(w => w.isHidden && w.visited));
   const totalStops = tripHistory.reduce((s, t) => s + t.waypoints.filter((w) => w.visited).length, 0) || 3;
 
+  // 连续天数：按日期去重排序，从最近一天往回数连续天数
+  const consecutiveDays = React.useMemo(() => {
+    const dateSet = new Set<string>();
+    tripHistory.forEach(t => dateSet.add(t.date));
+    const dates: string[] = [];
+    dateSet.forEach(d => dates.push(d));
+    dates.sort().reverse();
+    if (dates.length === 0) return 0;
+    let streak = 1;
+    for (let i = 1; i < dates.length; i++) {
+      const prev = new Date(dates[i - 1]);
+      const cur = new Date(dates[i]);
+      const diff = (prev.getTime() - cur.getTime()) / (1000 * 60 * 60 * 24);
+      if (Math.round(diff) === 1) streak++;
+      else break;
+    }
+    return streak;
+  }, [tripHistory]);
+
+  const uniqueCategories = React.useMemo(() => {
+    const emojis = new Set<string>();
+    tripHistory.forEach(t => t.waypoints.filter(w => w.visited).forEach(w => emojis.add(w.emoji)));
+    if (generatedRoute) generatedRoute.waypoints.forEach(wp => emojis.add(wp.emoji));
+    return emojis.size;
+  }, [tripHistory, generatedRoute]);
+
   const badges = [
-    { icon: "🔥", label: "首次探索", done: totalDays >= 1 },
-    { icon: "⚡", label: "连续3天", done: totalDays >= 3 },
-    { icon: "👑", label: "连续7天", done: totalDays >= 7 },
-    { icon: "🗺️", label: "打卡10站", done: totalStops >= 10 },
-    { icon: "🔮", label: "隐藏任务", done: hasHidden },
-    { icon: "🎯", label: "集齐5券", done: allCoupons.length >= 5 },
-    { icon: "🌟", label: "探索达人", done: totalDays >= 14 },
-    { icon: "💎", label: "全品类通关", done: false },
+    { icon: "🔥", label: "首次探索", desc: "完成第一次探索", done: totalDays >= 1, progress: `${Math.min(totalDays, 1)}/1` },
+    { icon: "⚡", label: "连续3天", desc: "连续探索 3 天", done: consecutiveDays >= 3, progress: `${Math.min(consecutiveDays, 3)}/3` },
+    { icon: "👑", label: "连续7天", desc: "连续探索 7 天", done: consecutiveDays >= 7, progress: `${Math.min(consecutiveDays, 7)}/7` },
+    { icon: "🗺️", label: "打卡10站", desc: "累计打卡 10 个站点", done: totalStops >= 10, progress: `${Math.min(totalStops, 10)}/10` },
+    { icon: "🔮", label: "隐藏任务", desc: "完成一次隐藏任务", done: hasHidden, progress: hasHidden ? "1/1" : "0/1" },
+    { icon: "🎯", label: "集齐5券", desc: "累计获得 5 张优惠券", done: allCoupons.length >= 5, progress: `${Math.min(allCoupons.length, 5)}/5` },
+    { icon: "🌟", label: "探索达人", desc: "累计探索 14 次", done: totalDays >= 14, progress: `${Math.min(totalDays, 14)}/14` },
+    { icon: "💎", label: "全品类通关", desc: "探索 8 种不同品类", done: uniqueCategories >= 8, progress: `${Math.min(uniqueCategories, 8)}/8` },
   ];
 
   const items = [
@@ -144,26 +171,48 @@ export function BagScreen({ onNavigate, generatedRoute }: { onNavigate: (s: Scre
       />
 
       <main className="absolute inset-x-0 top-[100px] bottom-[104px] overflow-y-auto no-scrollbar px-4 pb-6">
-        {/* 成就徽章 */}
-        <div className="rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] p-4 mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-[15px] font-black text-[var(--text-primary)]">成就徽章</h3>
-            <span className="text-[11px] font-bold text-[var(--text-muted)]">{badges.filter(b => b.done).length}/{badges.length}</span>
-          </div>
-          <div className="grid grid-cols-4 gap-2">
-            {badges.map((b) => (
-              <div key={b.label} className="flex flex-col items-center gap-1.5">
-                <div className={`flex h-12 w-12 items-center justify-center rounded-2xl text-[22px] ${
-                  b.done ? "bg-amber-500/15 shadow-[0_0_12px_rgba(245,158,11,0.2)]" : "bg-[var(--bg-input)] grayscale opacity-40"
-                }`}>
-                  {b.icon}
+        {/* 成就徽章（可折叠） */}
+        <div className="rounded-2xl bg-[var(--bg-card)] border border-[var(--border-subtle)] mb-4 overflow-hidden">
+          <button
+            onClick={() => setBadgeOpen(!badgeOpen)}
+            className="flex w-full items-center justify-between p-4 active:bg-[var(--bg-input)] transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <h3 className="text-[15px] font-black text-[var(--text-primary)]">成就徽章</h3>
+              <span className="rounded-full bg-[#6C5CFF]/15 px-2 py-0.5 text-[11px] font-black text-[#A98BFF]">{badges.filter(b => b.done).length}/{badges.length}</span>
+            </div>
+            <motion.div animate={{ rotate: badgeOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+              <ChevronDown size={18} style={{ color: "var(--text-muted)" }} />
+            </motion.div>
+          </button>
+          <AnimatePresence>
+            {badgeOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25 }}
+                className="overflow-hidden"
+              >
+                <div className="px-4 pb-4 space-y-2">
+                  {badges.map((b) => (
+                    <div key={b.label} className={`flex items-center gap-3 rounded-xl p-2.5 ${b.done ? "bg-amber-500/10" : "bg-[var(--bg-input)]"}`}>
+                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[20px] ${
+                        b.done ? "bg-amber-500/15 shadow-[0_0_8px_rgba(245,158,11,0.15)]" : "grayscale opacity-40"
+                      }`}>
+                        {b.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className={`text-[13px] font-bold ${b.done ? "text-[var(--text-primary)]" : "text-[var(--text-faint)]"}`}>{b.label}</div>
+                        <div className="text-[10px] text-[var(--text-muted)]">{b.desc}</div>
+                      </div>
+                      <span className={`text-[11px] font-bold shrink-0 ${b.done ? "text-amber-500" : "text-[var(--text-faint)]"}`}>{b.progress}</span>
+                    </div>
+                  ))}
                 </div>
-                <span className={`text-[9px] font-bold text-center leading-tight ${
-                  b.done ? "text-[var(--text-primary)]" : "text-[var(--text-faint)]"
-                }`}>{b.label}</span>
-              </div>
-            ))}
-          </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <TabBar tabs={["优惠券", "道具", "装备"]} active={activeTab} onChange={setActiveTab} />

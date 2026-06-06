@@ -16,7 +16,6 @@ const DONE_STEPS: ReadonlySet<ExploreStep> = new Set<ExploreStep>([
  * - initial: 用户在 origin（出发点），要走去 wp[0]
  * - checkin_initial: 用户到达了 wp[waypointIndex]
  * - hidden steps: 用户在 hiddenTask 位置
- * - branch_choice: 用户在刚完成的 wp[waypointIndex] 附近
  * - next_objective: 用户在上一站（wp[waypointIndex-1]），要走去 wp[waypointIndex]
  * - checkin_next: 用户到达了 wp[waypointIndex]
  * - achievement_unlock: 用户在最后一站
@@ -30,20 +29,15 @@ export function positionFromStep(
   if (!route || route.waypoints.length === 0) return origin;
 
   if (DONE_STEPS.has(step)) {
+    if (route.hiddenTask) {
+      return { lat: route.hiddenTask.lat, lng: route.hiddenTask.lng };
+    }
     const last = route.waypoints[route.waypoints.length - 1];
     return { lat: last.lat, lng: last.lng };
   }
 
   if (HIDDEN_STEPS.has(step) && route.hiddenTask) {
     return { lat: route.hiddenTask.lat, lng: route.hiddenTask.lng };
-  }
-
-  if (step === "branch_choice") {
-    if (route.hiddenTask) {
-      return { lat: route.hiddenTask.lat, lng: route.hiddenTask.lng };
-    }
-    const wp = route.waypoints[waypointIndex] ?? route.waypoints[0];
-    return { lat: wp.lat, lng: wp.lng };
   }
 
   // checkin = 到达了目标
