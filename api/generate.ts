@@ -6,18 +6,12 @@ async function getAI() {
   if (aiInstance) return aiInstance;
   const { GoogleGenAI } = await import("@google/genai");
 
-  const saJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
   const apiKey = process.env.GEMINI_API_KEY;
 
-  if (saJson) {
-    const creds = JSON.parse(saJson);
-    const project = creds.project_id;
-    const location = process.env.GOOGLE_CLOUD_LOCATION || "us-central1";
-    aiInstance = new GoogleGenAI({ vertexai: true, project, location });
-  } else if (apiKey) {
+  if (apiKey) {
     aiInstance = new GoogleGenAI({ apiKey });
   } else {
-    throw new Error("需要 GOOGLE_SERVICE_ACCOUNT_JSON 或 GEMINI_API_KEY");
+    throw new Error("需要设置 GEMINI_API_KEY 环境变量");
   }
   return aiInstance;
 }
