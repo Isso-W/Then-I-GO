@@ -60,9 +60,10 @@ export function useWeather() {
         setWeather(w);
         setWeatherImage(weatherImagePath(w.icon));
       })
-      .catch(() =>
-        setWeather({ temp: "22", feelsLike: "22", desc: "晴", humidity: "50", windSpeed: "10", icon: "113" })
-      );
+      .catch(() => {
+        setWeather({ temp: "22", feelsLike: "22", desc: "晴", humidity: "50", windSpeed: "10", icon: "113" });
+        setWeatherImage(weatherImagePath("113"));
+      });
   }, []);
 
   return { weather, weatherImage };
