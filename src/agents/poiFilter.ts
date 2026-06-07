@@ -119,7 +119,8 @@ export function extractVisitedNames(history: TripRecord[]): Set<string> {
 
 const MAX_PER_CATEGORY = 2;
 const MAX_CANDIDATES = 15;
-const MAX_FOOD = 5;
+const MAX_EATING = 4;
+const MAX_DRINKING = 3;
 const EATING_CATEGORIES = new Set(["餐厅", "酒吧"]);
 
 const COMPANION_CROWD: Record<string, number> = {
@@ -293,22 +294,23 @@ export function filterCandidates(
 
   const isLong = prefs.duration === "full_day" || prefs.duration === "half_day";
   const catCount = new Map<string, number>();
-  let foodCount = 0;
+  let eatCount = 0;
+  let drinkCount = 0;
   const capped: POI[] = [];
   for (const { poi } of sorted) {
     const base = getBaseCategory(poi.category);
     const activity = getActivityType(poi.category);
-    const isFood = activity === "eating" || activity === "drinking";
 
-    // 食物类（eating + drinking）总量上限 5 个
-    if (isFood && foodCount >= MAX_FOOD) continue;
+    if (activity === "eating" && eatCount >= MAX_EATING) continue;
+    if (activity === "drinking" && drinkCount >= MAX_DRINKING) continue;
     // 单品类上限（餐厅/酒吧在长线路放宽到 3）
     const cap = isLong && EATING_CATEGORIES.has(base) ? 3 : MAX_PER_CATEGORY;
     const count = catCount.get(base) ?? 0;
     if (count >= cap) continue;
 
     catCount.set(base, count + 1);
-    if (isFood) foodCount++;
+    if (activity === "eating") eatCount++;
+    if (activity === "drinking") drinkCount++;
     capped.push(poi);
     if (capped.length >= MAX_CANDIDATES) break;
   }
