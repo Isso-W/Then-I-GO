@@ -17,6 +17,7 @@ import type { ChatMessage } from "./components/ChatPanel";
 import type { LatLng } from "./components/mapProjection";
 import { SAMPLE_TRIPS } from "./data/sampleTrips";
 import { motion, AnimatePresence } from "motion/react";
+import { DiceLoader } from "./components/DiceLoader";
 
 const PROFILE_KEY = "userProfile";
 const THEME_KEY = "appTheme";
@@ -411,13 +412,7 @@ export default function App() {
             className="fixed inset-0 z-[200] flex flex-col items-center justify-center backdrop-blur-md"
             style={{ backgroundColor: "var(--overlay-bg)" }}
           >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-              className="h-12 w-12 rounded-full border-4 border-t-[#6C5CFF]"
-              style={{ borderColor: "var(--border-subtle)", borderTopColor: "#6C5CFF" }}
-            />
-            <p className="mt-6 text-[15px] font-bold" style={{ color: "var(--text-muted)" }}>AI 正在为你规划路线…</p>
+            <DiceLoader />
           </motion.div>
         )}
       </AnimatePresence>
