@@ -148,7 +148,7 @@ export function ExploreScreen({
 
       <AnimatePresence>
         {step === "hidden_found" && (
-          <HiddenTaskAlert hiddenTask={generatedRoute?.hiddenTask} onAccept={startHiddenTask} mystery={mystery} />
+          <HiddenTaskAlert hiddenTask={generatedRoute?.hiddenTask} onAccept={startHiddenTask} onSkip={() => setStep("achievement_unlock")} mystery={mystery} />
         )}
       </AnimatePresence>
 
@@ -446,7 +446,8 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
   // 别让我思考：到达（inRange）前藏起目的地名字和奖励，到了才揭晓
   const hideMystery = mystery && hasTarget && !inRange;
   const displayTitle = hideMystery ? "？？？" : content.title;
-  const displayReward = hideMystery ? "到达后揭晓" : content.reward;
+  const displayDesc = hideMystery ? "到达后揭晓" : content.desc;
+  const displayReward = content.reward;
 
   const handleAction = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -491,7 +492,7 @@ function TaskCard({ step, onComplete, onCheckIn, generatedRoute, waypointIndex =
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-[15px] font-bold line-clamp-2" style={{ color: "var(--text-primary)" }}>{displayTitle}</div>
-            <p className="text-[11px] line-clamp-2" style={{ color: "var(--text-muted)" }}>{content.desc}</p>
+            <p className="text-[11px] line-clamp-2" style={{ color: "var(--text-muted)" }}>{displayDesc}</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg w-fit" style={{ backgroundColor: "var(--bg-input)" }}>
@@ -547,7 +548,7 @@ function HiddenTaskImage({ category, emoji }: { category?: string; emoji?: strin
   );
 }
 
-function HiddenTaskAlert({ hiddenTask, onAccept, mystery }: { hiddenTask?: Waypoint; onAccept: () => void; mystery?: boolean }) {
+function HiddenTaskAlert({ hiddenTask, onAccept, onSkip, mystery }: { hiddenTask?: Waypoint; onAccept: () => void; onSkip: () => void; mystery?: boolean }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -608,6 +609,12 @@ function HiddenTaskAlert({ hiddenTask, onAccept, mystery }: { hiddenTask?: Waypo
             className="w-full rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 py-3.5 text-[15px] font-black text-white shadow-lg shadow-amber-500/25 transition-transform active:scale-[0.98]"
           >
             立即前往
+          </button>
+          <button
+            onClick={onSkip}
+            className="w-full rounded-2xl py-3 text-[14px] font-bold text-[var(--text-muted)] transition-colors active:text-[var(--text-secondary)]"
+          >
+            跳过，直接结算
           </button>
         </div>
       </motion.div>

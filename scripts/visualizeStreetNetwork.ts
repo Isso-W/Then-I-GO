@@ -168,8 +168,8 @@ const html = `<!DOCTYPE html>
 <script>
 const map = L.map('map');
 map.fitBounds([[${network.bbox.south},${network.bbox.west}],[${network.bbox.north},${network.bbox.east}]]);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '© OpenStreetMap contributors', maxZoom: 19,
+L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
+  subdomains: '1234', attribution: '© 高德地图', maxZoom: 19,
 }).addTo(map);
 
 L.rectangle(
@@ -188,5 +188,14 @@ ${pois.map(poiToJS).join('\n')}
 
 const outPath = path.join(dataDir, 'street-network.html');
 writeFileSync(outPath, html, 'utf-8');
+
+const htmlNoTile = html
+  .replace(/L\.tileLayer\([^)]+\)\s*\.addTo\(map\);/, '')
+  .replace('<title>五道口路网 + POI</title>', '<title>五道口路网 + POI (无底图)</title>')
+  .replace("#map { width:100vw; height:100vh; }", "#map { width:100vw; height:100vh; background:#fff; }");
+const outPathNoTile = path.join(dataDir, 'street-network-no-bg.html');
+writeFileSync(outPathNoTile, htmlNoTile, 'utf-8');
+
 console.log(`已生成：${outPath}`);
+console.log(`已生成（无底图）：${outPathNoTile}`);
 console.log('浏览器打开，点 POI 圆圈可查看详情。');

@@ -25,7 +25,6 @@ export type ExploreStep =
   | "reward_hidden"
   | "next_objective"
   | "checkin_next"
-  | "vlog_ready"
   | "achievement_unlock";
 
 export interface Coupon {

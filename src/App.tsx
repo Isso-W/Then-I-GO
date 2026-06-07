@@ -98,7 +98,7 @@ export default function App() {
   // 行为信号追踪（不驱动渲染，用 useRef）
   const tripStartTime = useRef<number | null>(null);
   const chatActionLog = useRef<string[]>([]);
-  const hiddenTriggered = useRef(false);
+  const [hiddenTriggered, setHiddenTriggered] = useState(false);
   const pendingRecord = useRef<TripRecord | null>(null);
   const weatherRef = useRef<{ code?: string; temp?: number }>({});
 
@@ -237,7 +237,7 @@ export default function App() {
     // 重置行为信号
     tripStartTime.current = Date.now();
     chatActionLog.current = [];
-    hiddenTriggered.current = false;
+    setHiddenTriggered(false);
     try {
       let wCode: string | undefined;
       let wTemp: number | undefined;
@@ -292,7 +292,7 @@ export default function App() {
   // 追踪 hidden_active 触发 + achievement_unlock 组装 TripRecord
   useEffect(() => {
     if (exploreStep === "hidden_active") {
-      hiddenTriggered.current = true;
+      setHiddenTriggered(true);
     }
   }, [exploreStep]);
 
@@ -310,13 +310,13 @@ export default function App() {
         emoji: generatedRoute.hiddenTask.emoji,
         lat: generatedRoute.hiddenTask.lat,
         lng: generatedRoute.hiddenTask.lng,
-        visited: hiddenTriggered.current,
+        visited: hiddenTriggered,
         isHidden: true,
       });
     }
     const elapsed = tripStartTime.current ? Math.round((Date.now() - tripStartTime.current) / 60000) : 30;
     const allRewards = generatedRoute.waypoints.map((w) => w.reward);
-    if (generatedRoute.hiddenTask && hiddenTriggered.current) {
+    if (generatedRoute.hiddenTask && hiddenTriggered) {
       allRewards.push(generatedRoute.hiddenTask.reward);
     }
 
@@ -341,7 +341,7 @@ export default function App() {
     }).catch(() => {});
 
     setShowFeedback(true);
-  }, [generatedRoute, preferences]);
+  }, [generatedRoute, preferences, hiddenTriggered, waypointIndex]);
 
   const saveTripRecord = useCallback((reaction?: string) => {
     const record = pendingRecord.current;
@@ -481,6 +481,9 @@ export default function App() {
               onTripReaction={handleTripReaction}
               onWaypointReaction={handleWaypointReaction}
               onTripFeedback={handleTripFeedback}
+              mystery={preferences?.intensity === "don't_think"}
+              waypointIndex={waypointIndex}
+              hiddenTriggered={hiddenTriggered}
             />
           )}
           {screen === "bag" && <BagScreen onNavigate={navigate} generatedRoute={generatedRoute} />}

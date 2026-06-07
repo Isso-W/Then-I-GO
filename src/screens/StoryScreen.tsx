@@ -53,7 +53,7 @@ function fmtDuration(scenes: { durationSec: number }[]): string {
 
 const REACTION_OPTIONS = ["🤩", "😎", "😐", "😩", "💀", "💸"];
 
-export function StoryScreen({ onNavigate, generatedRoute, checkinPhotos = {}, vlogs = [], onVlogGenerated, tripHistory = [], onTripReaction, onWaypointReaction, onTripFeedback }: {
+export function StoryScreen({ onNavigate, generatedRoute, checkinPhotos = {}, vlogs = [], onVlogGenerated, tripHistory = [], onTripReaction, onWaypointReaction, onTripFeedback, mystery, waypointIndex = 0, hiddenTriggered }: {
   onNavigate: (s: ScreenType) => void;
   generatedRoute?: GeneratedRoute | null;
   checkinPhotos?: Record<number, string>;
@@ -63,6 +63,9 @@ export function StoryScreen({ onNavigate, generatedRoute, checkinPhotos = {}, vl
   onTripReaction?: (tripId: string, emoji: string) => void;
   onWaypointReaction?: (tripId: string, waypointIdx: number, emoji: string) => void;
   onTripFeedback?: (tripId: string, text: string) => void;
+  mystery?: boolean;
+  waypointIndex?: number;
+  hiddenTriggered?: boolean;
 }) {
   const [activeTab, setActiveTab] = React.useState(0);
   const [selectedDate, setSelectedDate] = React.useState("今日");
@@ -100,18 +103,21 @@ export function StoryScreen({ onNavigate, generatedRoute, checkinPhotos = {}, vl
   ];
   const routeItems: TimelineItemData[] | null = generatedRoute
     ? [
-        ...generatedRoute.waypoints.map((wp, i) => ({
-          time: `第${i + 1}站`,
-          title: `${wp.emoji} ${wp.name}`,
-          desc: wp.description,
-          icon: <MapPin size={17} />,
-          img: routeGradients[i % routeGradients.length],
-        })),
-        ...(generatedRoute.hiddenTask
+        ...generatedRoute.waypoints.map((wp, i) => {
+          const hidden = mystery && i > waypointIndex;
+          return {
+            time: `第${i + 1}站`,
+            title: hidden ? `${wp.emoji} ???` : `${wp.emoji} ${wp.name}`,
+            desc: hidden ? "到达后揭晓" : wp.description,
+            icon: <MapPin size={17} />,
+            img: routeGradients[i % routeGradients.length],
+          };
+        }),
+        ...(generatedRoute.hiddenTask && hiddenTriggered
           ? [{
               time: "隐藏",
-              title: `${generatedRoute.hiddenTask.emoji} 秘密：${generatedRoute.hiddenTask.name}`,
-              desc: generatedRoute.hiddenTask.description,
+              title: mystery ? `✨ 秘密：???` : `${generatedRoute.hiddenTask.emoji} 秘密：${generatedRoute.hiddenTask.name}`,
+              desc: mystery ? "到达后揭晓" : generatedRoute.hiddenTask.description,
               icon: <Sparkles size={17} />,
               img: "bg-gradient-to-br from-amber-700 to-yellow-300",
             }]
@@ -138,15 +144,21 @@ export function StoryScreen({ onNavigate, generatedRoute, checkinPhotos = {}, vl
   const genStops = React.useMemo(
     () => {
       if (!generatedRoute) return (currentItems ?? []).map((it) => ({ name: cleanName(it.title), desc: it.desc, emoji: "📍" }));
-      const ordered: { name: string; desc: string; emoji: string }[] = generatedRoute.waypoints.map((wp) => ({
-        name: wp.name, desc: wp.description, emoji: wp.emoji,
-      }));
-      if (generatedRoute.hiddenTask) {
-        ordered.push({ name: generatedRoute.hiddenTask.name, desc: generatedRoute.hiddenTask.description, emoji: generatedRoute.hiddenTask.emoji });
+      const ordered: { name: string; desc: string; emoji: string }[] = generatedRoute.waypoints.map((wp, i) => {
+        const hidden = mystery && i > waypointIndex;
+        return { name: hidden ? "???" : wp.name, desc: hidden ? "到达后揭晓" : wp.description, emoji: wp.emoji };
+      });
+      if (generatedRoute.hiddenTask && hiddenTriggered) {
+        const hiddenMasked = mystery;
+        ordered.push({
+          name: hiddenMasked ? "???" : generatedRoute.hiddenTask.name,
+          desc: hiddenMasked ? "到达后揭晓" : generatedRoute.hiddenTask.description,
+          emoji: generatedRoute.hiddenTask.emoji,
+        });
       }
       return ordered;
     },
-    [generatedRoute, currentItems]
+    [generatedRoute, currentItems, mystery, waypointIndex, hiddenTriggered]
   );
 
   // 切日期 / 换路线时重置配图：今日用打卡拍的照片预填，其他清空
@@ -527,7 +539,7 @@ function TripCard({ trip, idx, delayOffset, onReact, onWaypointReact, onFeedback
       </AnimatePresence>
 
       <div className="mt-3 flex flex-col gap-1.5">
-        {trip.waypoints.map((w, wi) => (
+        {trip.waypoints.filter((w) => !(w.isHidden && !w.visited)).map((w, wi) => (
           <div key={wi} className="flex items-center gap-2">
             <span className={`text-[18px] ${w.visited ? "" : "opacity-30 grayscale"}`}>{w.emoji}</span>
             <span className="flex-1 text-[13px] font-medium truncate" style={{ color: w.visited ? "var(--text-secondary)" : "var(--text-faint)" }}>

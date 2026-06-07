@@ -84,28 +84,28 @@ const CATEGORY_REWARDS: Record<string, string> = {
   美术馆: "¥15展览折扣券",
   餐厅: "¥20餐饮代金券",
   奶茶甜品: "¥8奶茶抵扣券",
-  电竞网咖: "¥15上机时长券",
+  "电竞/网咖": "¥15上机时长券",
   livehouse: "¥30演出折扣券",
   公园绿地: "¥5骑行体验券",
   花店: "¥15鲜花折扣券",
   夜宵烧烤: "¥25烧烤代金券",
   酒吧: "¥20特调鸡尾酒券",
   宠物友好咖啡: "¥12饮品抵扣券",
-  健身瑜伽: "¥30单次体验券",
-  景点地标: "¥10纪念品折扣券",
+  "健身/瑜伽": "¥30单次体验券",
+  "景点/地标": "¥10纪念品折扣券",
   夜店: "¥50入场优惠券",
   KTV: "¥30欢唱时长券",
   电影院: "¥25电影兑换券",
   美食城: "¥15美食代金券",
   美食街: "¥10小吃品尝券",
-  台球棋牌: "¥20免费开台券",
-  桌游密室: "¥35密室体验券",
+  "台球/棋牌": "¥20免费开台券",
+  "桌游/密室": "¥35密室体验券",
   运动娱乐: "¥25运动体验券",
 };
 
 function rewardHint(category: string): string {
   for (const [key, hint] of Object.entries(CATEGORY_REWARDS)) {
-    if (category.includes(key) || key.replace("/", "").split("").some(c => category.includes(c) && c.length > 1)) {
+    if (category.includes(key) || key.includes(category)) {
       return hint;
     }
   }

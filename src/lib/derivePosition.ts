@@ -6,7 +6,7 @@ const HIDDEN_STEPS: ReadonlySet<ExploreStep> = new Set<ExploreStep>([
 ]);
 
 const DONE_STEPS: ReadonlySet<ExploreStep> = new Set<ExploreStep>([
-  "vlog_ready", "achievement_unlock",
+  "achievement_unlock",
 ]);
 
 /**
