@@ -209,7 +209,7 @@ export function StoryScreen({ onNavigate, generatedRoute, checkinPhotos = {}, vl
     const stops: VlogStop[] = genStops.map((s, i) => ({ ...s, photo: uploads[i] }));
     try {
       const vlog = await generateVlog({ routeTitle, stops, style });
-      if (generatedRoute) vlog.geo = computeVlogGeo(generatedRoute);
+      if (generatedRoute) vlog.geo = computeVlogGeo(generatedRoute, !!hiddenTriggered);
       pendingVlog.current = vlog;
     } catch (e) {
       console.error("Vlog 生成异常：", e);

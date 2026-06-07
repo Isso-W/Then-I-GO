@@ -335,7 +335,7 @@ export default function App() {
     // 异步算距离（动态导入避免首屏加载路网）
     import("./lib/routeGeometry").then(({ computeVlogGeo }) => {
       try {
-        const geo = computeVlogGeo(generatedRoute);
+        const geo = computeVlogGeo(generatedRoute, hiddenTriggered);
         if (pendingRecord.current) pendingRecord.current.distanceKm = Math.round(geo.distanceKm * 10) / 10;
       } catch {}
     }).catch(() => {});
